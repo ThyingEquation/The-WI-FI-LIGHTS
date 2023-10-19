@@ -1,7 +1,7 @@
 **WI-FI Lumières De Noël**
 =====================
 
-**The WI-FI Christmas lights**
+**WI-FI Christmas lights**
 =====================
 
 **Вы сможете собрать свою собственную новогоднюю гирлянду. 
