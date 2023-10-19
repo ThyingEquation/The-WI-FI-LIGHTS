@@ -1,4 +1,4 @@
-**WI-FI гирлянда**
+**WI-FI Lumières De Noël**
 =====================
 
 **The WI-FI Christmas lights**
