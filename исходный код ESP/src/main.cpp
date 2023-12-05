@@ -113,7 +113,7 @@ int g = matrix.width();
 
 char wifi_ssid[15]; //.................................... CHANGE SSID {COMMAND}
 //char wifi_password[15]; //........................
-const char* wifi_password = "134599996";
+const char* wifi_password = "11111111";
 char start_mode[3]; //........................
 
 IPAddress local_ip(192, 168, 1, 1); 
