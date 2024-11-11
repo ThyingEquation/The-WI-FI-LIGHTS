@@ -38,9 +38,9 @@ void runningLights() {
 
     case 7:
       theaterChase(getStripColorByIndex(col));
-      // if (++col >= 128) {
-      //   pass = 0;
-      // }
+      if (++col >= 128) {
+        col = 0;
+      }
       break;
 
     case 8:
@@ -464,7 +464,7 @@ void drawB3() {
 
 void draw5R() {
   if (ledsCount <= NUM_LEDS) {
-    strip.setPixelColor(ledsCount, getStripColorByIndex(1));
+    strip.setPixelColor(ledsCount, getStripColorByIndex(col));
     strip.show();
     strip.setPixelColor(ledsCount - 1, strip.Color(0, 0, 0));
     strip.show();
@@ -478,7 +478,7 @@ void draw5R() {
 
 void draw6R() {
   if (ledsCount <= NUM_LEDS) {
-    strip.setPixelColor(ledsCount, getStripColorByIndex(1));
+    strip.setPixelColor(ledsCount, getStripColorByIndex(col));
     strip.show();
     strip.setPixelColor(ledsCount - 1, strip.Color(0, 0, 0));
     strip.show();

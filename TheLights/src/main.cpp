@@ -11,22 +11,8 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
     NEO_GRB + NEO_KHZ800);
 
 
-uint16_t waveSnakeJ = 0;
-uint16_t waveSnakeK = 0;
-
-int currentStepJP = 0;
-int currentPhaseJP = 0;
-int currentLetterJP = 0;
-int currentStepKR = 0;
-int currentPhaseKR = 0;
-int currentLetterKR = 0;
-
 uint8_t choosenModeD1 = 255;
 uint8_t choosenModeD2 = 255;
-
-int col = 0;
-unsigned int ledsCount = 0;
-int g = matrix.width();
 
 char ssid[15];
 const char *password = "134599996";
@@ -36,73 +22,6 @@ IPAddress local_ip(192, 168, 1, 1);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
-
-bool loadConfig() {
-  File configFile = SPIFFS.open("/config.json", "r");
-  if (!configFile) {
-    return false;
-  }
-
-  size_t size = configFile.size();
-  if (size > 256) {
-    return false;
-  }
-
-  std::unique_ptr<char[]> buf(new char[size]);
-  configFile.readBytes(buf.get(), size);
-
-  DynamicJsonDocument doc(256);
-  DeserializationError error = deserializeJson(doc, buf.get());
-  if (error) {
-    return false;
-  }
-
-  const char *json_startmode = doc["json_startmode"];
-  strncpy(start_mode, json_startmode, 3);
-
-  const char *json_ssid = doc["json_ssid"];
-  strncpy(ssid, json_ssid, 15);
-  return true;
-}
-
-bool saveConfig() {
-  DynamicJsonDocument json(256);
-
-  json["json_startmode"] = start_mode;
-  json["json_ssid"] = ssid;
-
-  File configFile = SPIFFS.open("/config.json", "w");
-  if (!configFile) {
-    return false;
-  }
-
-  serializeJson(json, configFile);
-  configFile.close();
-
-  return true;
-}
-
-uint32_t getMatrixColor(const RGBColorX &colorX) {
-  return matrix.Color(colorX.r, colorX.g, colorX.b);
-}
-
-uint32_t getStripColor(const RGBColorX &colorX) {
-  return strip.Color(colorX.r, colorX.g, colorX.b);
-}
-
-uint32_t getMatrixColorByIndex(int index) {
-  if (index < 0 || index >= sizeof(colorsX) / sizeof(colorsX[0])) {
-    return matrix.Color(0, 0, 0);
-  }
-  return getMatrixColor(colorsX[index]);
-}
-
-uint32_t getStripColorByIndex(int index) {
-  if (index < 0 || index >= sizeof(colorsX) / sizeof(colorsX[0])) {
-    return strip.Color(0, 0, 0);
-  }
-  return getStripColor(colorsX[index]);
-}
 
 void setup() {
 
@@ -126,7 +45,7 @@ void setup() {
 
   delay(500);
 
-  if (!SPIFFS.begin()) {
+  if (!LittleFS.begin()) {
     return;
   }
 
@@ -142,8 +61,8 @@ void setup() {
 
   server.begin();
 
-  choosenModeD1 = 10;
-  choosenModeD2 = 8;
+  //choosenModeD1 = 1;
+  //choosenModeD2 = 7;
 }
 
 void changeSSID(String ssidW) {
@@ -320,4 +239,87 @@ void clearStrip() {
     strip.setPixelColor(i, strip.Color(0, 0, 0));
   }
   strip.show();
+}
+
+bool loadConfig() {
+  File configFile = LittleFS.open("/config.json", "r");
+  if (!configFile) {
+    Serial.println("Failed to open config file");
+    return false;
+  }
+
+  size_t size = configFile.size();
+  if (size > 256) {
+    Serial.println("Config file size is too large");
+    configFile.close();
+    return false;
+  }
+
+  std::unique_ptr<char[]> buf(new char[size]);
+  size_t bytesRead = configFile.readBytes(buf.get(), size);
+  configFile.close();
+
+  if (bytesRead != size) {
+    Serial.println("Failed to read config file");
+    return false;
+  }
+
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, buf.get());
+  if (error) {
+    Serial.println("Failed to deserialize JSON");
+    return false;
+  }
+
+  const char *json_startmode = doc["json_startmode"];
+  if (json_startmode) {
+    strncpy(start_mode, json_startmode, 3);
+  }
+
+  const char *json_ssid = doc["json_ssid"];
+  if (json_ssid) {
+    strncpy(ssid, json_ssid, 15);
+  }
+
+  return true;
+}
+
+bool saveConfig() {
+  JsonDocument json;
+
+  json["json_startmode"] = start_mode;
+  json["json_ssid"] = ssid;
+
+  File configFile = LittleFS.open("/config.json", "w");
+  if (!configFile) {
+    Serial.println("Failed to open config file for writing");
+    return false;
+  }
+
+  serializeJson(json, configFile);
+  configFile.close();
+
+  return true;
+}
+
+uint32_t getMatrixColor(const RGBColorX &colorX) {
+  return matrix.Color(colorX.r, colorX.g, colorX.b);
+}
+
+uint32_t getStripColor(const RGBColorX &colorX) {
+  return strip.Color(colorX.r, colorX.g, colorX.b);
+}
+
+uint32_t getMatrixColorByIndex(int index) {
+  if (index < 0 || index >= sizeof(colorsX) / sizeof(colorsX[0])) {
+    return matrix.Color(0, 0, 0);
+  }
+  return getMatrixColor(colorsX[index]);
+}
+
+uint32_t getStripColorByIndex(int index) {
+  if (index < 0 || index >= sizeof(colorsX) / sizeof(colorsX[0])) {
+    return strip.Color(0, 0, 0);
+  }
+  return getStripColor(colorsX[index]);
 }

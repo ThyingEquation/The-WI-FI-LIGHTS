@@ -26,8 +26,6 @@ const int maxRadius = max(centerX, centerY);
 
 int rotationAngle = 0;
 
-///////////////////////////////////////////////////////////////
-
 static int startColS[8] = {11, 7, 3, 0, 5, 10, 6, 4};
 static int startRowS[8] = {0, 3, 5, 3, 1, 4, 0, 1};
 static int currentRowS[8] = {11, 7, 3, 0, 5, 10, 6, 4};
@@ -124,8 +122,6 @@ void space() {
       break;
   }
 }
-
-///////////////////////////////////////////////////////////////////////////////////
 
 void starSky() {
   if (starcycle < 60) {
@@ -352,57 +348,3 @@ void starFall() {
     }
   }
 }
-
-// void starFall() {
-//   for (int i = 0; i < 8; i++) {
-//     if (currentRowS[i] < 22) {
-//       for (int j = 0; j < lineLengthS; j++) {
-//         rowIndexS = currentRowS[i] + j;
-//         colIndexS = startColS[i] + j;
-//         if (rowIndexS < 30 && colIndexS < 25) {
-//           pixelIndexS = ledMatrix2[rowIndexS][colIndexS];
-//           if (j == lineLengthS - 1) {
-//             brightnessS = 255;
-//           } else {
-//             brightnessS = 5 * j;
-//           }
-//           colorS = HSVtoRGB(0, 0, brightnessS);
-//           if (pixelIndexS <= 155) {
-//             strip.setPixelColor(pixelIndexS, colorS);
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   strip.show();
-//   delay(110);
-
-//   for (int i = 0; i < 8; i++) {
-//     if (currentRowS[i] < 22) {
-//       for (int j = 0; j < lineLengthS; j++) {
-//         rowIndexS = currentRowS[i] + j;
-//         colIndexS = startColS[i] + j;
-//         if (rowIndexS < 30 && colIndexS < 25) {
-//           pixelIndexS = ledMatrix2[rowIndexS][colIndexS];
-//           if (pixelIndexS <= 155) {
-//             strip.setPixelColor(pixelIndexS, strip.Color(0, 0, 0));
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   strip.show();
-
-//   for (int i = 0; i < 8; i++) {
-//     if (currentRowS[i] < 22) {
-//       currentRowS[i]++;
-//       startColS[i]++;
-//     } else {
-//       startColS[i] = random(12);
-//       startRowS[i] = random(6);
-//       currentRowS[i] = startRowS[i];
-//     }
-//   }
-// }

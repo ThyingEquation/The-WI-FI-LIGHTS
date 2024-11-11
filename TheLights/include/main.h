@@ -1,21 +1,17 @@
 /*
-* ==BARANOV KIRILL==*
-REMOTE CODES:
-* A, B - ON/OFF
-* C ... L - COLORS
-* N ... R - COLORS
-
+==BARANOV KIRILL==
 */
 
 #ifndef MAIN_H
 #define MAIN_H
-#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
+#include <Arduino.h>
 #include <ArduinoJson.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <FastLED.h>
+#include <LittleFS.h>
 #include <math.h>
 #include "FS.h"
 
@@ -48,19 +44,8 @@ extern CRGB* const leds;
 
 extern uint8_t choosenModeD2;
 
-extern int g;
-
-extern int currentStepJP;
-extern int currentPhaseJP;
-extern int currentLetterJP;
-extern int currentStepKR;
-extern int currentPhaseKR;
-extern int currentLetterKR;
-
-extern unsigned int ledsCount;
-
-extern uint16_t waveSnakeJ;
-extern uint16_t waveSnakeK;
+bool loadConfig();
+bool saveConfig();
 
 void clearStrip(void);
 void settingsProcessing(void);

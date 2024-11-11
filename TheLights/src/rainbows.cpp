@@ -1,6 +1,7 @@
 #include <rainbows.h>
 
-// extern uint16_t waveRainbow2j;
+uint16_t waveSnakeJ = 0;
+uint16_t waveSnakeK = 0;
 uint16_t waveRainbow2j = 0;
 
 void rainbows() {

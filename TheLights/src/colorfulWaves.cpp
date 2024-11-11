@@ -102,23 +102,34 @@ void Sinusoid(void) {
               (x - semikMatrixWidthMajor) +
               float(e_s3_size * (cos16(e_s3_speed * 72.0874 * time_shift))) /
                   32767.0;
-          int8_t v = 127 * (float(0.001 * time_shift * e_s3_speed) +
-                            sin16(127 * _scale *
-                                  sqrt((((float)cx * cx) + ((float)cy * cy)))) /
-                                32767.0);
+          int8_t v =
+              127 * (1 + sin16(127 * _scale *
+                               sqrt((((float)cx * cx) + ((float)cy * cy)))) /
+                             32767.0);
           color.r = ~v;
+
           cx = (y - semikMatrixHeightMajor) +
                float(e_s3_size * (sin16(e_s3_speed * 68.8107 * time_shift))) /
                    32767.0;
           cy = (x - semikMatrixWidthMajor) +
                float(e_s3_size * (cos16(e_s3_speed * 65.534 * time_shift))) /
                    32767.0;
-          v = 127 * (float(0.001 * time_shift * e_s3_speed) +
-                     sin16(127 * _scale *
-                           sqrt((((float)cx * cx) + ((float)cy * cy)))) /
-                         32767.0);
-          color.r = (uint8_t(~v) > color.r) ? ~v : color.r;
-          color.g = uint8_t(~v) >> 1;
+          v = 127 * (1 + sin16(127 * _scale *
+                               sqrt((((float)cx * cx) + ((float)cy * cy)))) /
+                             32767.0);
+          color.g = ~v;
+
+          cx = (y - semikMatrixHeightMajor) +
+               float(e_s3_size * (sin16(e_s3_speed * 134.3447 * time_shift))) /
+                   32767.0;
+          cy = (x - semikMatrixWidthMajor) +
+               float(e_s3_size * (cos16(e_s3_speed * 170.3884 * time_shift))) /
+                   32767.0;
+          v = 127 * (1 + sin16(127 * _scale *
+                               sqrt((((float)cx * cx) + ((float)cy * cy)))) /
+                             32767.0);
+          color.b = ~v;
+
           leds[XY(x, y)] = color;
         }
       }

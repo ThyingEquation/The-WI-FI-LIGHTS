@@ -2,7 +2,13 @@
 
 unsigned long previousMillisJP = 0;
 unsigned long previousMillisKR = 0;
-const long interval = 200;
+
+uint8_t currentStepJP = 0;
+uint8_t currentPhaseJP = 0;
+uint8_t currentLetterJP = 0;
+uint8_t currentStepKR = 0;
+uint8_t currentPhaseKR = 0;
+uint8_t currentLetterKR = 0;
 
 uint8_t mainScheme[] = {
     144, 143, 118, 117, 92,  91,  66,  65,  40,  39,  14,  13,  145, 142, 119,
@@ -17,44 +23,22 @@ uint8_t mainScheme[] = {
     106, 103, 80,  77,  54,  51,  28,  25,  2,   156, 131, 130, 105, 104, 79,
     78,  53,  52,  27,  26,  1};
 
-const long *jpL[] = {jpLetter1, jpLetter2, jpLetter3, jpLetter4, jpLetter5,
-                     jpLetter6, jpLetter7, jpLetter8, jpLetter9, jpLetter10};
-//const long *krL[] = {krLetter1, krLetter2, krLetter3, krLetter4, krLetter5};
+const int *jpL[] = {jpLetter1, jpLetter2, jpLetter3, jpLetter4, jpLetter5,
+                    jpLetter6, jpLetter7, jpLetter8, jpLetter9, jpLetter10};
 const int *krL[] = {krLetter1, krLetter2, krLetter3, krLetter4, krLetter5};
-const long *heartImages[] = {heart1, heart2, heart3, heart4};
-const long *smileImages[] = {smile1, smile2, smile3, smile4};
-const long *jumpingManImages[] = {jumpingMan1, jumpingMan2};
-const long *fireballImages[] = {fireball1, fireball2, fireball3, fireball4};
-const long *explosionImages[] = {
+const int *heartImages[] = {heart1, heart2, heart3, heart4};
+const int *smileImages[] = {smile1, smile2, smile3, smile4};
+const int *jumpingManImages[] = {jumpingMan1, jumpingMan2};
+const int *fireballImages[] = {fireball1, fireball2, fireball3, fireball4};
+const int *explosionImages[] = {
     explosion1,  explosion2,  explosion3,  explosion4,  explosion5,
     explosion6,  explosion7,  explosion8,  explosion9,  explosion10,
     explosion11, explosion12, explosion13, explosion14, explosion15,
     explosion16, explosion17, explosion18};
-const long *pacmanImages[] = {pacman1, pacman2, pacman3, pacman4, pacman5};
-const long *diffImages[] = {mushroom, amogus, cup,    pineapple, alien,
-                            hummer,   cat,    teaCup, dino};
+const int *pacmanImages[] = {pacman1, pacman2, pacman3, pacman4, pacman5};
+const int *diffImages[] = {mushroom, amogus, cup,    pineapple, alien,
+                           hummer,   cat,    teaCup, dino};
 const int *signalsImages[] = {signal1, signal2, signal3, signal4, signal5};
-
-void displayAnimation(const long *images[], int numImages,
-                      unsigned long interval) {
-  static unsigned long previousMillisJP = 0;
-  static int currentImageIndex = 0;
-
-  static bool initialized = false;
-
-  unsigned long currentMillis = millis();
-
-  if (!initialized || (currentMillis - previousMillisJP >= interval)) {
-    initialized = true;
-    previousMillisJP = currentMillis;
-    mainFunAnime(mainScheme, images[currentImageIndex]);
-    FastLED.show();
-    currentImageIndex = (currentImageIndex + 1) % numImages;
-  }
-}
-
-void shiftArrUp(uint8_t upCount);
-void shiftArrDown();
 
 uint8_t ArrDown[156];
 uint8_t ArrUp[156];
@@ -122,23 +106,11 @@ void anime() {
   }
 }
 
-void mainFunAnime(uint8_t p1[], const long p2[]) {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    leds[p1[i] - 1] = pgm_read_dword(&(p2[i]));
-  }
-}
-
-// void mainFunAnime2(uint8_t p1[], const long p2[]) {
-//   for (int i = 0; i < NUM_LEDS; i++) {
-//     leds[p1[i] - 1] = pgm_read_dword(&(p2[i]));
-//   }
-// }
-
-void mainFunAnime2(uint8_t p1[], const int p2[]) {
+void mainFunAnime(uint8_t p1[], const int p2[]) {
   for (int i = 0; i < NUM_LEDS; i++) {
     if ((p1[i] - 1) <= 155) {
-    strip.setPixelColor(p1[i] - 1, pgm_read_dword(&(p2[i])));
-  }
+      strip.setPixelColor(p1[i] - 1, pgm_read_dword(&(p2[i])));
+    }
   }
 }
 
@@ -163,16 +135,16 @@ void shiftArrDown() {
 void anime7() {
   unsigned long currentMillisJp = millis();
 
-  if (currentMillisJp - previousMillisJP >= interval) {
+  if (currentMillisJp - previousMillisJP >= 210) {
     previousMillisJP = currentMillisJp;
 
     switch (currentPhaseJP) {
       case 0:
         if (currentStepJP < 13) {
-          FastLED.clear();
+          clearStrip();
           shiftArrUp(currentStepJP);
           mainFunAnime(ArrUp, jpLetter1);
-          FastLED.show();
+          strip.show();
           currentStepJP++;
         } else {
           currentPhaseJP = 1;
@@ -185,7 +157,7 @@ void anime7() {
       case 1:
         if (currentLetterJP < 9) {
           if (currentStepJP < 16) {
-            FastLED.clear();
+            clearStrip();
             if (currentStepJP < 13) {
               shiftArrDown();
               mainFunAnime(ArrDown, jpL[currentLetterJP]);
@@ -194,7 +166,7 @@ void anime7() {
               shiftArrUp(currentStepJP - 3);
               mainFunAnime(ArrUp, jpL[currentLetterJP + 1]);
             }
-            FastLED.show();
+            strip.show();
             currentStepJP++;
           } else {
             currentStepJP = 0;
@@ -210,10 +182,10 @@ void anime7() {
 
       case 2:
         if (currentStepJP < 13) {
-          FastLED.clear();
+          clearStrip();
           shiftArrDown();
           mainFunAnime(ArrDown, jpLetter10);
-          FastLED.show();
+          strip.show();
           currentStepJP++;
         } else {
           currentPhaseJP = 3;
@@ -232,15 +204,15 @@ void anime7() {
 void anime8() {
   unsigned long currentMillisKr = millis();
 
-  if (currentMillisKr - previousMillisKR >= interval) {
+  if (currentMillisKr - previousMillisKR >= 210) {
     previousMillisKR = currentMillisKr;
 
     switch (currentPhaseKR) {
       case 0:
         if (currentStepKR < 13) {
-          //clearStrip();
+          clearStrip();
           shiftArrUp(currentStepKR);
-          mainFunAnime2(ArrUp, krLetter1);
+          mainFunAnime(ArrUp, krLetter1);
           strip.show();
           currentStepKR++;
         } else {
@@ -254,23 +226,16 @@ void anime8() {
       case 1:
         if (currentLetterKR < 4) {
           if (currentStepKR < 16) {
-           // if (currentStepKR == 1) {
-              clearStrip();
-              // for (int i = 0; i < 12; i++) {
-              //   strip.setPixelColor(mainScheme[i] - 1, strip.Color(0, 0, 0));
-              // }
-              // strip.show();
-          //  }
-              strip.clear();
-              if (currentStepKR < 13) {
-                shiftArrDown();
-                mainFunAnime2(ArrDown, krL[currentLetterKR]);
+            clearStrip();
+            strip.clear();
+            if (currentStepKR < 13) {
+              shiftArrDown();
+              mainFunAnime(ArrDown, krL[currentLetterKR]);
             }
             if (currentStepKR >= 3) {
               shiftArrUp(currentStepKR - 3);
-              mainFunAnime2(ArrUp, krL[currentLetterKR + 1]);
+              mainFunAnime(ArrUp, krL[currentLetterKR + 1]);
             }
-
             strip.show();
             currentStepKR++;
           } else {
@@ -287,9 +252,9 @@ void anime8() {
 
       case 2:
         if (currentStepKR < 13) {
-          //clearStrip();
+          clearStrip();
           shiftArrDown();
-          mainFunAnime2(ArrDown, krLetter5);
+          mainFunAnime(ArrDown, krLetter5);
           strip.show();
           currentStepKR++;
         } else {
@@ -314,7 +279,6 @@ void initArrLetters() {
 }
 
 void anime9(uint8_t sig) {
-
   static int shift = 0;
 
   for (int row = 0; row < 13; row++) {
@@ -333,3 +297,20 @@ void anime9(uint8_t sig) {
   shift = (shift + 1) % 12;
 }
 
+void displayAnimation(const int *images[], int numImages,
+                      unsigned long interval) {
+  static unsigned long previousMillisJP = 0;
+  static uint8_t currentImageIndex = 0;
+
+  static bool initialized = false;
+
+  unsigned long currentMillis = millis();
+
+  if (!initialized || (currentMillis - previousMillisJP >= interval)) {
+    initialized = true;
+    previousMillisJP = currentMillis;
+    mainFunAnime(mainScheme, images[currentImageIndex]);
+    strip.show();
+    currentImageIndex = (currentImageIndex + 1) % numImages;
+  }
+}

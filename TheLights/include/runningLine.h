@@ -3,6 +3,8 @@
 
 #include "main.h"
 
+extern int g;
+
 void runningLine();
 String utf8rus(String source);
 

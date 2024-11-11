@@ -122,13 +122,6 @@ const int ledMatrix1[30][12] = {
     {157, 157, 157, 157, 157, 157, 157, 157, 157, 157, 157, 157},
     {157, 157, 157, 157, 157, 157, 157, 157, 157, 157, 157, 157}};
 
-uint8_t brightness;
-
-int rowIndexE = 0;
-int colIndexE = 0;
-int pixelIndexE = 0;
-uint32_t colorE = 0;
-
 void extra() {
   switch (choosenModeD2) {
     case 1:
@@ -571,16 +564,17 @@ void extra7() {
   for (int i = 0; i < 11; i++) {
     if (currentRowE[i] < 20) {
       for (int j = 0; j < lineLengthE[i]; j++) {
-        rowIndexE = currentRowE[i] + j;
-        colIndexE = startColE[i];
+        int rowIndexE = currentRowE[i] + j;
+        int colIndexE = startColE[i];
         if (rowIndexE < 30 && colIndexE < 12) {
-          pixelIndexE = ledMatrix1[rowIndexE][colIndexE];
+          int pixelIndexE = ledMatrix1[rowIndexE][colIndexE];
+          int brightnessE;
           if (j == lineLengthE[i] - 1) {
-            brightness = 255;
+            brightnessE = 255;
           } else {
-            brightness = 5 + (5 * j);
+            brightnessE = 5 + (5 * j);
           }
-          colorE = HSVtoRGB(90, 255, brightness);
+          uint32_t colorE = HSVtoRGB(90, 255, brightnessE);
           if (pixelIndexE <= 155) {
             strip.setPixelColor(pixelIndexE, colorE);
           }
@@ -595,10 +589,10 @@ void extra7() {
   for (int i = 0; i < 11; i++) {
     if (currentRowE[i] < 20) {
       for (int j = 0; j < lineLengthE[i]; j++) {
-        rowIndexE = currentRowE[i] + j;
-        colIndexE = startColE[i];
+        int rowIndexE = currentRowE[i] + j;
+        int colIndexE = startColE[i];
         if (rowIndexE < 30 && colIndexE < 12) {
-          pixelIndexE = ledMatrix1[rowIndexE][colIndexE];
+          int pixelIndexE = ledMatrix1[rowIndexE][colIndexE];
           if (pixelIndexE <= 155) {
             strip.setPixelColor(pixelIndexE, strip.Color(0, 0, 0));
           }

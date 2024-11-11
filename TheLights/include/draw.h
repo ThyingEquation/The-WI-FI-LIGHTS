@@ -9,4 +9,7 @@ void draw2();
 void draw3();
 void draw4();
 
+extern int col;
+extern unsigned int ledsCount;
+
 #endif

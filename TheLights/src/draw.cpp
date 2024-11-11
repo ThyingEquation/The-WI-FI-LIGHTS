@@ -10,9 +10,13 @@ unsigned char ilD = 0;
 unsigned char chaD = 0;
 static int sD = 0;
 static int g5D = 0;
+int col = 0;
+unsigned int ledsCount = 0;
 
-unsigned long previousMillisD = 0;
-const long intervalD = 70;  // Интервал в миллисекундах
+unsigned long previousMillisD2 = 0;
+unsigned long previousMillisD1 = 0;
+
+const long intervalD = 70;
 
 void draw() {
   switch (choosenModeD2) {
@@ -63,21 +67,28 @@ void draw2() {
     ledsCount = 0;
   }
 }
+
 void draw3() {
-  matrix.fillScreen(getMatrixColorByIndex(col));
-  matrix.show();
-  delay(5000);
-  if (++col >= 128) {
-    col = 0;
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillisD2 >= 5000) {
+    previousMillisD2 = currentMillis;
+
+    matrix.fillScreen(getMatrixColorByIndex(col));
+    matrix.show();
+
+    if (++col >= 128) {
+      col = 0;
+    }
   }
 }
-void draw4() {
 
+void draw4() {
   static int randcolD = random(128);
   unsigned long currentMillisD = millis();
 
-  if (currentMillisD - previousMillisD >= intervalD) {
-    previousMillisD = currentMillisD;
+  if (currentMillisD - previousMillisD1 >= intervalD) {
+    previousMillisD1 = currentMillisD;
 
     if (g5D <= (ilD + chameleon[chaD])) {
       strip.setPixelColor(g5D, getStripColorByIndex(randcolD));

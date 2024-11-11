@@ -23,7 +23,7 @@ const char* messages[] = {"С НОВЫМ ГОДОМ!!!",
 const int messageLengths[] = {100, 173, 137, 85, 183, 98, 98};
 
 int pass = 0;
-
+int g = kMatrixWidth;
 int messageIndex = -1;
 
 void runningLine() {
