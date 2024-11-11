@@ -19,7 +19,7 @@ int currentPhaseJP = 0;
 int currentLetterJP = 0;
 int currentStepKR = 0;
 int currentPhaseKR = 0;
-int currentLetterKR = 0;
+int currentLetterKR = 100;
 
 uint8_t choosenModeD1 = 255;
 uint8_t choosenModeD2 = 255;
