@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\Projects\LumieresDeNoel\ver. 2.0\TheLights\build\CMakeFiles\9c0493a1782585e0cf5f4b5b5d74c687\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{11CF8D0D-76AA-36F0-A4B8-C67E378D2714}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
