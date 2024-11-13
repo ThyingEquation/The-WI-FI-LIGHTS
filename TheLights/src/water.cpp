@@ -104,20 +104,20 @@ void pacifica_deepen_colors() {
   }
 }
 
-uint16_t XY9(uint8_t x, uint8_t y) { return (y * kMatrixWidth + x); }
+uint16_t XY9(uint8_t x, uint8_t y) { return (y * mWidth + x); }
 
 bool loadingFlag9 = true;
 CRGBPalette16 currentPalette9(PartyColors_p);
 uint8_t hue9;
 
 void N() {
-  for (byte y = 0; y < kMatrixHeight; y++) {
-    for (byte x = 0; x < kMatrixWidth; x++) {
+  for (byte y = 0; y < mHeight; y++) {
+    for (byte x = 0; x < mWidth; x++) {
       uint8_t pixelHue8 = inoise8(x * 30, y * 30, millis() / 16);
       leds[XY9(x, y)] = ColorFromPalette(currentPalette9, pixelHue8);
     }
   }
-  blur2d(leds, kMatrixWidth, kMatrixHeight, 32, xyMap);
+  blur2d(leds, mWidth, mHeight, 32, xyMap);
 }
 
 void PoolNoise() {
@@ -140,7 +140,7 @@ void PoolNoise() {
     currentPalette9[7] = CHSV(hue9, 195, 255);
   }
 
-  blur2d(leds, kMatrixWidth, kMatrixHeight, 100, xyMap);
+  blur2d(leds, mWidth, mHeight, 100, xyMap);
   N();
   FastLED.show();
   FastLED.delay(1000 / 60);

@@ -153,12 +153,12 @@ void starSky() {
   }
 }
 
-uint16_t XY7(uint8_t x, uint8_t y) { return (y * kMatrixWidth + x); }
+uint16_t XY7(uint8_t x, uint8_t y) { return (y * mWidth + x); }
 
 byte dir7 = 3;
 void drawPixel(byte x, byte y, CRGB color) {
   leds[XY7(x, y)] += color;
-  if (kMatrixWidth > 24 || kMatrixHeight > 24) {
+  if (mWidth > 24 || mHeight > 24) {
     leds[XY7(x + 1, y)] += color;
     leds[XY7(x - 1, y)] += color;
     leds[XY7(x, y + 1)] += color;
@@ -169,14 +169,14 @@ void drawPixel(byte x, byte y, CRGB color) {
 void MoveX(int8_t delta) {
   if (delta) {
     if (delta > 0) {
-      for (uint8_t y = 0; y < kMatrixHeight; y++) {
-        for (uint8_t x = 0; x < kMatrixWidth; x++) {
+      for (uint8_t y = 0; y < mHeight; y++) {
+        for (uint8_t x = 0; x < mWidth; x++) {
           leds[XY7(x, y)] = leds[XY7(x + delta, y)];
         }
       }
     } else {
-      for (uint8_t y = 0; y < kMatrixHeight; y++) {
-        for (uint8_t x = kMatrixWidth - 1; x > 0; x--) {
+      for (uint8_t y = 0; y < mHeight; y++) {
+        for (uint8_t x = mWidth - 1; x > 0; x--) {
           leds[XY7(x, y)] = leds[XY7(x + delta, y)];
         }
       }
@@ -187,14 +187,14 @@ void MoveX(int8_t delta) {
 void MoveY(int8_t delta) {
   if (delta) {
     if (delta > 0) {
-      for (uint8_t x = 0; x < kMatrixWidth; x++) {
-        for (uint8_t y = 0; y < kMatrixHeight; y++) {
+      for (uint8_t x = 0; x < mWidth; x++) {
+        for (uint8_t y = 0; y < mHeight; y++) {
           leds[XY7(x, y)] = leds[XY7(x, y + delta)];
         }
       }
     } else {
-      for (uint8_t x = 0; x < kMatrixWidth; x++) {
-        for (uint8_t y = kMatrixHeight - 1; y > 0; y--) {
+      for (uint8_t x = 0; x < mWidth; x++) {
+        for (uint8_t y = mHeight - 1; y > 0; y--) {
           leds[XY7(x, y)] = leds[XY7(x, y + delta)];
         }
       }
@@ -235,12 +235,12 @@ void spaceship() {
       break;
   }
   for (byte i = 0; i < 8; i++) {
-    byte x = beatsin8(12 + i, 2, kMatrixWidth - 3);
-    byte y = beatsin8(15 + i, 2, kMatrixHeight - 3);
+    byte x = beatsin8(12 + i, 2, mWidth - 3);
+    byte y = beatsin8(15 + i, 2, mHeight - 3);
     drawPixel(x, y,
               ColorFromPalette(RainbowColors_p, beatsin8(12 + i, 0, 255), 255));
   }
-  blur2d(leds, kMatrixWidth, kMatrixHeight, 32, xyMap);
+  blur2d(leds, mWidth, mHeight, 32, xyMap);
   FastLED.show();
   EVERY_N_SECONDS(5) {
     if (dir7 == 7)

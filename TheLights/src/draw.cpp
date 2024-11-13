@@ -13,6 +13,7 @@ static int g5D = 0;
 int col = 0;
 unsigned int ledsCount = 0;
 
+unsigned long previousMillisD3 = 0;
 unsigned long previousMillisD2 = 0;
 unsigned long previousMillisD1 = 0;
 
@@ -36,6 +37,10 @@ void draw() {
       draw4();
       break;
 
+    case 5:
+      breathingLight();
+      break;
+
     default:
       break;
   }
@@ -43,7 +48,7 @@ void draw() {
 
 void draw1() {
   if (ledsCount <= NUM_LEDS) {
-    strip.setPixelColor(ledsCount, getStripColorByIndex(col));
+    strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[col])));
     strip.show();
     delay(6);
     ledsCount++;
@@ -56,7 +61,7 @@ void draw1() {
 }
 void draw2() {
   if (ledsCount <= NUM_LEDS) {
-    strip.setPixelColor(ledsCount, getStripColorByIndex(col));
+    strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[col])));
     strip.show();
     delay(25);
     ledsCount++;
@@ -69,14 +74,27 @@ void draw2() {
 }
 
 void draw3() {
+  int centerX = 6;
+  int centerY = 6;
+  int maxDistance = max(centerX, centerY);
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillisD2 >= 5000) {
     previousMillisD2 = currentMillis;
 
-    matrix.fillScreen(getMatrixColorByIndex(col));
-    matrix.show();
-
+    for (int distance = 0; distance <= maxDistance; distance++) {
+      for (int x = 0; x < 12; x++) {
+        for (int y = 0; y < 13; y++) {
+          int dx = abs(x - centerX);
+          int dy = abs(y - centerY);
+          if (dx <= distance && dy <= distance) {
+            strip.setPixelColor(XY(x, y), pgm_read_dword(&(mainColors[col])));
+          }
+        }
+      }
+      strip.show();
+      delay(50);
+    }
     if (++col >= 128) {
       col = 0;
     }
@@ -85,13 +103,13 @@ void draw3() {
 
 void draw4() {
   static int randcolD = random(128);
-  unsigned long currentMillisD = millis();
+  unsigned long currentMillisD3 = millis();
 
-  if (currentMillisD - previousMillisD1 >= intervalD) {
-    previousMillisD1 = currentMillisD;
+  if (currentMillisD3 - previousMillisD3 >= intervalD) {
+    previousMillisD3 = currentMillisD3;
 
     if (g5D <= (ilD + chameleon[chaD])) {
-      strip.setPixelColor(g5D, getStripColorByIndex(randcolD));
+      strip.setPixelColor(g5D, pgm_read_dword(&(mainColors[randcolD])));
       strip.show();
       g5D++;
     } else {
@@ -108,6 +126,49 @@ void draw4() {
       ilD = 0;
       g5D = 0;
       randcolD = random(128);
+    }
+  }
+}
+
+int brightnessD = 0;
+int stepD = 0;
+
+void breathingLight() {
+  if (brightnessD < 255 && stepD == 0) {
+    brightnessD++;
+    if (brightnessD == 255) {
+      stepD = 1;
+    }
+    for (uint16_t i = 0; i < strip.numPixels(); i++) {
+      strip.setPixelColor(
+          i, strip.Color(
+                 (uint8_t)((pgm_read_dword(&(mainColors[col])) >> 16) & 0xFF) *
+                     brightnessD / 255,
+                 (uint8_t)((pgm_read_dword(&(mainColors[col])) >> 8) & 0xFF) *
+                     brightnessD / 255,
+                 (uint8_t)(pgm_read_dword(&(mainColors[col])) & 0xFF) *
+                     brightnessD / 255));
+    }
+    strip.show();
+    delay(10);
+  } else if (brightnessD > 0 && stepD == 1) {
+    brightnessD--;
+    for (uint16_t i = 0; i < strip.numPixels(); i++) {
+      strip.setPixelColor(
+          i, strip.Color(
+                 (uint8_t)((pgm_read_dword(&(mainColors[col])) >> 16) & 0xFF) *
+                     brightnessD / 255,
+                 (uint8_t)((pgm_read_dword(&(mainColors[col])) >> 8) & 0xFF) *
+                     brightnessD / 255,
+                 (uint8_t)(pgm_read_dword(&(mainColors[col])) & 0xFF) *
+                     brightnessD / 255));
+    }
+    strip.show();
+    delay(10);
+
+    if (brightnessD == 0) {
+      stepD = 0;
+      col = random(127);
     }
   }
 }

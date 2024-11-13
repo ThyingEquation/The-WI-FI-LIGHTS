@@ -115,20 +115,20 @@ void mainFunAnime(uint8_t p1[], const int p2[]) {
 }
 
 void shiftArrUp(uint8_t upCount) {
-  for (int i = 0; i < NUM_LEDS - kMatrixWidth; i++) {
-    ArrUp[i] = ArrUp[i + kMatrixWidth];
+  for (int i = 0; i < NUM_LEDS - mWidth; i++) {
+    ArrUp[i] = ArrUp[i + mWidth];
   }
-  for (int j = 0; j < kMatrixWidth; j++) {
-    ArrUp[NUM_LEDS - kMatrixWidth + j] = mainScheme[upCount * kMatrixWidth + j];
+  for (int j = 0; j < mWidth; j++) {
+    ArrUp[NUM_LEDS - mWidth + j] = mainScheme[upCount * mWidth + j];
   }
 }
 
 void shiftArrDown() {
-  for (int i = 0; i < NUM_LEDS - kMatrixWidth; i++) {
-    ArrDown[i] = ArrDown[i + kMatrixWidth];
+  for (int i = 0; i < NUM_LEDS - mWidth; i++) {
+    ArrDown[i] = ArrDown[i + mWidth];
   }
-  for (int j = 0; j < kMatrixWidth; j++) {
-    ArrDown[NUM_LEDS - kMatrixWidth + j] = 157;
+  for (int j = 0; j < mWidth; j++) {
+    ArrDown[NUM_LEDS - mWidth + j] = 157;
   }
 }
 
@@ -141,7 +141,7 @@ void anime7() {
     switch (currentPhaseJP) {
       case 0:
         if (currentStepJP < 13) {
-          clearStrip();
+          strip.clear();
           shiftArrUp(currentStepJP);
           mainFunAnime(ArrUp, jpLetter1);
           strip.show();
@@ -157,7 +157,7 @@ void anime7() {
       case 1:
         if (currentLetterJP < 9) {
           if (currentStepJP < 16) {
-            clearStrip();
+            strip.clear();
             if (currentStepJP < 13) {
               shiftArrDown();
               mainFunAnime(ArrDown, jpL[currentLetterJP]);
@@ -182,7 +182,7 @@ void anime7() {
 
       case 2:
         if (currentStepJP < 13) {
-          clearStrip();
+          strip.clear();
           shiftArrDown();
           mainFunAnime(ArrDown, jpLetter10);
           strip.show();
@@ -210,7 +210,7 @@ void anime8() {
     switch (currentPhaseKR) {
       case 0:
         if (currentStepKR < 13) {
-          clearStrip();
+          strip.clear();
           shiftArrUp(currentStepKR);
           mainFunAnime(ArrUp, krLetter1);
           strip.show();
@@ -226,7 +226,6 @@ void anime8() {
       case 1:
         if (currentLetterKR < 4) {
           if (currentStepKR < 16) {
-            clearStrip();
             strip.clear();
             if (currentStepKR < 13) {
               shiftArrDown();
@@ -252,7 +251,7 @@ void anime8() {
 
       case 2:
         if (currentStepKR < 13) {
-          clearStrip();
+          strip.clear();
           shiftArrDown();
           mainFunAnime(ArrDown, krLetter5);
           strip.show();

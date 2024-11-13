@@ -1,14 +1,19 @@
 #include <runningLights.h>
 
-XYMap xyMap(kMatrixWidth, kMatrixHeight);
+XYMap xyMap(mWidth, mHeight);
 
 bool setUp = true;
 int8_t pos[2][8];
 byte dir[8];
 byte hue6;
 bool fade = false;
+uint16_t snake2[10];
+uint16_t head = 0;
+uint16_t tail = 0;
+uint16_t pixelCounter = 0;
+unsigned long previousMillisE = 0;
 
-uint16_t XY6(uint8_t x, uint8_t y) { return (y * kMatrixWidth + x); }
+uint16_t XY6(uint8_t x, uint8_t y) { return (y * mWidth + x); }
 
 void runningLights() {
   switch (choosenModeD2) {
@@ -37,7 +42,7 @@ void runningLights() {
       break;
 
     case 7:
-      theaterChase(getStripColorByIndex(col));
+      theaterChase(pgm_read_dword(&(mainColors[col])));
       if (++col >= 128) {
         col = 0;
       }
@@ -49,6 +54,10 @@ void runningLights() {
 
     case 9:
       drawB3();
+      break;
+
+    case 10:
+      snake();
       break;
 
     default:
@@ -83,10 +92,10 @@ void check2(byte id) {
     dir[id] = 3;
 }
 void check3(byte id) {
-  if (pos[0][id] > kMatrixHeight - 1) pos[0][id] = 0;
-  if (pos[1][id] > kMatrixWidth - 1) pos[1][id] = 0;
-  if (pos[0][id] < 0) pos[0][id] = kMatrixHeight - 1;
-  if (pos[1][id] < 0) pos[1][id] = kMatrixWidth - 1;
+  if (pos[0][id] > mHeight - 1) pos[0][id] = 0;
+  if (pos[1][id] > mWidth - 1) pos[1][id] = 0;
+  if (pos[0][id] < 0) pos[0][id] = mHeight - 1;
+  if (pos[1][id] < 0) pos[1][id] = mWidth - 1;
 }
 void check1(byte id) {
   if (leds[XY6(pos[0][id], pos[1][id])] == CRGB(0, 0, 0))
@@ -100,8 +109,8 @@ void draw3R() {
     setUp = false;
     FastLED.clear();
     for (byte i = 0; i < 8; i++) {
-      pos[0][i] = random(0, kMatrixHeight);
-      pos[1][i] = random(0, kMatrixWidth);
+      pos[0][i] = random(0, mHeight);
+      pos[1][i] = random(0, mWidth);
       dir[i] = random(0, 3);
     }
   }
@@ -129,10 +138,10 @@ bool loadingFlag6 = true;
 
 uint16_t XY3(uint8_t x, uint8_t y) {
   if ((y % 2 == 0) || 1) {
-    return ((uint32_t)y * kMatrixWidth + x) % (kMatrixWidth * kMatrixHeight);
+    return ((uint32_t)y * mWidth + x) % (mWidth * mHeight);
   } else {
-    return ((uint32_t)y * kMatrixWidth + kMatrixWidth - x - 1) %
-           (kMatrixWidth * kMatrixHeight);
+    return ((uint32_t)y * mWidth + mWidth - x - 1) %
+           (mWidth * mHeight);
   }
 }
 
@@ -172,8 +181,8 @@ void draw4R() {
         mass6[i] = random(15, 100);
       }
       lightersSpeedZ[i] = random(3, 25);
-      lightersPosX6[i] = random(0, kMatrixWidth * 10);
-      lightersPosY6[i] = random(0, kMatrixHeight * 10);
+      lightersPosX6[i] = random(0, mWidth * 10);
+      lightersPosY6[i] = random(0, mHeight * 10);
       lcolor6[i] = random(0, 9) * 28;
     }
   }
@@ -185,7 +194,7 @@ void draw4R() {
       fadeToBlackBy(leds, NUM_LEDS, 50);
       break;
     case 2:
-      blur2d(leds, kMatrixWidth, kMatrixHeight, 30, xyMap);
+      blur2d(leds, mWidth, mHeight, 30, xyMap);
       fadeToBlackBy(leds, NUM_LEDS, 5);
       break;
     case 3:
@@ -199,30 +208,30 @@ void draw4R() {
       case 0:
         lightersPosX6[i] +=
             beatsin88(lightersSpeedX6[0] * 255, 0,
-                      mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 8)) -
-            mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 16);
+                      mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
+            mass6[i] / 10 * ((mHeight + mWidth) / 16);
         lightersPosY6[i] +=
             beatsin88(lightersSpeedY6[0] * 255, 0,
-                      mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 8)) -
-            mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 16);
+                      mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
+            mass6[i] / 10 * ((mHeight + mWidth) / 16);
         break;
       case 1:
         if (1) {
           lightersPosX6[i] =
               beatsin16(lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0,
-                        (kMatrixWidth - 1) * 10);
+                        (mWidth - 1) * 10);
           lightersPosY6[i] =
               beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
-                        (kMatrixHeight - 1) * 10);
+                        (mHeight - 1) * 10);
         } else {
           lightersPosX6[i] +=
               beatsin16(lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0,
-                        mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 8)) -
-              mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 16);
+                        mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
+              mass6[i] / 10 * ((mHeight + mWidth) / 16);
           lightersPosY6[i] +=
               beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
-                        mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 8)) -
-              mass6[i] / 10 * ((kMatrixHeight + kMatrixWidth) / 16);
+                        mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
+              mass6[i] / 10 * ((mHeight + mWidth) / 16);
         }
         break;
       case 2:
@@ -247,28 +256,28 @@ void draw4R() {
           lightersPosX6[i] = 1;
           lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
         }
-        if (lightersPosY6[i] >= (kMatrixHeight - 1) * 10) {
-          lightersPosY6[i] = ((kMatrixHeight - 1) * 10) - 1;
+        if (lightersPosY6[i] >= (mHeight - 1) * 10) {
+          lightersPosY6[i] = ((mHeight - 1) * 10) - 1;
           lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
         }
-        if (lightersPosX6[i] >= (kMatrixWidth - 1) * 10) {
-          lightersPosX6[i] = ((kMatrixWidth - 1) * 10) - 1;
+        if (lightersPosX6[i] >= (mWidth - 1) * 10) {
+          lightersPosX6[i] = ((mWidth - 1) * 10) - 1;
           lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
         }
       } else if (3 == 1) {
       } else {
         if ((lightersPosX6[i] <= 0) ||
-            (lightersPosX6[i] >= (kMatrixWidth - 1) * 10))
+            (lightersPosX6[i] >= (mWidth - 1) * 10))
           lightersSpeedX6[i] = -lightersSpeedX6[i];
         if ((lightersPosY6[i] <= 0) ||
-            (lightersPosY6[i] >= (kMatrixHeight - 1) * 10))
+            (lightersPosY6[i] >= (mHeight - 1) * 10))
           lightersSpeedY6[i] = -lightersSpeedY6[i];
       }
     } else {
-      if (lightersPosX6[i] < 0) lightersPosX6[i] = (kMatrixWidth - 1) * 10;
-      if (lightersPosX6[i] > (kMatrixWidth - 1) * 10) lightersPosX6[i] = 0;
-      if (lightersPosY6[i] < 0) lightersPosY6[i] = (kMatrixHeight - 1) * 10;
-      if (lightersPosY6[i] > (kMatrixHeight - 1) * 10) lightersPosY6[i] = 0;
+      if (lightersPosX6[i] < 0) lightersPosX6[i] = (mWidth - 1) * 10;
+      if (lightersPosX6[i] > (mWidth - 1) * 10) lightersPosX6[i] = 0;
+      if (lightersPosY6[i] < 0) lightersPosY6[i] = (mHeight - 1) * 10;
+      if (lightersPosY6[i] > (mHeight - 1) * 10) lightersPosY6[i] = 0;
     }
     CRGB color = 0;
     switch (1) {
@@ -316,7 +325,6 @@ void draw4R() {
           lightersSpeedY6[i] = random(3, 25);
         }
         lightersSpeedZ[i] = random(3, 25);
-        mass6[i] + random(-25, 25);
       }
     }
   }
@@ -326,10 +334,10 @@ void draw4R() {
 
 void jumplight() {
   for (byte i = 8; i--;) {
-    leds[XY6(beatsin8(12 + i, 0, kMatrixWidth - 1),
-             beatsin8(15 - i, 0, kMatrixHeight - 1))] =
+    leds[XY6(beatsin8(12 + i, 0, mWidth - 1),
+             beatsin8(15 - i, 0, mHeight - 1))] =
         CHSV(beatsin8(12, 0, 255), 255, 255);
-    blur2d(leds, kMatrixWidth, kMatrixHeight, 16, xyMap);
+    blur2d(leds, mWidth, mHeight, 16, xyMap);
   }
   FastLED.show();
 }
@@ -401,11 +409,11 @@ void theaterChaseRainbow() {
   }
 }
 
-uint16_t XYB3(uint8_t x, uint8_t y) { return (y * kMatrixWidth + x); }
+uint16_t XYB3(uint8_t x, uint8_t y) { return (y * mWidth + x); }
 
 void drawPixelXYFB3(float x, float y, const CRGB& color) {
-  if (x < 0 || y < 0 || x > ((float)kMatrixWidth - 1) ||
-      y > ((float)kMatrixHeight - 1))
+  if (x < 0 || y < 0 || x > ((float)mWidth - 1) ||
+      y > ((float)mHeight - 1))
     return;
 
   uint8_t xx = (x - (int)x) * 255, yy = (y - (int)y) * 255, ix = 255 - xx,
@@ -418,7 +426,7 @@ void drawPixelXYFB3(float x, float y, const CRGB& color) {
   for (uint8_t i = 0; i < 4; i++) {
     int16_t xn = x + (i & 1), yn = y + ((i >> 1) & 1);
     CRGB clr = leds[XYB3(xn, yn)];
-    if (xn < (int)kMatrixWidth - 1 && yn < (int)kMatrixHeight - 1 && yn > 0 &&
+    if (xn < (int)mWidth - 1 && yn < (int)mHeight - 1 && yn > 0 &&
         xn > 0) {
       clr.r = qadd8(clr.r, (color.r * wu[i]) >> 8);
       clr.g = qadd8(clr.g, (color.g * wu[i]) >> 8);
@@ -436,7 +444,6 @@ void drawPixelXYFB3(float x, float y, const CRGB& color) {
 void drawCurve(float x, float y, float x2, float y2, float x3, float y3,
                CRGB coll) {
   float xu = 0.0, yu = 0.0, u = 0.0;
-  int i = 0;
   for (u = 0.0; u <= 1.0; u += 0.01) {
     xu = pow(1 - u, 3) * x + 3 * u * pow(1 - u, 2) * x2 +
          3 * pow(u, 2) * (1 - u) * x3 + pow(u, 3) * x3;
@@ -449,13 +456,13 @@ byte hue;
 
 void drawB3() {
   fadeToBlackBy(leds, NUM_LEDS, 30);
-  byte x1 = beatsin8(18 + 100, 1, (kMatrixWidth - 2));
-  byte x2 = beatsin8(23 + 100, 1, (kMatrixWidth - 2));
-  byte x3 = beatsin8(27 + 100, 1, (kMatrixWidth - 2));
+  byte x1 = beatsin8(18 + 100, 1, (mWidth - 2));
+  byte x2 = beatsin8(23 + 100, 1, (mWidth - 2));
+  byte x3 = beatsin8(27 + 100, 1, (mWidth - 2));
 
-  byte y1 = beatsin8(20 + 100, 1, (kMatrixHeight - 2));
-  byte y2 = beatsin8(26 + 100, 1, (kMatrixHeight - 2));
-  byte y3 = beatsin8(15 + 100, 1, (kMatrixHeight - 2));
+  byte y1 = beatsin8(20 + 100, 1, (mHeight - 2));
+  byte y2 = beatsin8(26 + 100, 1, (mHeight - 2));
+  byte y3 = beatsin8(15 + 100, 1, (mHeight - 2));
 
   drawCurve(x1, y1, x2, y2, x3, y3, CHSV(hue, 255, 255));
   hue++;
@@ -464,7 +471,7 @@ void drawB3() {
 
 void draw5R() {
   if (ledsCount <= NUM_LEDS) {
-    strip.setPixelColor(ledsCount, getStripColorByIndex(col));
+    strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[col])));
     strip.show();
     strip.setPixelColor(ledsCount - 1, strip.Color(0, 0, 0));
     strip.show();
@@ -478,7 +485,7 @@ void draw5R() {
 
 void draw6R() {
   if (ledsCount <= NUM_LEDS) {
-    strip.setPixelColor(ledsCount, getStripColorByIndex(col));
+    strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[col])));
     strip.show();
     strip.setPixelColor(ledsCount - 1, strip.Color(0, 0, 0));
     strip.show();
@@ -487,5 +494,27 @@ void draw6R() {
   } else {
     col = random(127);
     ledsCount = 0;
+  }
+}
+
+void snake() {
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillisE >= 50) {
+    previousMillisE = currentMillis;
+    head = (head + 1) % strip.numPixels();
+    tail = (tail + 1) % 10;
+    snake2[tail] = head;
+    pixelCounter++;
+    if (pixelCounter >= NUM_LEDS) {
+      pixelCounter = 0;
+      col = random(127);
+    }
+    for (uint16_t i = 0; i < strip.numPixels(); i++) {
+      strip.setPixelColor(i, strip.Color(0, 0, 0));
+    }
+    for (uint16_t i = 0; i < 10; i++) {
+      strip.setPixelColor(snake2[i], pgm_read_dword(&(mainColors[col])));
+    }
+    strip.show();
   }
 }

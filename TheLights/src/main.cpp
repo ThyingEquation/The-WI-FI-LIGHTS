@@ -6,17 +6,26 @@ CRGB *const leds(leds_plus_safety_pixel + 1);
 Adafruit_NeoPixel strip =
     Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
-    kMatrixWidth, kMatrixHeight, PIN,
+    mWidth, mHeight, PIN,
     NEO_MATRIX_BOTTOM + TEXT_POS + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
     NEO_GRB + NEO_KHZ800);
 
-
 uint8_t choosenModeD1 = 255;
 uint8_t choosenModeD2 = 255;
+uint8_t allModsEnable = 0;
+
+const int modeArray[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+    19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
+    38, 39, 40, 41, /*42,*/ /*43,*/ 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56};
+const int arraySize = sizeof(modeArray) / sizeof(modeArray[0]);
+
+unsigned long prevTime = 0;
+const unsigned long modeDelay = 15 * 60 * 1000;  // 15 минут в миллисекундах
+int currentIndex = 255;
 
 char ssid[15];
 const char *password = "134599996";
-char start_mode[3];
+char start_mode[2];
 
 IPAddress local_ip(192, 168, 1, 1);
 IPAddress gateway(192, 168, 1, 1);
@@ -24,7 +33,6 @@ IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
 
 void setup() {
-
   FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
   FastLED.addLeds<WS2812B, PIN, GRB>(leds, NUM_LEDS)
       .setCorrection(TypicalSMD5050)
@@ -39,7 +47,7 @@ void setup() {
   matrix.begin();
   matrix.setTextWrap(false);
   matrix.setBrightness(BRIGHTNESS);
-  matrix.setTextColor(getMatrixColorByIndex(0));
+  matrix.setTextColor(pgm_read_dword(&(mainColors[0])));
 
   randomSeed(analogRead(0));
 
@@ -61,8 +69,11 @@ void setup() {
 
   server.begin();
 
-  //choosenModeD1 = 1;
-  //choosenModeD2 = 7;
+  String mode = start_mode;
+  uint8_t modeNum = mode.toInt();
+  checkMode(modeNum);
+
+  delay(1000);
 }
 
 void changeSSID(String ssidW) {
@@ -79,12 +90,12 @@ void changeSM(String startM) {
   char startMode[sm_str_len];
   startM.toCharArray(startMode, sm_str_len);
 
-  strncpy(start_mode, startMode, 3);
+  strncpy(start_mode, startMode, 2);
   saveConfig();
   ESP.restart();
 }
 
-void (*funcArray[12])() = {runningLine,    // 0
+void (*funcArray[13])() = {runningLine,    // 0
                            colorfulSpots,  // 1
                            rainbows,       // 2
                            draw,           // 3
@@ -95,7 +106,8 @@ void (*funcArray[12])() = {runningLine,    // 0
                            snow,           // 8
                            colorfulWaves,  // 9
                            anime,          // 10
-                           extra};         // 11
+                           extra,          // 11
+                           allMods};       // 12
 
 void loop() {
   static unsigned long lastMillis = 0;
@@ -105,24 +117,25 @@ void loop() {
     server.handleClient();
   }
 
-  if (choosenModeD1 <= 11) {
+  if (allModsEnable == 1) {
+    allMods();
+  }
+
+  if (choosenModeD1 <= 12) {
     funcArray[choosenModeD1]();
   }
 }
 
 void settingsProcessing() {
-  clearStrip();
+  strip.clear();
+  strip.show();
   if (server.hasArg("ssid")) {
     String newSsid = server.arg("ssid");
     changeSSID(newSsid);
+  } else if (server.hasArg("startMode")) {
+    String newStartMode = server.arg("startMode");
+    changeSM(newStartMode);
   }
-  // else if (command.indexOf("/CSM") != -1) {
-  //   FastLED.clear();
-  //   String nSM = command;
-  //   nSM.remove(0, 8);
-  //   nSM.remove(((nSM.length() - 9) + 1), 9);
-  //   changeSM(nSM);
-  // }
 }
 
 void paintingProcessing(void) {
@@ -132,11 +145,19 @@ void paintingProcessing(void) {
 }
 
 void mainProcessing() {
-  clearStrip();
+  allModsEnable = 0;
+  strip.clear();
+  strip.show();
   if (server.hasArg("ok")) {
   } else if (server.hasArg("stop")) {
     choosenModeD1 = 255;
     choosenModeD2 = 255;
+  } else if (server.hasArg("allModes")) {
+    currentIndex = 255;
+    allModsEnable = 1;
+    choosenModeD1 = 255;
+    choosenModeD2 = 255;
+    allMods();
   } else if (server.hasArg("runLine")) {
     g = 13;
     choosenModeD1 = 0;
@@ -234,13 +255,6 @@ void argIndexCheck(String argu) {
   }
 }
 
-void clearStrip() {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, strip.Color(0, 0, 0));
-  }
-  strip.show();
-}
-
 bool loadConfig() {
   File configFile = LittleFS.open("/config.json", "r");
   if (!configFile) {
@@ -273,7 +287,7 @@ bool loadConfig() {
 
   const char *json_startmode = doc["json_startmode"];
   if (json_startmode) {
-    strncpy(start_mode, json_startmode, 3);
+    strncpy(start_mode, json_startmode, 2);
   }
 
   const char *json_ssid = doc["json_ssid"];
@@ -302,24 +316,87 @@ bool saveConfig() {
   return true;
 }
 
-uint32_t getMatrixColor(const RGBColorX &colorX) {
-  return matrix.Color(colorX.r, colorX.g, colorX.b);
-}
+struct Mode {
+  uint8_t choosenModeD1;
+  uint8_t choosenModeD2;
+};
 
-uint32_t getStripColor(const RGBColorX &colorX) {
-  return strip.Color(colorX.r, colorX.g, colorX.b);
-}
+const struct Mode modes[] = {
+    {255, 255},  //[0] нет стартового режима
+    {3, 3},      //[1] Полная заливка
+    {3, 1},      //[2] Заливка змейкой 1
+    {3, 2},      //[3] Заливка змейкой 2
+    {3, 4},      //[4] Заливка змейкой 3
+    {3, 5},      //[5] Цветное дыхание
+    {1, 255},    //[6] цветные пятна
+    {2, 1},      //[7] радуга колесо
+    {2, 2},      //[8] радуга волной 1
+    {2, 3},      //[9] радуга волной 2
+    {2, 4},      //[10] радуга змейкой
+    {4, 1},      //[11] бегущий огонек медленно
+    {4, 2},      //[12] бегущий огонек быстро
+    {4, 6},      //[13] бегущий огонек цветной
+    {4, 7},      //[14] бегущие огоньки 1
+    {4, 8},      //[15] бегущие огоньки 2
+    {4, 10},     //[16] цветная змейка
+    {4, 3},      //[17] прыгающие огоньки 1
+    {4, 4},      //[18] прыгающие огоньки 2
+    {4, 5},      //[19] прыгающие огоньки 3
+    {4, 9},      //[20] прыгающие огоньки 4
+    {5, 2},      //[21] космические корабли
+    {5, 1},      //[22] звездное небо
+    {5, 3},      //[23] пульсар
+    {5, 4},      //[24] метеорный поток
+    {6, 1},      //[25] мерцающие огни 1
+    {6, 2},      //[26] мерцающие огни 2
+    {6, 3},      //[27] мерцающие огни 3
+    {7, 1},      //[28] лагуна
+    {7, 2},      //[29] бассейн
+    {8, 255},    //[30] метель
+    {9, 1},      //[31] цветные волны 1
+    {9, 2},      //[32] цветные волны 2
+    {9, 3},      //[33] цветные волны 3
+    {9, 4},      //[34] цветные волны 4
+    {9, 5},      //[35] цветные волны 5
+    {10, 1},     //[36] Анимации: Сердце
+    {10, 2},     //[37] Смайлик
+    {10, 3},     //[38] Прыгающий человечек
+    {10, 4},     //[39] Файербол
+    {10, 5},     //[40] Взрыв
+    {10, 6},     //[41] Пакман
+    {10, 7},     //[42] "С НОВЫМ ГОДОМ" на японском
+    {10, 8},     //[43] Приветствие на корейском
+    {10, 9},     //[44] Различные картинки
+    {10, 10},    //[45] Цифровой сигнал
+    {10, 11},    //[46] Синусоида
+    {10, 12},    //[47] Цветные синусоиды
+    {10, 13},    //[48] Цветные линии 1
+    {10, 14},    //[49] Цветные линии 2
+    {11, 1},     //[50] Прыгающий квадрат
+    {11, 2},     //[51] Прыгающие точки
+    {11, 3},     //[52] Цветная спираль
+    {11, 4},     //[53] Игра змейка
+    {11, 5},     //[54] Игра тетрис
+    {11, 6},     //[55] Игра арканоид
+    {11, 7}      //[56] Эффект из к/ф матрица
+};
 
-uint32_t getMatrixColorByIndex(int index) {
-  if (index < 0 || index >= sizeof(colorsX) / sizeof(colorsX[0])) {
-    return matrix.Color(0, 0, 0);
+void checkMode(uint8_t num) {
+  if (num < sizeof(modes) / sizeof(modes[0])) {
+    choosenModeD1 = modes[num].choosenModeD1;
+    choosenModeD2 = modes[num].choosenModeD2;
   }
-  return getMatrixColor(colorsX[index]);
 }
 
-uint32_t getStripColorByIndex(int index) {
-  if (index < 0 || index >= sizeof(colorsX) / sizeof(colorsX[0])) {
-    return strip.Color(0, 0, 0);
+void allMods() {
+  unsigned long currentTime = millis();
+
+  if (currentIndex == 255 || (currentTime - prevTime >= modeDelay)) {
+    if (currentIndex == 255) {currentIndex = 0;} 
+    prevTime = currentTime;
+    checkMode(modeArray[currentIndex]);
+    currentIndex = (currentIndex + 1) % arraySize;
+    strip.clear();
+    strip.show();
   }
-  return getStripColor(colorsX[index]);
 }

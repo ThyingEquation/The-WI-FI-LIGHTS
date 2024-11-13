@@ -1,5 +1,7 @@
 #include <extra.h>
 
+uint8_t firstStartPoints = 0;
+
 int squareX = 0;
 int squareY = 0;
 int directionX = 1;
@@ -21,8 +23,8 @@ void updatePointColor(Point &point);
 
 void initPoints() {
   for (int i = 0; i < 6; i++) {
-    points[i].x = random(kMatrixWidth);
-    points[i].y = random(kMatrixHeight);
+    points[i].x = random(mWidth);
+    points[i].y = random(mHeight);
     points[i].color = CHSV(random8(), 255, 255);
     points[i].directionX = random(2) == 0 ? 1 : -1;
     points[i].directionY = random(2) == 0 ? 1 : -1;
@@ -36,8 +38,8 @@ int snakeDirection = 0;
 
 void initSnake() {
   for (int i = 0; i < 5; i++) {
-    snakeX[i] = kMatrixWidth / 2;
-    snakeY[i] = kMatrixHeight / 2 + i;
+    snakeX[i] = mWidth / 2;
+    snakeY[i] = mHeight / 2 + i;
   }
   spawnFood();
 }
@@ -129,7 +131,10 @@ void extra() {
       break;
 
     case 2:
-      extra2();
+      if (firstStartPoints == 0){
+        initPoints();
+        firstStartPoints = 1;
+      } extra2();
       break;
 
     case 3:
@@ -170,12 +175,12 @@ void drawSquare(int x, int y, CRGB color) {
 
 void updateSquarePosition() {
   squareX += directionX;
-  if (squareX + 3 >= kMatrixWidth || squareX < 0) {
+  if (squareX + 3 >= mWidth || squareX < 0) {
     directionX = -directionX;
   }
 
   squareY += directionY;
-  if (squareY + 3 >= kMatrixHeight || squareY < 0) {
+  if (squareY + 3 >= mHeight || squareY < 0) {
     directionY = -directionY;
   }
 }
@@ -191,9 +196,9 @@ void updateSquareColor() {
 
 int XY(int x, int y) {
   if (x % 2 == 0) {
-    return x * kMatrixHeight + y;
+    return x * mHeight + y;
   } else {
-    return x * kMatrixHeight + (kMatrixHeight - 1 - y);
+    return x * mHeight + (mHeight - 1 - y);
   }
 }
 
@@ -206,12 +211,12 @@ void drawPoint(int x, int y, CRGB color) {
 
 void updatePointPosition(Point &point) {
   point.x += point.directionX;
-  if (point.x >= kMatrixWidth || point.x < 0) {
+  if (point.x >= mWidth || point.x < 0) {
     point.directionX = -point.directionX;
   }
 
   point.y += point.directionY;
-  if (point.y >= kMatrixHeight || point.y < 0) {
+  if (point.y >= mHeight || point.y < 0) {
     point.directionY = -point.directionY;
   }
 }
@@ -228,13 +233,13 @@ void updatePointColor(Point &point) {
 void drawSpiral() {
   int x = 0, y = 0;
   int dx = 0, dy = -1;
-  int t = kMatrixWidth;
+  int t = mWidth;
   int maxI = t * t;
 
   for (int i = 0; i < maxI; i++) {
-    if ((-kMatrixWidth / 2 <= x) && (x < kMatrixWidth / 2) &&
-        (-kMatrixHeight / 2 <= y) && (y < kMatrixHeight / 2)) {
-      int ledIndex = XY(x + kMatrixWidth / 2, y + kMatrixHeight / 2);
+    if ((-mWidth / 2 <= x) && (x < mWidth / 2) &&
+        (-mHeight / 2 <= y) && (y < mHeight / 2)) {
+      int ledIndex = XY(x + mWidth / 2, y + mHeight / 2);
       if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
         leds[ledIndex] = CHSV((i + spiralIndex) % 256, 255, 255);
       }
@@ -270,10 +275,10 @@ void updateSnake() {
       break;
   }
 
-  if (snakeX[0] < 0) snakeX[0] = kMatrixWidth - 1;
-  if (snakeX[0] >= kMatrixWidth) snakeX[0] = 0;
-  if (snakeY[0] < 0) snakeY[0] = kMatrixHeight - 1;
-  if (snakeY[0] >= kMatrixHeight) snakeY[0] = 0;
+  if (snakeX[0] < 0) snakeX[0] = mWidth - 1;
+  if (snakeX[0] >= mWidth) snakeX[0] = 0;
+  if (snakeY[0] < 0) snakeY[0] = mHeight - 1;
+  if (snakeY[0] >= mHeight) snakeY[0] = 0;
 
   if (snakeX[0] == foodX && snakeY[0] == foodY) {
     spawnFood();
@@ -301,8 +306,8 @@ void drawFood() {
 }
 
 void spawnFood() {
-  foodX = random(kMatrixWidth);
-  foodY = random(kMatrixHeight);
+  foodX = random(mWidth);
+  foodY = random(mHeight);
 }
 
 void drawFigure(int figureIndex, int x, int y, CRGB color) {
@@ -492,6 +497,7 @@ void extra1() {
   updateSquareColor();
   FastLED.delay(5000 / 60);
 }
+
 void extra2() {
   fill_solid(leds, NUM_LEDS, CRGB::Black);
   for (int i = 0; i < 6; i++) {
@@ -510,16 +516,28 @@ void extra2() {
 bool forward = true;
 
 void extra3() {
-  delay(100);
+  // delay(50);
+  // fill_solid(leds, NUM_LEDS, CRGB::Black);
+  // drawSpiral();
+  // FastLED.show();
+  // spiralIndex = (spiralIndex + (forward ? 1 : -1)) % NUM_LEDS;
+  // FastLED.delay(6000 / 60);
+
+  // if (spiralIndex == 0 || spiralIndex == NUM_LEDS - 1) {
+  //   forward = !forward;
+  // }
+
   fill_solid(leds, NUM_LEDS, CRGB::Black);
   drawSpiral();
   FastLED.show();
+
   spiralIndex = (spiralIndex + (forward ? 1 : -1)) % NUM_LEDS;
-  FastLED.delay(6000 / 60);
 
   if (spiralIndex == 0 || spiralIndex == NUM_LEDS - 1) {
     forward = !forward;
   }
+
+  FastLED.delay(6000 / 45);
 }
 
 void extra4() {

@@ -52,8 +52,8 @@ static float fmap(const float x, const float in_min, const float in_max,
 
 void Sinusoid(void) {
   const uint8_t semikMatrixHeightMajor =
-      kMatrixHeight / 2 + (kMatrixHeight % 2);
-  const uint8_t semikMatrixWidthMajor = kMatrixWidth / 2 + (kMatrixWidth % 2);
+      mHeight / 2 + (mHeight % 2);
+  const uint8_t semikMatrixWidthMajor = mWidth / 2 + (mWidth % 2);
   float e_s3_speed = 0.004 * speed1 + 0.015;
   float e_s3_size = fmap(amplitude, 1, 255, 3, 9);
   uint8_t _scale = map8(scale17, 50, 150);
@@ -61,8 +61,8 @@ void Sinusoid(void) {
 
   switch (sinNum) {
     case 0:
-      for (uint8_t y = 0; y < kMatrixHeight; y++) {
-        for (uint8_t x = 0; x < kMatrixWidth; x++) {
+      for (uint8_t y = 0; y < mHeight; y++) {
+        for (uint8_t x = 0; x < mWidth; x++) {
           float cx =
               (y - semikMatrixHeightMajor) +
               float(e_s3_size * (sin16(e_s3_speed * 98.301 * time_shift))) /
@@ -91,8 +91,8 @@ void Sinusoid(void) {
       }
       break;
     case 1:
-      for (uint8_t y = 0; y < kMatrixHeight; y++) {
-        for (uint8_t x = 0; x < kMatrixWidth; x++) {
+      for (uint8_t y = 0; y < mHeight; y++) {
+        for (uint8_t x = 0; x < mWidth; x++) {
           CRGB color;
           float cx =
               (y - semikMatrixHeightMajor) +
@@ -135,8 +135,8 @@ void Sinusoid(void) {
       }
       break;
     case 2:
-      for (uint8_t y = 0; y < kMatrixHeight; y++) {
-        for (uint8_t x = 0; x < kMatrixWidth; x++) {
+      for (uint8_t y = 0; y < mHeight; y++) {
+        for (uint8_t x = 0; x < mWidth; x++) {
           float cx =
               (y - semikMatrixHeightMajor) +
               float(e_s3_size * (sin16(e_s3_speed * 98.301 * time_shift))) /
@@ -176,8 +176,8 @@ void Sinusoid(void) {
       }
       break;
     case 3:
-      for (uint8_t y = 0; y < kMatrixHeight; y++) {
-        for (uint8_t x = 0; x < kMatrixWidth; x++) {
+      for (uint8_t y = 0; y < mHeight; y++) {
+        for (uint8_t x = 0; x < mWidth; x++) {
           float cx =
               (y - semikMatrixHeightMajor) +
               float(e_s3_size * (sin16(e_s3_speed * 98.301 * time_shift))) /

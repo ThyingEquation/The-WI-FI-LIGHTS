@@ -1,7 +1,7 @@
 #include <colorfulSpots.h>
 
 #define MAX_DIMENSION \
-  ((kMatrixWidth > kMatrixHeight) ? kMatrixWidth : kMatrixHeight)
+  ((mWidth > mHeight) ? mWidth : mHeight)
 
 CRGBPalette16 currentPalette(CloudColors_p);
 
@@ -56,8 +56,8 @@ void fillnoise8() {
 void mapNoiseToLEDsUsingPalette() {
   static uint8_t ihue = 0;
 
-  for (int i = 0; i < kMatrixWidth; i++) {
-    for (int j = 0; j < kMatrixHeight; j++) {
+  for (int i = 0; i < mWidth; i++) {
+    for (int j = 0; j < mHeight; j++) {
       uint8_t index = noise[j][i];
       uint8_t bri = noise[i][j];
 
@@ -169,10 +169,10 @@ void SetupBlackAndWhiteStripedPalette() {
 }
 void DrawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8) {
   byte lineStartHue = startHue8;
-  for (byte Y = 0; Y < kMatrixHeight; Y++) {
+  for (byte Y = 0; Y < mHeight; Y++) {
     lineStartHue += yHueDelta8;
     byte pixelHue = lineStartHue;
-    for (byte X = 0; X < kMatrixWidth; X++) {
+    for (byte X = 0; X < mWidth; X++) {
       pixelHue += xHueDelta8;
       leds[XY(X, Y)] = CHSV(pixelHue, 255, 255);
     }
@@ -182,10 +182,10 @@ void DrawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8) {
 uint16_t XY(uint8_t X, uint8_t Y) {
   uint16_t i;
   if (Y & 0x01) {
-    uint8_t reverseX = (kMatrixWidth - 1) - X;
-    i = (Y * kMatrixWidth) + reverseX;
+    uint8_t reverseX = (mWidth - 1) - X;
+    i = (Y * mWidth) + reverseX;
   } else {
-    i = (Y * kMatrixWidth) + X;
+    i = (Y * mWidth) + X;
   }
   return i;
 }

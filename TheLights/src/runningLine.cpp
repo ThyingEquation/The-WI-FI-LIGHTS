@@ -23,7 +23,7 @@ const char* messages[] = {"С НОВЫМ ГОДОМ!!!",
 const int messageLengths[] = {100, 173, 137, 85, 183, 98, 98};
 
 int pass = 0;
-int g = kMatrixWidth;
+int g = mWidth;
 int messageIndex = -1;
 
 void runningLine() {
@@ -67,7 +67,9 @@ void runningLine() {
     if (--g < -messageLengths[messageIndex]) {
       g = matrix.width();
       pass = random(127);
-      matrix.setTextColor(getMatrixColorByIndex(pass));
+      // pgm_read_dword(&(p2[i]))
+      //matrix.setTextColor(getMatrixColorByIndex(pass));
+      matrix.setTextColor(pgm_read_dword(&(mainColors[pass])));
     }
     matrix.show();
     delay(250);

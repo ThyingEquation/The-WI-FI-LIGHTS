@@ -22,8 +22,8 @@ void flashLights() {
 uint8_t speed8 = 128;
 int shift8;
 
-byte FF[kMatrixWidth][kMatrixHeight];
-byte SF[kMatrixWidth][kMatrixHeight];
+byte FF[mWidth][mHeight];
+byte SF[mWidth][mHeight];
 
 bool loadingFlag8 = true;
 
@@ -35,15 +35,15 @@ void sparkles() {
     loadingFlag8 = 0;
   }
   for (byte i = 0; i < map(speed8, 1, 255, 2, 16); i++) {
-    uint8_t x = random(0, kMatrixWidth);
-    uint8_t y = random(0, kMatrixHeight);
+    uint8_t x = random(0, mWidth);
+    uint8_t y = random(0, mHeight);
     if (!SF[x][y]) {
       SF[x][y] = 255;
       FF[x][y] = random(0, 255);
     }
   }
-  for (byte x = 0; x < kMatrixWidth; x++) {
-    for (byte y = 0; y < kMatrixHeight; y++) {
+  for (byte x = 0; x < mWidth; x++) {
+    for (byte y = 0; y < mHeight; y++) {
       if (SF[x][y] <= 30)
         SF[x][y] = 0;
       else
@@ -62,9 +62,9 @@ uint16_t getIndex(uint16_t x, uint16_t y) {
   if (y == 0) {
     index = x;
   } else if (y % 2 == 0) {
-    index = y * kMatrixWidth + x;
+    index = y * mWidth + x;
   } else {
-    index = ((y * kMatrixWidth) + (kMatrixWidth - 1)) - x;
+    index = ((y * mWidth) + (mWidth - 1)) - x;
   }
   return index;
 }
@@ -79,11 +79,11 @@ void flashLights3() {
 
 void flashLights1() {
   EVERY_N_MILLIS(75) {
-    for (int8_t row = kMatrixHeight - 1; row >= 0; row--) {
-      for (int8_t col = 0; col < kMatrixWidth; col++) {
+    for (int8_t row = mHeight - 1; row >= 0; row--) {
+      for (int8_t col = 0; col < mWidth; col++) {
         if (leds[getIndex(col, row)] == CRGB(175, 255, 175)) {
           leds[getIndex(col, row)] = CRGB(27, 130, 39);
-          if (row < kMatrixHeight - 1)
+          if (row < mHeight - 1)
             leds[getIndex(col, row + 1)] = CRGB(175, 255, 175);
         }
       }
@@ -101,7 +101,7 @@ void flashLights1() {
     }
 
     if (random8(3) == 0 || emptyScreen) {
-      int8_t spawnX = random8(kMatrixWidth);
+      int8_t spawnX = random8(mWidth);
       leds[getIndex(spawnX, 0)] = CRGB(175, 255, 175);
     }
 

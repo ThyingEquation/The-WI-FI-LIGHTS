@@ -24,6 +24,8 @@ void theaterChaseRainbow();
 void drawB3();
 void draw5R();
 void draw6R();
+//void snake(uint32_t color, uint8_t wait);
+void snake();
 
 extern int col;
 

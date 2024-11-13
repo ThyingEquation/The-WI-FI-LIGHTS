@@ -8,6 +8,7 @@ void draw1();
 void draw2();
 void draw3();
 void draw4();
+void breathingLight();
 
 extern int col;
 extern unsigned int ledsCount;
