@@ -24,7 +24,7 @@ const unsigned long modeDelay = 15 * 60 * 1000;  // 15 минут в милли�
 int currentIndex = 255;
 
 char ssid[15];
-const char *password = "134599996";
+const char *password = "11111111";
 char start_mode[2];
 
 IPAddress local_ip(192, 168, 1, 1);
