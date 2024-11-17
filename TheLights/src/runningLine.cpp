@@ -49,7 +49,7 @@ void runningLine() {
       break;
 
     case 6:
-      messageIndex = 4;
+      messageIndex = 5;
       break;
 
     case 7:

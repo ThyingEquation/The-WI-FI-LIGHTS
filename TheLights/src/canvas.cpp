@@ -4,194 +4,104 @@ unsigned char x = 0;
 unsigned char y = 0;
 unsigned char z = 0;
 
-void canvas(String choosenMode) {
-  String sortString;
+void canvas(String mode, uint8_t color, int led) {
 
-  if (choosenMode.indexOf("A") != -1) {
-    if (choosenMode.indexOf("257") != -1) {
-      chooseColor(choosenMode);
+  if (mode.indexOf("A") != -1) {
+    if (led == 257) {
       for (int i = 0; i < NUM_LEDS; i++) {
-        strip.setPixelColor(i, strip.Color(x, y, z));
+        strip.setPixelColor(i, chooseColor(color));
       }
       strip.show();
-      delay(150);
-      choosenMode = "";
-    }
-
-    else {
-      sortString = choosenMode;
-      sortString.remove(0, 2);
-      int ledNum = sortString.toInt();
-      ledNum--;
-      chooseColor(choosenMode);
-      strip.setPixelColor(ledNum, strip.Color(x, y, z));
+      //delay(150); ///////////////////////////////////////////////////////////////////
+    } else {
+      strip.setPixelColor(--led, chooseColor(color));
       strip.show();
-      delay(150);
-      choosenMode = "";
+      //delay(150); ///////////////////////////////////////////////////////////////////
     }
   }
 
-  else if (choosenMode.indexOf("B") != -1) {
-    if (choosenMode.indexOf("257") != -1) {
+  else if (mode.indexOf("B") != -1) {
+    if (led == 257) {
       for (int i = 0; i < NUM_LEDS; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0));
       }
       strip.show();
-      delay(150);
-      choosenMode = "";
-    }
-
-    else {
-      sortString = choosenMode;
-      sortString.remove(0, 2);
-      int ledNum = sortString.toInt();
-      ledNum--;
-      chooseColor(choosenMode);
-      strip.setPixelColor(ledNum, strip.Color(0, 0, 0));
-      strip.show();
-      delay(150);
-      choosenMode = "";
+      //delay(150); ///////////////////////////////////////////////////////////////////////
+      } else {
+        strip.setPixelColor(--led, strip.Color(0, 0, 0));
+        strip.show();
+        //delay(150); //////////////////////////////////////////////////////////////////////
     }
   }
-
-  choosenMode = "";
 }
 
-unsigned char chooseColor(String choosenMode) {
-  if (choosenMode.indexOf("C") != -1) {  // белый
-    x = 255;
-    y = 255;
-    z = 255;
-    return x;
-    return y;
-    return z;
+int chooseColor(uint8_t color) {
+  switch (color) {
+    case 1:  // черный
+      return 0x000000;
+      break;
+    case 2:  // белый
+      return 0xffffff;
+      break;
+    case 3:  // синий
+      return 0x0000ff;
+      break;
+    case 4:  // лайм
+      return 0x00ff00;
+      break;
+    case 5:  // морозное небо
+      return 0x00bfff;
+      break;
+    case 6:  // малиновый
+      return 0xff1493;
+      break;
+    case 7:  // желтый
+      return 0xffff00;
+      break;
+    case 8:  // аквамариновый
+      return 0x7fffd4;
+      break;
+    case 9:  // весенне-зеленый
+      return 0x00ff7f;
+      break;
+    case 10:  // оранжевый
+      return 0xffa500;
+      break;
+    case 11:  // красный
+      return 0xff0000;
+      break;
+    case 12:  // фиолетово-баклажанный
+      return 0x9400d3;
+      break;
+    case 13:  // светлорозовый
+      return 0xffb6c1;
+      break;
+    case 14:  // индиго
+      return 0x4b0082;
+      break;
+    case 15:  // золотой
+      return 0xffd700;
+      break;
+    case 16:  // зеленый
+      return 0x008000;
+      break;
+    case 17:  // Cерый
+      return 0x22262c;
+      break;
+    case 18:  // Коричневый
+      return 0x964b00;
+      break;
+    case 19:  // Персидский синий
+      return 0x6600ff;
+      break;
+    case 20:  // Темно-оранжевый
+      return 0xd76e00;
+      break;
+    case 21:  // Зеленая лужайка
+      return 0x7cfc00;
+      break;
+    default:
+      break;
   }
-
-  else if (choosenMode.indexOf("D") != -1) {  // синий
-    x = 0;
-    y = 0;
-    z = 255;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("E") != -1) {  // лаймовый
-    x = 0;
-    y = 255;
-    z = 0;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("F") != -1) {  // желтый
-    x = 255;
-    y = 255;
-    z = 0;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("G") != -1) {  // оранжевый
-    x = 255;
-    y = 165;
-    z = 0;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("H") != -1) {  // красный
-    x = 255;
-    y = 0;
-    z = 0;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("I") != -1) {  // малиновый
-    x = 255;
-    y = 20;
-    z = 147;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("J") != -1) {  // фиолетово-баклажанный
-    x = 148;
-    y = 0;
-    z = 211;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("K") != -1) {  // весенне-зеленый
-    x = 0;
-    y = 255;
-    z = 127;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("L") != -1) {  // золотой
-    x = 255;
-    y = 215;
-    z = 0;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("N") != -1) {  // морозное небо
-    x = 0;
-    y = 191;
-    z = 255;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("O") != -1) {  // аквамариновый
-    x = 127;
-    y = 255;
-    z = 212;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("P") != -1) {  // индиго
-    x = 75;
-    y = 0;
-    z = 130;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("Q") != -1) {  // светлорозовый
-    x = 255;
-    y = 182;
-    z = 193;
-    return x;
-    return y;
-    return z;
-  }
-
-  else if (choosenMode.indexOf("R") != -1) {  // зеленый
-    x = 0;
-    y = 128;
-    z = 0;
-    return x;
-    return y;
-    return z;
-  }
-
-  return 0;
+  return 0x000000;
 }

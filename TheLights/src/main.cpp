@@ -33,6 +33,7 @@ IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
 
 void setup() {
+  Serial.begin(9600);
   FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
   FastLED.addLeds<WS2812B, PIN, GRB>(leds, NUM_LEDS)
       .setCorrection(TypicalSMD5050)
@@ -139,9 +140,19 @@ void settingsProcessing() {
 }
 
 void paintingProcessing(void) {
-  if (server.hasArg("canvas")) {
-    canvas(server.arg("canvas"));
-  }
+  //if (server.hasArg("canvas")) {
+    //canvas(server.arg("canvas"));
+  //}
+
+  int ledNum = server.arg("led").toInt();
+  //ledNum--;
+  uint8_t canvasColor = server.arg("color").toInt();
+
+  canvas(server.arg("mode"), canvasColor, ledNum);
+
+  // Serial.print(server.arg("mode"));
+  // Serial.print(server.arg("color"));
+  // Serial.print(server.arg("led"));
 }
 
 void mainProcessing() {

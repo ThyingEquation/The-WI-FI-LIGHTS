@@ -164,28 +164,21 @@ void drawPixelXYF(float x, float y, CRGB color) {
 }
 
 void draw4R() {
+
   if (loadingFlag6) {
     loadingFlag6 = false;
     randomSeed(millis());
     for (byte i = 0; i < 32; i++) {
-      if (3 == 2) {
-        lightersSpeedX6[i] = random(-10, 10);
-        lightersSpeedY6[i] = random(-10, 10);
-      } else if (3 == 3) {
-        lightersSpeedX6[i] = random(-10, 10);
-        lightersSpeedY6[i] = random(0, 360);
-        mass6[i] = random(5, 10);
-      } else {
-        lightersSpeedX6[i] = random(3, 25);
-        lightersSpeedY6[i] = random(3, 25);
-        mass6[i] = random(15, 100);
-      }
+      lightersSpeedX6[i] = random(-10, 10);
+      lightersSpeedY6[i] = random(-10, 10);
+      mass6[i] = random(5, 10);
       lightersSpeedZ[i] = random(3, 25);
       lightersPosX6[i] = random(0, mWidth * 10);
       lightersPosY6[i] = random(0, mHeight * 10);
       lcolor6[i] = random(0, 9) * 28;
     }
   }
+
   switch (2) {
     case 0:
       FastLED.clear();
@@ -202,7 +195,7 @@ void draw4R() {
       break;
   }
 
-  for (byte i = 0; i < map(8, 1, 16, 2, 32); i++) {
+  for (byte i = 0; i < 32; i++) {
     lcolor6[i]++;
     switch (3) {
       case 0:
@@ -216,23 +209,11 @@ void draw4R() {
             mass6[i] / 10 * ((mHeight + mWidth) / 16);
         break;
       case 1:
-        if (1) {
-          lightersPosX6[i] =
-              beatsin16(lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0,
-                        (mWidth - 1) * 10);
-          lightersPosY6[i] =
-              beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
-                        (mHeight - 1) * 10);
-        } else {
-          lightersPosX6[i] +=
-              beatsin16(lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0,
-                        mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
-              mass6[i] / 10 * ((mHeight + mWidth) / 16);
-          lightersPosY6[i] +=
-              beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
-                        mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
-              mass6[i] / 10 * ((mHeight + mWidth) / 16);
-        }
+        lightersPosX6[i] = beatsin16(
+            lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0, (mWidth - 1) * 10);
+        lightersPosY6[i] =
+            beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
+                      (mHeight - 1) * 10);
         break;
       case 2:
         lightersPosX6[i] += lightersSpeedX6[i] / map(255, 1, 255, 10, 1);
@@ -246,89 +227,42 @@ void draw4R() {
         lightersSpeedY6[i] += lightersSpeedX6[i] / map(255, 1, 255, 20, 2);
         break;
     }
-    if (1) {
-      if (3 == 3) {
-        if (lightersPosY6[i] < 0) {
-          lightersPosY6[i] = 1;
-          lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
-        }
-        if (lightersPosX6[i] < 0) {
-          lightersPosX6[i] = 1;
-          lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
-        }
-        if (lightersPosY6[i] >= (mHeight - 1) * 10) {
-          lightersPosY6[i] = ((mHeight - 1) * 10) - 1;
-          lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
-        }
-        if (lightersPosX6[i] >= (mWidth - 1) * 10) {
-          lightersPosX6[i] = ((mWidth - 1) * 10) - 1;
-          lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
-        }
-      } else if (3 == 1) {
-      } else {
-        if ((lightersPosX6[i] <= 0) ||
-            (lightersPosX6[i] >= (mWidth - 1) * 10))
-          lightersSpeedX6[i] = -lightersSpeedX6[i];
-        if ((lightersPosY6[i] <= 0) ||
-            (lightersPosY6[i] >= (mHeight - 1) * 10))
-          lightersSpeedY6[i] = -lightersSpeedY6[i];
-      }
-    } else {
-      if (lightersPosX6[i] < 0) lightersPosX6[i] = (mWidth - 1) * 10;
-      if (lightersPosX6[i] > (mWidth - 1) * 10) lightersPosX6[i] = 0;
-      if (lightersPosY6[i] < 0) lightersPosY6[i] = (mHeight - 1) * 10;
-      if (lightersPosY6[i] > (mHeight - 1) * 10) lightersPosY6[i] = 0;
+
+    if (lightersPosY6[i] < 0) {
+      lightersPosY6[i] = 1;
+      lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
     }
-    CRGB color = 0;
-    switch (1) {
-      case 0:
-        color = CHSV(lcolor6[i], 40,
-                     (2 == 3)
-                         ? 128 + random8(2) * 111
-                         : beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1),
-                                    128, 255));
-        break;
-      case 1:
-        color = CHSV(lcolor6[i], 255,
-                     (2 == 3)
-                         ? 128 + random8(2) * 111
-                         : beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1),
-                                    128, 255));
-        break;
-      case 2:
-        color = ColorFromPalette(
-            PartyColors_p, lcolor6[i],
-            (2 == 3) ? 128 + random8(2) * 111
-                     : beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1),
-                                128, 255));
-        break;
+    if (lightersPosX6[i] < 0) {
+      lightersPosX6[i] = 1;
+      lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
     }
-    if (1)
-      drawPixelXYF((float)lightersPosX6[i] / 10, (float)lightersPosY6[i] / 10,
-                   color);
-    else
-      leds[XY(lightersPosX6[i] / 10, lightersPosY6[i] / 10)] = color;
+    if (lightersPosY6[i] >= (mHeight - 1) * 10) {
+      lightersPosY6[i] = ((mHeight - 1) * 10) - 1;
+      lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
+    }
+    if (lightersPosX6[i] >= (mWidth - 1) * 10) {
+      lightersPosX6[i] = ((mWidth - 1) * 10) - 1;
+      lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
+    }
+
+    CRGB color =
+        CHSV(lcolor6[i], 255,
+             beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1), 128, 255));
+    drawPixelXYF((float)lightersPosX6[i] / 10, (float)lightersPosY6[i] / 10,
+                 color);
   }
-  if (10 > 0) {
-    EVERY_N_SECONDS(10) {
-      randomSeed(millis());
-      for (byte i = 0; i < map(8, 1, 16, 2, 32); i++) {
-        if (3 == 2) {
-          lightersSpeedX6[i] = random(-10, 10);
-          lightersSpeedY6[i] = random(-10, 10);
-        } else if (3 == 3) {
-          lightersSpeedX6[i] = random(-10, 10);
-          lightersSpeedY6[i] = random(0, 360);
-          mass6[i] = random(5, 10);
-        } else {
-          lightersSpeedX6[i] = random(3, 25);
-          lightersSpeedY6[i] = random(3, 25);
-        }
-        lightersSpeedZ[i] = random(3, 25);
-      }
+
+  EVERY_N_SECONDS(10) {
+    randomSeed(millis());
+    for (byte i = 0; i < 32; i++) {
+      lightersSpeedX6[i] = random(-10, 10);
+      lightersSpeedY6[i] = random(0, 360);
+      mass6[i] = random(5, 10);
+      lightersSpeedZ[i] = random(3, 25);
     }
   }
-  delay(16);
+
+  FastLED.delay(20);
   FastLED.show();
 }
 

@@ -218,7 +218,7 @@ void Sinusoid(void) {
   }
 }
 
-int xyToIndexW(int x, int y) { return mainScheme[y * 12 + x]; }
+int xyToIndexW(int x, int y) { return mainScheme[y * 12 + x]-1; }
 
 void wavesExtra() {
   static uint8_t hue = 0;
