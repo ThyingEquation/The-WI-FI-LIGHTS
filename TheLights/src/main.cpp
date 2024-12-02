@@ -14,9 +14,11 @@ uint8_t choosenModeD1 = 255;
 uint8_t choosenModeD2 = 255;
 uint8_t allModsEnable = 0;
 
-const int modeArray[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
-    19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
-    38, 39, 40, 41, /*42,*/ /*43,*/ 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56};
+const int modeArray[] = {
+    1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+    29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, /*42,*/ /*43,*/ 44,
+    45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56};
 const int arraySize = sizeof(modeArray) / sizeof(modeArray[0]);
 
 unsigned long prevTime = 0;
@@ -24,7 +26,7 @@ const unsigned long modeDelay = 15 * 60 * 1000;  // 15 минут в милли�
 int currentIndex = 255;
 
 char ssid[15];
-const char *password = "11111111";
+const char *password = "134599996";
 char start_mode[2];
 
 IPAddress local_ip(192, 168, 1, 1);
@@ -140,12 +142,12 @@ void settingsProcessing() {
 }
 
 void paintingProcessing(void) {
-  //if (server.hasArg("canvas")) {
-    //canvas(server.arg("canvas"));
+  // if (server.hasArg("canvas")) {
+  // canvas(server.arg("canvas"));
   //}
 
   int ledNum = server.arg("led").toInt();
-  //ledNum--;
+  // ledNum--;
   uint8_t canvasColor = server.arg("color").toInt();
 
   canvas(server.arg("mode"), canvasColor, ledNum);
@@ -403,7 +405,9 @@ void allMods() {
   unsigned long currentTime = millis();
 
   if (currentIndex == 255 || (currentTime - prevTime >= modeDelay)) {
-    if (currentIndex == 255) {currentIndex = 0;} 
+    if (currentIndex == 255) {
+      currentIndex = 0;
+    }
     prevTime = currentTime;
     checkMode(modeArray[currentIndex]);
     currentIndex = (currentIndex + 1) % arraySize;
