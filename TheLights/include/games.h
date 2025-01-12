@@ -1,4 +1,4 @@
 #pragma once
 #include "main.h"
 
-void draw(uint8_t subMode);
+void games(uint8_t subMode);

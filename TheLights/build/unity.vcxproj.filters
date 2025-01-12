@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Projects\LumieresDeNoel\ver. 2.0\TheLights\.pio\libdeps\esp12e\Unity\src\unity.c">
+    <ClCompile Include="D:\Projects\TheChristmasLights\The-WI-FI-LIGHTS\TheLights\.pio\libdeps\esp12e\Unity\src\unity.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Projects\LumieresDeNoel\ver. 2.0\TheLights\.pio\libdeps\esp12e\Unity\CMakeLists.txt" />
+    <CustomBuild Include="D:\Projects\TheChristmasLights\The-WI-FI-LIGHTS\TheLights\.pio\libdeps\esp12e\Unity\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{D6796352-131B-3544-80EB-62697A4F90CC}</UniqueIdentifier>
+      <UniqueIdentifier>{4E39AD84-7760-33E3-9AA0-242F2958CB7B}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

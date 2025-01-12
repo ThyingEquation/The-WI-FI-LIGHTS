@@ -1,4 +1,4 @@
-# Install script for directory: D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity
+# Install script for directory: D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,36 +34,36 @@ endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/Debug/unity.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/Debug/unity.lib")
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/Release/unity.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/Release/unity.lib")
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Mm][Ii][Nn][Ss][Ii][Zz][Ee][Rr][Ee][Ll])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/MinSizeRel/unity.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/MinSizeRel/unity.lib")
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/RelWithDebInfo/unity.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/RelWithDebInfo/unity.lib")
   endif()
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "library" OR NOT CMAKE_INSTALL_COMPONENT)
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
     file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/unity" TYPE FILE FILES
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
       )
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$")
     file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/unity" TYPE FILE FILES
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
       )
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Mm][Ii][Nn][Ss][Ii][Zz][Ee][Rr][Ee][Ll])$")
     file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/unity" TYPE FILE FILES
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
       )
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo])$")
     file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/unity" TYPE FILE FILES
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
-      "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity.h"
+      "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/src/unity_internals.h"
       )
   endif()
 endif()
@@ -72,7 +72,7 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/cmake/unity/unityTargets.cmake")
     file(DIFFERENT _cmake_export_file_changed FILES
          "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/cmake/unity/unityTargets.cmake"
-         "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets.cmake")
+         "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets.cmake")
     if(_cmake_export_file_changed)
       file(GLOB _cmake_old_config_files "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/cmake/unity/unityTargets-*.cmake")
       if(_cmake_old_config_files)
@@ -85,35 +85,47 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
     endif()
     unset(_cmake_export_file_changed)
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets.cmake")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets.cmake")
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-debug.cmake")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-debug.cmake")
   endif()
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Mm][Ii][Nn][Ss][Ii][Zz][Ee][Rr][Ee][Ll])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-minsizerel.cmake")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-minsizerel.cmake")
   endif()
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-relwithdebinfo.cmake")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-relwithdebinfo.cmake")
   endif()
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-release.cmake")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/Export/80da942aa44c821c5569bae18496db2c/unityTargets-release.cmake")
   endif()
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/unity" TYPE FILE FILES
-    "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/.pio/libdeps/esp12e/Unity/unityConfig.cmake"
-    "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/unityConfigVersion.cmake"
+    "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/.pio/libdeps/esp12e/Unity/unityConfig.cmake"
+    "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/unityConfigVersion.cmake"
     )
-endif()
-
-if(CMAKE_INSTALL_COMPONENT)
-  set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")
-else()
-  set(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "D:/Projects/LumieresDeNoel/ver. 2.0/TheLights/build/${CMAKE_INSTALL_MANIFEST}"
+if(CMAKE_INSTALL_LOCAL_ONLY)
+  file(WRITE "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
+endif()
+if(CMAKE_INSTALL_COMPONENT)
+  if(CMAKE_INSTALL_COMPONENT MATCHES "^[a-zA-Z0-9_.+-]+$")
+    set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")
+  else()
+    string(MD5 CMAKE_INST_COMP_HASH "${CMAKE_INSTALL_COMPONENT}")
+    set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INST_COMP_HASH}.txt")
+    unset(CMAKE_INST_COMP_HASH)
+  endif()
+else()
+  set(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  file(WRITE "D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/${CMAKE_INSTALL_MANIFEST}"
+     "${CMAKE_INSTALL_MANIFEST_CONTENT}")
+endif()

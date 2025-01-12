@@ -1,13 +1,17 @@
-#include <flashLights.h>
+#include "flashLights.h"
 
-void flashLights() {
-  switch (choosenModeD2) {
+static void flashLights1();
+static void flashLights2();
+static void flashLights3();
+
+void flashLights(uint8_t subMode) {
+  switch (subMode) {
     case 1:
       flashLights1();
       break;
 
     case 2:
-      sparkles();
+      flashLights2();
       break;
 
     case 3:
@@ -19,27 +23,23 @@ void flashLights() {
   }
 }
 
-uint8_t speed8 = 128;
-int shift8;
+void flashLights2() {
+  static bool loadingFlag = true;
 
-byte FF[mWidth][mHeight];
-byte SF[mWidth][mHeight];
+  static byte FF[mWidth][mHeight];
+  static byte SF[mWidth][mHeight];
 
-bool loadingFlag8 = true;
-
-void sparkles() {
-  if (loadingFlag8) {
+  if (loadingFlag) {
     memset8(SF, 0, NUM_LEDS);
     memset8(FF, 0, NUM_LEDS);
-    shift8 = 0;
-    loadingFlag8 = 0;
+    loadingFlag = 0;
   }
-  for (byte i = 0; i < map(speed8, 1, 255, 2, 16); i++) {
-    uint8_t x = random(0, mWidth);
-    uint8_t y = random(0, mHeight);
+  for (byte i = 0; i < map(128, 1, 255, 2, 16); i++) {
+    uint8_t x = rand() % mWidth;
+    uint8_t y = rand() % mHeight;
     if (!SF[x][y]) {
       SF[x][y] = 255;
-      FF[x][y] = random(0, 255);
+      FF[x][y] = rand() % 255;
     }
   }
   for (byte x = 0; x < mWidth; x++) {
@@ -47,9 +47,9 @@ void sparkles() {
       if (SF[x][y] <= 30)
         SF[x][y] = 0;
       else
-        SF[x][y] = ((SF[x][y] - map(speed8, 1, 255, 1, 16)) <= 0)
+        SF[x][y] = ((SF[x][y] - map(128, 1, 255, 1, 16)) <= 0)
                        ? 0
-                       : (SF[x][y] - map(speed8, 1, 255, 1, 16));
+                       : (SF[x][y] - map(128, 1, 255, 1, 16));
       leds[XY(x, y)] = CHSV(FF[x][y], 255, SF[x][y]);
     }
   }
@@ -57,7 +57,7 @@ void sparkles() {
   FastLED.show();
 }
 
-uint16_t getIndex(uint16_t x, uint16_t y) {
+static uint16_t getIndex(uint16_t x, uint16_t y) {
   uint16_t index;
   if (y == 0) {
     index = x;

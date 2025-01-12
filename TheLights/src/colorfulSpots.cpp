@@ -1,21 +1,18 @@
-#include <colorfulSpots.h>
+#include "colorfulSpots.h"
 
-#define MAX_DIMENSION \
-  ((mWidth > mHeight) ? mWidth : mHeight)
+static void fillnoise8();
+static void mapNoiseToLEDsUsingPalette();
+static void ChangePaletteAndSettingsPeriodically();
 
-CRGBPalette16 currentPalette(CloudColors_p);
+static CRGBPalette16 currentPalette(CloudColors_p);
 
-uint16_t speed = 10;
-uint16_t scale = 25;
-uint8_t colorLoop = 1;
+static uint16_t speed = 10;
+static uint16_t scale = 25;
+static uint8_t colorLoop = 1;
 
-uint16_t X = random16();
-uint16_t Y = random16();
-uint16_t Z = random16();
+static uint8_t noise[16][16];
 
-uint8_t noise[16][16];
-
-void colorfulSpots() {
+void colorfulSpots(uint8_t sumMode) {
   ChangePaletteAndSettingsPeriodically();
   fillnoise8();
   mapNoiseToLEDsUsingPalette();
@@ -23,14 +20,18 @@ void colorfulSpots() {
 }
 
 void fillnoise8() {
+  static uint16_t X = random16();
+  static uint16_t Y = random16();
+  static uint16_t Z = random16();
+
   uint8_t dataSmoothing = 0;
   if (speed < 50) {
     dataSmoothing = 400 - (speed * 4);
   }
 
-  for (int i = 0; i < MAX_DIMENSION; i++) {
+  for (int i = 0; i < mHeight; i++) {
     int ioffset = scale * i;
-    for (int j = 0; j < MAX_DIMENSION; j++) {
+    for (int j = 0; j < mHeight; j++) {
       int joffset = scale * j;
 
       uint8_t data = inoise8(X + ioffset, Y + joffset, Z);
@@ -77,6 +78,12 @@ void mapNoiseToLEDsUsingPalette() {
   }
 
   ihue += 1;
+}
+
+static void SetupRandomPalette() {
+  currentPalette =
+      CRGBPalette16(CHSV(random8(), 255, 32), CHSV(random8(), 255, 255),
+                    CHSV(random8(), 128, 255), CHSV(random8(), 255, 255));
 }
 
 void ChangePaletteAndSettingsPeriodically() {
@@ -153,40 +160,3 @@ void ChangePaletteAndSettingsPeriodically() {
     }
   }
 }
-
-void SetupRandomPalette() {
-  currentPalette =
-      CRGBPalette16(CHSV(random8(), 255, 32), CHSV(random8(), 255, 255),
-                    CHSV(random8(), 128, 255), CHSV(random8(), 255, 255));
-}
-
-void SetupBlackAndWhiteStripedPalette() {
-  fill_solid(currentPalette, 16, CRGB::Black);
-  currentPalette[0] = CRGB::White;
-  currentPalette[4] = CRGB::White;
-  currentPalette[8] = CRGB::White;
-  currentPalette[12] = CRGB::White;
-}
-void DrawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8) {
-  byte lineStartHue = startHue8;
-  for (byte Y = 0; Y < mHeight; Y++) {
-    lineStartHue += yHueDelta8;
-    byte pixelHue = lineStartHue;
-    for (byte X = 0; X < mWidth; X++) {
-      pixelHue += xHueDelta8;
-      leds[XY(X, Y)] = CHSV(pixelHue, 255, 255);
-    }
-  }
-}
-
-uint16_t XY(uint8_t X, uint8_t Y) {
-  uint16_t i;
-  if (Y & 0x01) {
-    uint8_t reverseX = (mWidth - 1) - X;
-    i = (Y * mWidth) + reverseX;
-  } else {
-    i = (Y * mWidth) + X;
-  }
-  return i;
-}
-

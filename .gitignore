@@ -1,0 +1,9 @@
+TheLights/.pio/
+TheLights/.vscode/
+TheLights/build/
+*.launch
+*.o
+*.bin
+*.elf
+*.map
+*.d

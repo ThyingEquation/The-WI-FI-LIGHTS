@@ -1,33 +1,148 @@
+#include <ArduinoJson.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266WiFi.h>
+#include <FS.h>
+#include <LittleFS.h>
 #include <main.h>
+
+#include "animations.h"
+#include "canvas.h"
+#include "colorfulSpots.h"
+#include "colorfulWaves.h"
+#include "colors.h"
+#include "draw.h"
+#include "drawImages.h"
+#include "flashLights.h"
+#include "games.h"
+#include "jumpingLights.h"
+#include "matrixMovie.h"
+#include "rainbows.h"
+#include "runningLights.h"
+#include "runningLine.h"
+#include "space.h"
+#include "water.h"
+#include "weather.h"
+
+static void settingsProcessing(void);
+static void mainModesProcessing(void);
+static void paintingProcessing(void);
+static void drawingImagesProcessing(void);
+static bool loadSettings();
+static bool saveSettings();
+static void applyNewParameters(String paramData, uint8_t param);
+static void allModesEffect();
 
 CRGB leds_plus_safety_pixel[NUM_LEDS + 1];
 CRGB *const leds(leds_plus_safety_pixel + 1);
 
-Adafruit_NeoPixel strip =
-    Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, 4, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
-    mWidth, mHeight, PIN,
+    mWidth, mHeight, 4,
     NEO_MATRIX_BOTTOM + TEXT_POS + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
     NEO_GRB + NEO_KHZ800);
 
-uint8_t choosenModeD1 = 255;
-uint8_t choosenModeD2 = 255;
-uint8_t allModsEnable = 0;
+enum effects {
+  RUNNING_LINE,
+  COLORFUL_SPOTS,
+  RAINBOWS,
+  DRAW,
+  RUNNING_LIGHTS,
+  SPACE,
+  FLASH_LIGHTS,
+  WATER,
+  WEATHER,
+  COLORFUL_WAVES,
+  ANIMATIONS,
+  GAMES,
+  JUMPING_LIGHTS,
+  MATRIX_MOVIE
+};
 
-const int modeArray[] = {
-    1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
-    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
-    29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, /*42,*/ /*43,*/ 44,
-    45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56};
-const int arraySize = sizeof(modeArray) / sizeof(modeArray[0]);
+void (*funcArray[14])(uint8_t) = {
+    runningLine, colorfulSpots, rainbows,      draw,       runningLights,
+    space,       flashLights,   water,         weather,    colorfulWaves,
+    animations,  games,         jumpingLights, matrixMovie};
 
-unsigned long prevTime = 0;
-const unsigned long modeDelay = 15 * 60 * 1000;  // 15 минут в миллисекундах
-int currentIndex = 255;
+const std::array<std::pair<uint8_t, uint8_t>, 60> modes = {{
+    {DRAW, 3},              // 0 полная заливка
+    {DRAW, 1},              // 1 заливка змейкой 1
+    {DRAW, 2},              // 2 заливка змейкой 2
+    {DRAW, 4},              // 3 заливка змейкой 3
+    {DRAW, 5},              // 4 цветное дыхание
+    {COLORFUL_SPOTS, 255},  // 5 цветные пятна
+    {RAINBOWS, 1},          // 6 радуга колесо
+    {RAINBOWS, 2},          // 7 радуга волной 1
+    {RAINBOWS, 3},          // 8 радуга волной 2
+    {RAINBOWS, 4},          // 9 радуга змейкой
+    {RUNNING_LIGHTS, 1},    // 10 бегущий огонек медленно
+    {RUNNING_LIGHTS, 2},    // 11 бегущий огонек быстро
+    {RUNNING_LIGHTS, 3},    // 12 бегущий огонек цветной
+    {RUNNING_LIGHTS, 4},    // 13 бегущие огоньки 1
+    {RUNNING_LIGHTS, 5},    // 14 бегущие огоньки 2
+    {RUNNING_LIGHTS, 7},    // 15 бегущие огоньки 3
+    {RUNNING_LIGHTS, 6},    // 16 цветная змейка
+    {JUMPING_LIGHTS, 1},    // 17 прыгающие огоньки 1
+    {JUMPING_LIGHTS, 2},    // 18 прыгающие огоньки 2
+    {JUMPING_LIGHTS, 3},    // 19 прыгающие огоньки 3
+    {JUMPING_LIGHTS, 4},    // 20 прыгающие огоньки 4
+    {JUMPING_LIGHTS, 5},    // 21 Прыгающий квадрат
+    {JUMPING_LIGHTS, 6},    // 22 Прыгающие точки
+    {SPACE, 2},             // 23 космические корабли
+    {SPACE, 1},             // 24 звездное небо
+    {SPACE, 3},             // 25 пульсар
+    {SPACE, 4},             // 26 метеорный поток
+    {SPACE, 5},             // 27 спиральная галактика
+    {FLASH_LIGHTS, 1},      // 28 мерцающие огни 1
+    {FLASH_LIGHTS, 2},      // 29 мерцающие огни 2
+    {FLASH_LIGHTS, 3},      // 30 мерцающие огни 3
+    {WATER, 1},             // 31 лагуна
+    {WATER, 2},             // 32 бассейн
+    {WEATHER, 1},           // 33 снегопад
+    {WEATHER, 2},           // 34 метель
+    {WEATHER, 3},           // 35 дождь
+    {WEATHER, 4},           // 36 ливень
+    {COLORFUL_WAVES, 1},    // 37 цветные волны 1
+    {COLORFUL_WAVES, 2},    // 38 цветные волны 2
+    {COLORFUL_WAVES, 3},    // 39 цветные волны 3
+    {COLORFUL_WAVES, 4},    // 40 цветные волны 4
+    {COLORFUL_WAVES, 5},    // 41 цветные волны 5
+    {ANIMATIONS, 1},        // 42 анимации: Сердце
+    {ANIMATIONS, 2},        // 43 смайлик
+    {ANIMATIONS, 3},        // 44 прыгающий человечек
+    {ANIMATIONS, 4},        // 45 файербол
+    {ANIMATIONS, 5},        // 46 взрыв
+    {ANIMATIONS, 6},   // 47 "С НОВЫМ ГОДОМ" на японском
+    {ANIMATIONS, 7},   // 48 приветствие на корейском
+    {ANIMATIONS, 8},   // 49 цифровой сигнал
+    {ANIMATIONS, 9},   // 50 синусоида
+    {ANIMATIONS, 10},  // 51 цветные синусоиды
+    {ANIMATIONS, 11},  // 52 цветные линии 1
+    {ANIMATIONS, 12},  // 53 цветные линии 2
+    {ANIMATIONS, 13},  // 54 цветные линии 3
+    {ANIMATIONS, 14},  // 55 цветные линии 4
+    {GAMES, 1},        // 56 игра змейка
+    {GAMES, 2},        // 57 игра тетрис
+    {GAMES, 3},        // 58 игра арканоид
+    {MATRIX_MOVIE, 1}  // 59 эффект из к/ф матрица
+}};
 
-char ssid[15];
-const char *password = "134599996";
-char start_mode[2];
+static uint8_t mode = 255;
+static uint8_t subMode = 255;
+static uint8_t allModesEnable = 0;
+static unsigned int currentIndex = 255;
+
+static unsigned long prevTime = 0;
+static unsigned long startingMillis = 0;
+
+static uint8_t intBrightness;
+static char brightness[4] = {'0', '0', '0', '\0'};
+static unsigned long allModeDelay = 0;
+static char allModeDelayString[5] = {'0', '0', '0', '0', '\0'};
+static char allModeType[2] = {'0', '\0'};
+static char startMode[3] = {'0', '0', '\0'};
+static char wifiAutoOffType[2] = {'0', '\0'};
+static char ssid[15];
+const char *password = "11111111";
 
 IPAddress local_ip(192, 168, 1, 1);
 IPAddress gateway(192, 168, 1, 1);
@@ -35,82 +150,62 @@ IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
 
 void setup() {
-  Serial.begin(9600);
-  FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
-  FastLED.addLeds<WS2812B, PIN, GRB>(leds, NUM_LEDS)
-      .setCorrection(TypicalSMD5050)
-      .setDither(BRIGHTNESS <= 255);
-  FastLED.setBrightness(BRIGHTNESS);
-
-  strip.begin();
-  strip.show();
-  strip.setBrightness(BRIGHTNESS);
-  strip.show();
-
-  matrix.begin();
-  matrix.setTextWrap(false);
-  matrix.setBrightness(BRIGHTNESS);
-  matrix.setTextColor(pgm_read_dword(&(mainColors[0])));
-
-  randomSeed(analogRead(0));
-
-  delay(500);
+  srand(time(NULL));
 
   if (!LittleFS.begin()) {
     return;
   }
 
-  loadConfig();
-  saveConfig();
+  loadSettings();
+
+  Serial.begin(9600);
+  FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
+  FastLED.addLeds<WS2812B, 4, GRB>(leds, NUM_LEDS)
+      .setCorrection(TypicalSMD5050)
+      .setDither(intBrightness <= 255);
+  FastLED.setBrightness(intBrightness);
+
+  strip.begin();
+  strip.show();
+  strip.setBrightness(intBrightness);
+  strip.show();
+
+  matrix.begin();
+  matrix.setTextWrap(false);
+  matrix.setBrightness(intBrightness);
+  matrix.setTextColor(pgm_read_dword(&(mainColors[rand() % 128])));
+
+  delay(10);
 
   WiFi.softAP(ssid, password);
   WiFi.softAPConfig(local_ip, gateway, subnet);
   delay(100);
-  server.on("/settings", settingsProcessing);
-  server.on("/command", mainProcessing);
-  server.on("/painting", paintingProcessing);
 
+  server.on("/settings", settingsProcessing);
+  server.on("/command", mainModesProcessing);
+  server.on("/painting", paintingProcessing);
+  server.on("/drawingImages", drawingImagesProcessing);
   server.begin();
 
-  String mode = start_mode;
-  uint8_t modeNum = mode.toInt();
-  checkMode(modeNum);
+  String modeS = startMode;
+  uint8_t modeNum = modeS.toInt();
 
-  delay(1000);
+  if (modeNum != 99) {
+    if (modeNum != 98) {
+      mode = modes[modeNum].first;
+      subMode = modes[modeNum].second;
+    } else {
+      currentIndex = 255;
+      allModesEnable = 1;
+      mode = 255;
+      subMode = 255;
+    }
+  }
+
+  delay(1500);
+
+  startingMillis = millis();
 }
-
-void changeSSID(String ssidW) {
-  int sid_str_len = ssidW.length() + 1;
-  char webssid[sid_str_len];
-  ssidW.toCharArray(webssid, sid_str_len);
-  strncpy(ssid, webssid, 15);
-  saveConfig();
-  ESP.restart();
-}
-
-void changeSM(String startM) {
-  int sm_str_len = startM.length() + 1;
-  char startMode[sm_str_len];
-  startM.toCharArray(startMode, sm_str_len);
-
-  strncpy(start_mode, startMode, 2);
-  saveConfig();
-  ESP.restart();
-}
-
-void (*funcArray[13])() = {runningLine,    // 0
-                           colorfulSpots,  // 1
-                           rainbows,       // 2
-                           draw,           // 3
-                           runningLights,  // 4
-                           space,          // 5
-                           flashLights,    // 6
-                           water,          // 7
-                           snow,           // 8
-                           colorfulWaves,  // 9
-                           anime,          // 10
-                           extra,          // 11
-                           allMods};       // 12
 
 void loop() {
   static unsigned long lastMillis = 0;
@@ -118,14 +213,20 @@ void loop() {
   if (currentMillis - lastMillis >= 100) {
     lastMillis = currentMillis;
     server.handleClient();
+
+    if (wifiAutoOffType[0] == '1') {
+      if (currentMillis - startingMillis >= 300000) {
+        WiFi.softAPdisconnect(true);
+      }
+    }
   }
 
-  if (allModsEnable == 1) {
-    allMods();
+  if (allModesEnable == 1) {
+    allModesEffect();
   }
 
-  if (choosenModeD1 <= 12) {
-    funcArray[choosenModeD1]();
+  if (mode < 14) {
+    funcArray[mode](subMode);
   }
 }
 
@@ -134,150 +235,106 @@ void settingsProcessing() {
   strip.show();
   if (server.hasArg("ssid")) {
     String newSsid = server.arg("ssid");
-    changeSSID(newSsid);
+    applyNewParameters(newSsid, 1);
   } else if (server.hasArg("startMode")) {
     String newStartMode = server.arg("startMode");
-    changeSM(newStartMode);
+    applyNewParameters(newStartMode, 2);
+  } else if (server.hasArg("brightness")) {
+    String newBrightness = server.arg("brightness");
+    applyNewParameters(newBrightness, 3);
+  } else if (server.hasArg("restart")) {
+    ESP.restart();
+  } else if (server.hasArg("allModesTime")) {
+    String allModeDelayTime = server.arg("allModesTime");
+    applyNewParameters(allModeDelayTime, 4);
+  } else if (server.hasArg("allModes")) {
+    String allMode = server.arg("allModes");
+    applyNewParameters(allMode, 5);
+  } else if (server.hasArg("wifiOff")) {
+    WiFi.softAPdisconnect(true);
+  } else if (server.hasArg("wifiAutoOff")) {
+    String wifiAutoOff = server.arg("wifiAutoOff");
+    applyNewParameters(wifiAutoOff, 6);
   }
 }
+
+void drawingImagesProcessing(void) { drawImages((server.arg("img")).toInt()); }
 
 void paintingProcessing(void) {
-  // if (server.hasArg("canvas")) {
-  // canvas(server.arg("canvas"));
-  //}
-
   int ledNum = server.arg("led").toInt();
-  // ledNum--;
   uint8_t canvasColor = server.arg("color").toInt();
-
   canvas(server.arg("mode"), canvasColor, ledNum);
-
-  // Serial.print(server.arg("mode"));
-  // Serial.print(server.arg("color"));
-  // Serial.print(server.arg("led"));
 }
 
-void mainProcessing() {
-  allModsEnable = 0;
+void mainModesProcessing() {
+  allModesEnable = 0;
+  FastLED.clear();
   strip.clear();
   strip.show();
+
   if (server.hasArg("ok")) {
   } else if (server.hasArg("stop")) {
-    choosenModeD1 = 255;
-    choosenModeD2 = 255;
+    mode = 255;
   } else if (server.hasArg("allModes")) {
     currentIndex = 255;
-    allModsEnable = 1;
-    choosenModeD1 = 255;
-    choosenModeD2 = 255;
-    allMods();
+    allModesEnable = 1;
+    mode = 255;
+    subMode = 255;
+    allModesEffect();
   } else if (server.hasArg("runLine")) {
-    g = 13;
-    choosenModeD1 = 0;
-    argIndexCheck("runLine");
-    runningLine();
+    mode = RUNNING_LINE;
+    runningLine(99);
+    subMode = (uint8_t)((server.arg("runLine")).toInt());
   } else if (server.hasArg("spots")) {
-    choosenModeD1 = 1;
-    colorfulSpots();
+    mode = COLORFUL_SPOTS;
   } else if (server.hasArg("rainbow")) {
-    choosenModeD1 = 2;
-    argIndexCheck("rainbow");
-    rainbows();
+    mode = RAINBOWS;
+    subMode = (server.arg("rainbow")).toInt();
   } else if (server.hasArg("draw")) {
-    col = 0;
-    ledsCount = 0;
-    choosenModeD1 = 3;
-    argIndexCheck("draw");
-    draw();
+    mode = DRAW;
+    subMode = (uint8_t)((server.arg("draw")).toInt());
   } else if (server.hasArg("runLights")) {
-    col = random(128);
-    ledsCount = 0;
-    choosenModeD1 = 4;
-    argIndexCheck("runLights");
-    runningLights();
+    mode = RUNNING_LIGHTS;
+    subMode = (uint8_t)((server.arg("runLights")).toInt());
   } else if (server.hasArg("space")) {
-    choosenModeD1 = 5;
-    argIndexCheck("space");
-    space();
+    mode = SPACE;
+    subMode = (uint8_t)((server.arg("space")).toInt());
   } else if (server.hasArg("flashLights")) {
-    col = 0;
-    choosenModeD1 = 6;
-    argIndexCheck("flashLights");
-    flashLights();
+    mode = FLASH_LIGHTS;
+    subMode = (uint8_t)((server.arg("flashLights")).toInt());
   } else if (server.hasArg("water")) {
-    choosenModeD1 = 7;
-    argIndexCheck("water");
-    water();
-  } else if (server.hasArg("snow")) {
-    choosenModeD1 = 8;
-    snow();
+    mode = WATER;
+    subMode = (uint8_t)((server.arg("water")).toInt());
+  } else if (server.hasArg("weather")) {
+    mode = WEATHER;
+    subMode = (uint8_t)((server.arg("weather")).toInt());
   } else if (server.hasArg("colorfulWaves")) {
-    choosenModeD1 = 9;
-    argIndexCheck("colorfulWaves");
-    colorfulWaves();
-  } else if (server.hasArg("anime")) {
-    currentStepJP = 0;
-    currentPhaseJP = 0;
-    currentLetterJP = 0;
-    currentStepKR = 0;
-    currentPhaseKR = 0;
-    currentLetterKR = 0;
-    initArrLetters();
-    choosenModeD1 = 10;
-    argIndexCheck("anime");
-    anime();
-  } else if (server.hasArg("extra")) {
-    initPoints();
-    choosenModeD1 = 11;
-    argIndexCheck("extra");
-    extra();
+    mode = COLORFUL_WAVES;
+    subMode = (uint8_t)((server.arg("colorfulWaves")).toInt());
+  } else if (server.hasArg("animations")) {
+    mode = ANIMATIONS;
+    animations(99);
+    subMode = (uint8_t)((server.arg("animations")).toInt());
+  } else if (server.hasArg("games")) {
+    mode = GAMES;
+    subMode = (uint8_t)((server.arg("games")).toInt());
+  } else if (server.hasArg("jumpingLights")) {
+    mode = JUMPING_LIGHTS;
+    subMode = (uint8_t)((server.arg("jumpingLights")).toInt());
+  } else if (server.hasArg("matrix")) {
+    mode = MATRIX_MOVIE;
+    subMode = (uint8_t)((server.arg("matrix")).toInt());
   }
 }
 
-void argIndexCheck(String argu) {
-  if (server.arg(argu) == "1") {
-    choosenModeD2 = 1;
-  } else if (server.arg(argu) == "2") {
-    choosenModeD2 = 2;
-  } else if (server.arg(argu) == "3") {
-    choosenModeD2 = 3;
-  } else if (server.arg(argu) == "4") {
-    choosenModeD2 = 4;
-  } else if (server.arg(argu) == "5") {
-    choosenModeD2 = 5;
-  } else if (server.arg(argu) == "6") {
-    choosenModeD2 = 6;
-  } else if (server.arg(argu) == "7") {
-    choosenModeD2 = 7;
-  } else if (server.arg(argu) == "8") {
-    choosenModeD2 = 8;
-  } else if (server.arg(argu) == "9") {
-    choosenModeD2 = 9;
-  } else if (server.arg(argu) == "10") {
-    choosenModeD2 = 10;
-  } else if (server.arg(argu) == "11") {
-    choosenModeD2 = 11;
-  } else if (server.arg(argu) == "12") {
-    choosenModeD2 = 12;
-  } else if (server.arg(argu) == "13") {
-    choosenModeD2 = 13;
-  } else if (server.arg(argu) == "14") {
-    choosenModeD2 = 14;
-  } else if (server.arg(argu) == "15") {
-    choosenModeD2 = 15;
-  }
-}
-
-bool loadConfig() {
+bool loadSettings() {
   File configFile = LittleFS.open("/config.json", "r");
   if (!configFile) {
-    Serial.println("Failed to open config file");
     return false;
   }
 
   size_t size = configFile.size();
   if (size > 256) {
-    Serial.println("Config file size is too large");
     configFile.close();
     return false;
   }
@@ -287,39 +344,64 @@ bool loadConfig() {
   configFile.close();
 
   if (bytesRead != size) {
-    Serial.println("Failed to read config file");
     return false;
   }
 
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, buf.get());
   if (error) {
-    Serial.println("Failed to deserialize JSON");
     return false;
   }
 
-  const char *json_startmode = doc["json_startmode"];
-  if (json_startmode) {
-    strncpy(start_mode, json_startmode, 2);
+  const char *jsonStartmode = doc["json_startmode"];
+  if (jsonStartmode) {
+    strncpy(startMode, jsonStartmode, 2);
   }
 
-  const char *json_ssid = doc["json_ssid"];
-  if (json_ssid) {
-    strncpy(ssid, json_ssid, 15);
+  const char *jsonSsid = doc["json_ssid"];
+  if (jsonSsid) {
+    strncpy(ssid, jsonSsid, 15);
+  }
+
+  const char *jsonBrightness = doc["json_brightness"];
+  if (jsonBrightness) {
+    strncpy(brightness, jsonBrightness, 3);
+    String localStr = brightness;
+    intBrightness = (uint8_t)(localStr.toInt());
+  }
+
+  const char *jsonAllModeDelay = doc["json_allModeDelay"];
+  if (jsonAllModeDelay) {
+    strncpy(allModeDelayString, jsonAllModeDelay, 3);
+    String localStr = allModeDelayString;
+    allModeDelay = (unsigned long)(localStr.toInt()) * 1000;
+  }
+
+  const char *jsonAllModeType = doc["json_allMode"];
+  if (jsonSsid) {
+    strncpy(allModeType, jsonAllModeType, 1);
+  }
+
+  const char *jsonWifiAutoOff = doc["json_wifiAutoOff"];
+  if (jsonSsid) {
+    strncpy(wifiAutoOffType, jsonWifiAutoOff, 1);
   }
 
   return true;
 }
 
-bool saveConfig() {
+bool saveSettings() {
   JsonDocument json;
 
-  json["json_startmode"] = start_mode;
+  json["json_startmode"] = startMode;
   json["json_ssid"] = ssid;
+  json["json_brightness"] = brightness;
+  json["json_allModeDelay"] = allModeDelayString;
+  json["json_allMode"] = allModeType;
+  json["json_wifiAutoOff"] = wifiAutoOffType;
 
   File configFile = LittleFS.open("/config.json", "w");
   if (!configFile) {
-    Serial.println("Failed to open config file for writing");
     return false;
   }
 
@@ -329,89 +411,118 @@ bool saveConfig() {
   return true;
 }
 
-struct Mode {
-  uint8_t choosenModeD1;
-  uint8_t choosenModeD2;
-};
-
-const struct Mode modes[] = {
-    {255, 255},  //[0] нет стартового режима
-    {3, 3},      //[1] Полная заливка
-    {3, 1},      //[2] Заливка змейкой 1
-    {3, 2},      //[3] Заливка змейкой 2
-    {3, 4},      //[4] Заливка змейкой 3
-    {3, 5},      //[5] Цветное дыхание
-    {1, 255},    //[6] цветные пятна
-    {2, 1},      //[7] радуга колесо
-    {2, 2},      //[8] радуга волной 1
-    {2, 3},      //[9] радуга волной 2
-    {2, 4},      //[10] радуга змейкой
-    {4, 1},      //[11] бегущий огонек медленно
-    {4, 2},      //[12] бегущий огонек быстро
-    {4, 6},      //[13] бегущий огонек цветной
-    {4, 7},      //[14] бегущие огоньки 1
-    {4, 8},      //[15] бегущие огоньки 2
-    {4, 10},     //[16] цветная змейка
-    {4, 3},      //[17] прыгающие огоньки 1
-    {4, 4},      //[18] прыгающие огоньки 2
-    {4, 5},      //[19] прыгающие огоньки 3
-    {4, 9},      //[20] прыгающие огоньки 4
-    {5, 2},      //[21] космические корабли
-    {5, 1},      //[22] звездное небо
-    {5, 3},      //[23] пульсар
-    {5, 4},      //[24] метеорный поток
-    {6, 1},      //[25] мерцающие огни 1
-    {6, 2},      //[26] мерцающие огни 2
-    {6, 3},      //[27] мерцающие огни 3
-    {7, 1},      //[28] лагуна
-    {7, 2},      //[29] бассейн
-    {8, 255},    //[30] метель
-    {9, 1},      //[31] цветные волны 1
-    {9, 2},      //[32] цветные волны 2
-    {9, 3},      //[33] цветные волны 3
-    {9, 4},      //[34] цветные волны 4
-    {9, 5},      //[35] цветные волны 5
-    {10, 1},     //[36] Анимации: Сердце
-    {10, 2},     //[37] Смайлик
-    {10, 3},     //[38] Прыгающий человечек
-    {10, 4},     //[39] Файербол
-    {10, 5},     //[40] Взрыв
-    {10, 6},     //[41] Пакман
-    {10, 7},     //[42] "С НОВЫМ ГОДОМ" на японском
-    {10, 8},     //[43] Приветствие на корейском
-    {10, 9},     //[44] Различные картинки
-    {10, 10},    //[45] Цифровой сигнал
-    {10, 11},    //[46] Синусоида
-    {10, 12},    //[47] Цветные синусоиды
-    {10, 13},    //[48] Цветные линии 1
-    {10, 14},    //[49] Цветные линии 2
-    {11, 1},     //[50] Прыгающий квадрат
-    {11, 2},     //[51] Прыгающие точки
-    {11, 3},     //[52] Цветная спираль
-    {11, 4},     //[53] Игра змейка
-    {11, 5},     //[54] Игра тетрис
-    {11, 6},     //[55] Игра арканоид
-    {11, 7}      //[56] Эффект из к/ф матрица
-};
-
-void checkMode(uint8_t num) {
-  if (num < sizeof(modes) / sizeof(modes[0])) {
-    choosenModeD1 = modes[num].choosenModeD1;
-    choosenModeD2 = modes[num].choosenModeD2;
+void successSave() {
+  for (int i = 0; i < NUM_LEDS; i++) {
+    strip.setPixelColor(i, 0xffffff);
   }
+  strip.show();
+  delay(950);
+  for (int i = 0; i < NUM_LEDS; i++) {
+    strip.setPixelColor(i, 0x000000);
+  }
+  strip.show();
 }
 
-void allMods() {
+void applyNewParameters(String paramData, uint8_t param) {
+  // имя сети - 1; стартовый режим - 2; яркость - 3
+  // длительность эффекта для "Все режимы" - 4
+  // "Все режимы" - эффекты подрял или в разброс - 5
+  // Автоотключение wifi через 5 минут после включения
+
+  int paramDataLen = paramData.length() + 1;
+  char webParamData[paramDataLen];
+  paramData.toCharArray(webParamData, paramDataLen);
+
+  switch (param) {
+    case 1:
+      strncpy(ssid, webParamData, sizeof(ssid));
+      break;
+
+    case 2:
+      strncpy(startMode, webParamData, sizeof(startMode));
+      break;
+
+    case 3:
+      strncpy(brightness, webParamData, sizeof(brightness));
+      break;
+
+    case 4: {
+      strncpy(allModeDelayString, webParamData, sizeof(allModeDelayString));
+      String localStr = allModeDelayString;
+      allModeDelay = (unsigned long)(localStr.toInt());
+    } break;
+
+    case 5:
+      strncpy(allModeType, webParamData, sizeof(allModeType));
+      break;
+
+    case 6:
+      strncpy(wifiAutoOffType, webParamData, sizeof(wifiAutoOffType));
+      break;
+  }
+
+  saveSettings();
+
+  if (param == 4) {
+    allModeDelay *= 1000;
+  }
+
+  successSave();
+}
+
+void allModesEffect() {
   unsigned long currentTime = millis();
 
-  if (currentIndex == 255 || (currentTime - prevTime >= modeDelay)) {
+  if (currentIndex == 255 || (currentTime - prevTime >= allModeDelay)) {
     if (currentIndex == 255) {
       currentIndex = 0;
     }
+
     prevTime = currentTime;
-    checkMode(modeArray[currentIndex]);
-    currentIndex = (currentIndex + 1) % arraySize;
+
+    if (allModeType[0] == '1') {
+      if (currentIndex > sizeof(modes) / sizeof(modes[0])) {
+        currentIndex = 0;
+      }
+
+      mode = modes[currentIndex].first;
+      subMode = modes[currentIndex].second;
+
+      currentIndex += 1;
+
+    } else {
+      currentIndex = rand() % 60;
+
+      mode = modes[currentIndex].first;
+      subMode = modes[currentIndex].second;
+    }
+
+    FastLED.clear();
+    FastLED.show();
+    FastLED.show();
     strip.clear();
     strip.show();
+    strip.show();
   }
+}
+
+int XY(int x, int y) {
+  if (x % 2 == 0) {
+    return x * mHeight + y;
+  } else {
+    return x * mHeight + (mHeight - 1 - y);
+  }
+}
+
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if (WheelPos < 85) {
+    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if (WheelPos < 170) {
+    WheelPos -= 85;
+    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }

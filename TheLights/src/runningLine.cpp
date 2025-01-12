@@ -1,33 +1,36 @@
 /*
-В случае вывода вместо кириллицы, непонятных символов (была обновлена библиотека
-или в вашем прокте взята новая): Нужно в библиотеке Adafruit_GFX_library файл
+
+Нужно в библиотеке Adafruit_GFX_library файл
 glcdfont.c заменить на аналогичный с этого проекта или с сайта автора данного
-решения (Адресная лента WS2812b, Бегущая строка, Управление шрифтами.):
+эффекта (Адресная лента WS2812b, Бегущая строка, Управление шрифтами.):
 http://arduino-kid.ru/blog/adresnaya-lenta-ws2812b-beguschaya-stroka-upravlenie-shriftami
+
+- для точки отсчета брать if (--g < -125), где 125 зависит от длины текста, так
+- например 125 при длине текста 21
+- число 3 - отступ сверху
+
 */
 
-// для точки отсчета брать if (--g < -125), где 125 зависит от длины текста, так
-// например 125 при длине текста 21
-// Число 3 - отступ сверху
+#include "runningLine.h"
+#include "colors.h"
 
-#include <runningLine.h>
+static String utf8rus(String source);
 
-const char* messages[] = {"С НОВЫМ ГОДОМ!!!",
-                          "ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА",
-                          "ПРИВЕТ, Я УМНАЯ ГИРЛЯНДА",
-                          "ВВЕДИТЕ ТЕКСТ",
-                          "С НАСТУПАЮЩИМ НОВЫМ ГОДОМ!!!",
-                          "С РОЖДЕСТВОМ!!!",
-                          "HAPPY NEW YEAR!!!"};
+void runningLine(uint8_t subMode) {
+  const char* messages[] = {"С НОВЫМ ГОДОМ!!!",
+                            "ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА",
+                            "ПРИВЕТ, Я УМНАЯ ГИРЛЯНДА",
+                            "ВВЕДИТЕ ТЕКСТ",
+                            "С НАСТУПАЮЩИМ НОВЫМ ГОДОМ!!!",
+                            "С РОЖДЕСТВОМ!!!",
+                            "HAPPY NEW YEAR!!!"};
 
-const int messageLengths[] = {100, 173, 137, 85, 183, 98, 98};
+  const int messageLengths[] = {100, 173, 137, 85, 183, 98, 98};
 
-int pass = 0;
-int g = mWidth;
-int messageIndex = -1;
+  static int messageIndex = -1;
+  static int g = mWidth;
 
-void runningLine() {
-  switch (choosenModeD2) {
+  switch (subMode) {
     case 1:
       messageIndex = 0;
       break;
@@ -57,6 +60,7 @@ void runningLine() {
       break;
 
     default:
+      g = mWidth;
       break;
   }
 
@@ -66,10 +70,7 @@ void runningLine() {
     matrix.print(utf8rus(messages[messageIndex]));
     if (--g < -messageLengths[messageIndex]) {
       g = matrix.width();
-      pass = random(127);
-      // pgm_read_dword(&(p2[i]))
-      //matrix.setTextColor(getMatrixColorByIndex(pass));
-      matrix.setTextColor(pgm_read_dword(&(mainColors[pass])));
+      matrix.setTextColor(pgm_read_dword(&(mainColors[rand() % 127])));
     }
     matrix.show();
     delay(250);

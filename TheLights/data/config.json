@@ -1,1 +1,1 @@
-{"json_ssid":"SmartXmasLights","json_startmode":"00"} 
+{"json_ssid":"SmartXmasLights", "json_startmode":"99", "json_brightness":"50", "json_allModeDelay":"900", "json_allMode":"1", "json_wifiAutoOff":"0"} 
