@@ -150,7 +150,13 @@ IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
 
 void setup() {
-  srand(time(NULL));
+
+  unsigned long randomInitVal = analogRead(0);
+  randomInitVal ^= analogRead(1) << 8;
+  randomInitVal ^= analogRead(2) << 16;
+  randomInitVal ^= millis() << 24;
+
+  srand(randomInitVal);
 
   if (!LittleFS.begin()) {
     return;
@@ -372,7 +378,7 @@ bool loadSettings() {
 
   const char *jsonAllModeDelay = doc["json_allModeDelay"];
   if (jsonAllModeDelay) {
-    strncpy(allModeDelayString, jsonAllModeDelay, 3);
+    strncpy(allModeDelayString, jsonAllModeDelay, 4);
     String localStr = allModeDelayString;
     allModeDelay = (unsigned long)(localStr.toInt()) * 1000;
   }
