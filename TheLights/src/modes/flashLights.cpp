@@ -26,24 +26,24 @@ void flashLights(uint8_t subMode) {
 void flashLights2() {
   static bool loadingFlag = true;
 
-  static byte FF[mWidth][mHeight];
-  static byte SF[mWidth][mHeight];
+  static byte FF[MATRIX_WIDTH][MATRIX_HEIGHT];
+  static byte SF[MATRIX_WIDTH][MATRIX_HEIGHT];
 
   if (loadingFlag) {
-    memset8(SF, 0, NUM_LEDS);
-    memset8(FF, 0, NUM_LEDS);
+    memset8(SF, 0, MATRIX_LEDS);
+    memset8(FF, 0, MATRIX_LEDS);
     loadingFlag = 0;
   }
   for (byte i = 0; i < map(128, 1, 255, 2, 16); i++) {
-    uint8_t x = ESP8266TrueRandom.random(mWidth);
-    uint8_t y = ESP8266TrueRandom.random(mHeight);
+    uint8_t x = ESP8266TrueRandom.random(MATRIX_WIDTH);
+    uint8_t y = ESP8266TrueRandom.random(MATRIX_HEIGHT);
     if (!SF[x][y]) {
       SF[x][y] = 255;
       FF[x][y] = ESP8266TrueRandom.random(255);
     }
   }
-  for (byte x = 0; x < mWidth; x++) {
-    for (byte y = 0; y < mHeight; y++) {
+  for (byte x = 0; x < MATRIX_WIDTH; x++) {
+    for (byte y = 0; y < MATRIX_HEIGHT; y++) {
       if (SF[x][y] <= 30)
         SF[x][y] = 0;
       else
@@ -62,16 +62,16 @@ static uint16_t getIndex(uint16_t x, uint16_t y) {
   if (y == 0) {
     index = x;
   } else if (y % 2 == 0) {
-    index = y * mWidth + x;
+    index = y * MATRIX_WIDTH + x;
   } else {
-    index = ((y * mWidth) + (mWidth - 1)) - x;
+    index = ((y * MATRIX_WIDTH) + (MATRIX_WIDTH - 1)) - x;
   }
   return index;
 }
 
 void flashLights3() {
-  fadeToBlackBy(leds, NUM_LEDS, 20);
-  int pos = random16(NUM_LEDS);
+  fadeToBlackBy(leds, MATRIX_LEDS, 20);
+  int pos = random16(MATRIX_LEDS);
   leds[pos] += CHSV(HUE_PURPLE, 255, 255);
   FastLED.show();
   FastLED.delay(1000 / 60);
@@ -79,21 +79,21 @@ void flashLights3() {
 
 void flashLights1() {
   EVERY_N_MILLIS(75) {
-    for (int8_t row = mHeight - 1; row >= 0; row--) {
-      for (int8_t col = 0; col < mWidth; col++) {
+    for (int8_t row = MATRIX_HEIGHT - 1; row >= 0; row--) {
+      for (int8_t col = 0; col < MATRIX_WIDTH; col++) {
         if (leds[getIndex(col, row)] == CRGB(175, 255, 175)) {
           leds[getIndex(col, row)] = CRGB(27, 130, 39);
-          if (row < mHeight - 1)
+          if (row < MATRIX_HEIGHT - 1)
             leds[getIndex(col, row + 1)] = CRGB(175, 255, 175);
         }
       }
     }
 
-    for (int i = 0; i < NUM_LEDS; i++) {
+    for (int i = 0; i < MATRIX_LEDS; i++) {
       if (leds[i].g != 255) leds[i].nscale8(192);
     }
     bool emptyScreen = true;
-    for (int i = 0; i < NUM_LEDS; i++) {
+    for (int i = 0; i < MATRIX_LEDS; i++) {
       if (leds[i]) {
         emptyScreen = false;
         break;
@@ -101,7 +101,7 @@ void flashLights1() {
     }
 
     if (random8(3) == 0 || emptyScreen) {
-      int8_t spawnX = random8(mWidth);
+      int8_t spawnX = random8(MATRIX_WIDTH);
       leds[getIndex(spawnX, 0)] = CRGB(175, 255, 175);
     }
 

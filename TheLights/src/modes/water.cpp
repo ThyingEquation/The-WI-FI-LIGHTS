@@ -23,7 +23,7 @@ static void lagoonOneLayer(CRGBPalette16& p, uint16_t cistart,
   uint16_t ci = cistart;
   uint16_t waveangle = ioff;
   uint16_t wavescale_half = (wavescale / 2) + 20;
-  for (uint16_t i = 0; i < NUM_LEDS; i++) {
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++) {
     waveangle += 250;
     uint16_t s16 = sin16(waveangle) + 32768;
     uint16_t cs = scale16(s16, wavescale_half) + wavescale_half;
@@ -39,7 +39,7 @@ static void lagoonAddWhitecaps() {
   uint8_t basethreshold = beatsin8(9, 55, 65);
   uint8_t wave = beat8(7);
 
-  for (uint16_t i = 0; i < NUM_LEDS; i++) {
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++) {
     uint8_t threshold = scale8(sin8(wave), 20) + basethreshold;
     wave += 7;
     uint8_t l = leds[i].getAverageLight();
@@ -52,7 +52,7 @@ static void lagoonAddWhitecaps() {
 }
 
 static void lagoonDeepenColors() {
-  for (uint16_t i = 0; i < NUM_LEDS; i++) {
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++) {
     leds[i].blue = scale8(leds[i].blue, 145);
     leds[i].green = scale8(leds[i].green, 200);
     leds[i] |= CRGB(2, 5, 7);
@@ -88,7 +88,7 @@ void lagoon() {
   sCIStart3 -= (deltams1 * beatsin88(501, 5, 7));
   sCIStart4 -= (deltams2 * beatsin88(257, 4, 6));
 
-  fill_solid(leds, NUM_LEDS, CRGB(2, 6, 10));
+  fill_solid(leds, MATRIX_LEDS, CRGB(2, 6, 10));
 
   lagoonOneLayer(lagoonPalette1, sCIStart1, beatsin16(3, 11 * 256, 14 * 256),
                  beatsin8(10, 70, 130), 0 - beat16(301));
@@ -128,16 +128,16 @@ void pool() {
     currentPalette9[8] = CHSV(hue9, 0, 210);
     currentPalette9[7] = CHSV(hue9, 195, 255);
   }
-  XYMap xyMap(mWidth, mHeight);
-  blur2d(leds, mWidth, mHeight, 100, xyMap);
+  XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+  blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 100, xyMap);
 
-  for (byte y = 0; y < mHeight; y++) {
-    for (byte x = 0; x < mWidth; x++) {
+  for (byte y = 0; y < MATRIX_HEIGHT; y++) {
+    for (byte x = 0; x < MATRIX_WIDTH; x++) {
       uint8_t pixelHue8 = inoise8(x * 30, y * 30, millis() / 16);
-      leds[(y * mWidth + x)] = ColorFromPalette(currentPalette9, pixelHue8);
+      leds[(y * MATRIX_WIDTH + x)] = ColorFromPalette(currentPalette9, pixelHue8);
     }
   }
-  blur2d(leds, mWidth, mHeight, 32, xyMap);
+  blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 32, xyMap);
 
   FastLED.show();
   FastLED.delay(1000 / 60);

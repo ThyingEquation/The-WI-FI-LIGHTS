@@ -44,8 +44,8 @@ static float fmap(const float x, const float in_min, const float in_max,
 }
 
 void sinusoidWaves(int sinNum) {
-  const uint8_t semikMatrixHeightMajor = mHeight / 2 + (mHeight % 2);
-  const uint8_t semikMatrixWidthMajor = mWidth / 2 + (mWidth % 2);
+  const uint8_t semikMatrixHeightMajor = MATRIX_HEIGHT / 2 + (MATRIX_HEIGHT % 2);
+  const uint8_t semikMatrixWidthMajor = MATRIX_WIDTH / 2 + (MATRIX_WIDTH % 2);
   const float e_s3_speed = 0.004 * 15 + 0.015;
   const float e_s3_size = fmap(255, 1, 255, 3, 9);
   const uint8_t _scale = map8(55, 50, 150);
@@ -65,8 +65,8 @@ void sinusoidWaves(int sinNum) {
         127 * (1 + sin16(127 * _scale * sqrt(cx * cx + cy * cy)) / 32767.0));
   };
 
-  for (uint8_t y = 0; y < mHeight; y++) {
-    for (uint8_t x = 0; x < mWidth; x++) {
+  for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
+    for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
       switch (sinNum) {
         case 0:
           leds[XY(x, y)].r = 255 - calculateColor(x, y, 98.301, 72.0874);

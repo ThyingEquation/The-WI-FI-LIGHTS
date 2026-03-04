@@ -66,14 +66,14 @@ static void move(byte id) {
 }
 
 static void check1(byte id) {
-  if (leds[pos[1][id] * mWidth + pos[0][id]] == CRGB(0, 0, 0))
+  if (leds[pos[1][id] * MATRIX_WIDTH + pos[0][id]] == CRGB(0, 0, 0))
     leds[XY(pos[0][id], pos[1][id])] = CHSV(hue6, 255, 255);
   else
     leds[XY(pos[0][id], pos[1][id])] = 0;
 }
 
 static void check2(byte id) {
-  if (leds[pos[1][id] * mWidth + pos[0][id]] == CRGB(0, 0, 0))
+  if (leds[pos[1][id] * MATRIX_WIDTH + pos[0][id]] == CRGB(0, 0, 0))
     dir[id]++;
   else
     dir[id]--;
@@ -84,10 +84,10 @@ static void check2(byte id) {
 }
 
 static void check3(byte id) {
-  if (pos[0][id] > mHeight - 1) pos[0][id] = 0;
-  if (pos[1][id] > mWidth - 1) pos[1][id] = 0;
-  if (pos[0][id] < 0) pos[0][id] = mHeight - 1;
-  if (pos[1][id] < 0) pos[1][id] = mWidth - 1;
+  if (pos[0][id] > MATRIX_HEIGHT - 1) pos[0][id] = 0;
+  if (pos[1][id] > MATRIX_WIDTH - 1) pos[1][id] = 0;
+  if (pos[0][id] < 0) pos[0][id] = MATRIX_HEIGHT - 1;
+  if (pos[1][id] < 0) pos[1][id] = MATRIX_WIDTH - 1;
 }
 
 void jumpingLights1() {
@@ -98,8 +98,8 @@ void jumpingLights1() {
     setUp = false;
     FastLED.clear();
     for (byte i = 0; i < 8; i++) {
-      pos[0][i] = ESP8266TrueRandom.random(mHeight);
-      pos[1][i] = ESP8266TrueRandom.random(mWidth);
+      pos[0][i] = ESP8266TrueRandom.random(MATRIX_HEIGHT);
+      pos[1][i] = ESP8266TrueRandom.random(MATRIX_WIDTH);
       dir[i] = ESP8266TrueRandom.random(3);
     }
   }
@@ -111,7 +111,7 @@ void jumpingLights1() {
     check2(i);
   }
   hue6++;
-  if (fade) fadeToBlackBy(leds, NUM_LEDS, 6);
+  if (fade) fadeToBlackBy(leds, MATRIX_LEDS, 6);
   EVERY_N_SECONDS(1) { setUp = true; }
   FastLED.show();
 }
@@ -144,7 +144,7 @@ void jumpingLights2() {
   static byte mass6[32];
   static bool loadingFlag6 = true;
 
-  XYMap xyMap(mWidth, mHeight);
+  XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
   if (loadingFlag6) {
     loadingFlag6 = false;
     randomSeed(millis());
@@ -153,8 +153,8 @@ void jumpingLights2() {
       lightersSpeedY6[i] = -10 + ESP8266TrueRandom.random(10 - (-10) + 1);
       mass6[i] = 5 + ESP8266TrueRandom.random(10 - 5 + 1);
       lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(25 - 3 + 1);
-      lightersPosX6[i] = ESP8266TrueRandom.random(mWidth * 10);
-      lightersPosY6[i] = ESP8266TrueRandom.random(mHeight * 10);
+      lightersPosX6[i] = ESP8266TrueRandom.random(MATRIX_WIDTH * 10);
+      lightersPosY6[i] = ESP8266TrueRandom.random(MATRIX_HEIGHT * 10);
       lcolor6[i] = ESP8266TrueRandom.random(9) * 28;
     }
   }
@@ -164,14 +164,14 @@ void jumpingLights2() {
       FastLED.clear();
       break;
     case 1:
-      fadeToBlackBy(leds, NUM_LEDS, 50);
+      fadeToBlackBy(leds, MATRIX_LEDS, 50);
       break;
     case 2:
-      blur2d(leds, mWidth, mHeight, 30, xyMap);
-      fadeToBlackBy(leds, NUM_LEDS, 5);
+      blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 30, xyMap);
+      fadeToBlackBy(leds, MATRIX_LEDS, 5);
       break;
     case 3:
-      fadeToBlackBy(leds, NUM_LEDS, 200);
+      fadeToBlackBy(leds, MATRIX_LEDS, 200);
       break;
   }
 
@@ -181,19 +181,19 @@ void jumpingLights2() {
       case 0:
         lightersPosX6[i] +=
             beatsin88(lightersSpeedX6[0] * 255, 0,
-                      mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
-            mass6[i] / 10 * ((mHeight + mWidth) / 16);
+                      mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
+            mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
         lightersPosY6[i] +=
             beatsin88(lightersSpeedY6[0] * 255, 0,
-                      mass6[i] / 10 * ((mHeight + mWidth) / 8)) -
-            mass6[i] / 10 * ((mHeight + mWidth) / 16);
+                      mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
+            mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
         break;
       case 1:
         lightersPosX6[i] = beatsin16(
-            lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0, (mWidth - 1) * 10);
+            lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0, (MATRIX_WIDTH - 1) * 10);
         lightersPosY6[i] =
             beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
-                      (mHeight - 1) * 10);
+                      (MATRIX_HEIGHT - 1) * 10);
         break;
       case 2:
         lightersPosX6[i] += lightersSpeedX6[i] / map(255, 1, 255, 10, 1);
@@ -216,12 +216,12 @@ void jumpingLights2() {
       lightersPosX6[i] = 1;
       lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
     }
-    if (lightersPosY6[i] >= (mHeight - 1) * 10) {
-      lightersPosY6[i] = ((mHeight - 1) * 10) - 1;
+    if (lightersPosY6[i] >= (MATRIX_HEIGHT - 1) * 10) {
+      lightersPosY6[i] = ((MATRIX_HEIGHT - 1) * 10) - 1;
       lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
     }
-    if (lightersPosX6[i] >= (mWidth - 1) * 10) {
-      lightersPosX6[i] = ((mWidth - 1) * 10) - 1;
+    if (lightersPosX6[i] >= (MATRIX_WIDTH - 1) * 10) {
+      lightersPosX6[i] = ((MATRIX_WIDTH - 1) * 10) - 1;
       lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
     }
 
@@ -248,19 +248,19 @@ void jumpingLights2() {
 
 void jumpingLights3() {
   for (byte i = 8; i--;) {
-    leds[XY(beatsin8(12 + i, 0, mWidth - 1),
-            beatsin8(15 - i, 0, mHeight - 1))] =
+    leds[XY(beatsin8(12 + i, 0, MATRIX_WIDTH - 1),
+            beatsin8(15 - i, 0, MATRIX_HEIGHT - 1))] =
         CHSV(beatsin8(12, 0, 255), 255, 255);
-    XYMap xyMap(mWidth, mHeight);
-    blur2d(leds, mWidth, mHeight, 16, xyMap);
+    XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+    blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 16, xyMap);
   }
   FastLED.show();
 }
 
-uint16_t XYB3(uint8_t x, uint8_t y) { return (y * mWidth + x); }
+uint16_t XYB3(uint8_t x, uint8_t y) { return (y * MATRIX_WIDTH + x); }
 
 void drawPixelXYFB3(float x, float y, const CRGB& color) {
-  if (x < 0 || y < 0 || x > ((float)mWidth - 1) || y > ((float)mHeight - 1))
+  if (x < 0 || y < 0 || x > ((float)MATRIX_WIDTH - 1) || y > ((float)MATRIX_HEIGHT - 1))
     return;
 
   uint8_t xx = (x - (int)x) * 255, yy = (y - (int)y) * 255, ix = 255 - xx,
@@ -273,7 +273,7 @@ void drawPixelXYFB3(float x, float y, const CRGB& color) {
   for (uint8_t i = 0; i < 4; i++) {
     int16_t xn = x + (i & 1), yn = y + ((i >> 1) & 1);
     CRGB clr = leds[XYB3(xn, yn)];
-    if (xn < (int)mWidth - 1 && yn < (int)mHeight - 1 && yn > 0 && xn > 0) {
+    if (xn < (int)MATRIX_WIDTH - 1 && yn < (int)MATRIX_HEIGHT - 1 && yn > 0 && xn > 0) {
       clr.r = qadd8(clr.r, (color.r * wu[i]) >> 8);
       clr.g = qadd8(clr.g, (color.g * wu[i]) >> 8);
       clr.b = qadd8(clr.b, (color.b * wu[i]) >> 8);
@@ -301,14 +301,14 @@ void drawCurve(float x, float y, float x2, float y2, float x3, float y3,
 byte hue;
 
 void jumpingLights4() {
-  fadeToBlackBy(leds, NUM_LEDS, 30);
-  byte x1 = beatsin8(18 + 100, 1, (mWidth - 2));
-  byte x2 = beatsin8(23 + 100, 1, (mWidth - 2));
-  byte x3 = beatsin8(27 + 100, 1, (mWidth - 2));
+  fadeToBlackBy(leds, MATRIX_LEDS, 30);
+  byte x1 = beatsin8(18 + 100, 1, (MATRIX_WIDTH - 2));
+  byte x2 = beatsin8(23 + 100, 1, (MATRIX_WIDTH - 2));
+  byte x3 = beatsin8(27 + 100, 1, (MATRIX_WIDTH - 2));
 
-  byte y1 = beatsin8(20 + 100, 1, (mHeight - 2));
-  byte y2 = beatsin8(26 + 100, 1, (mHeight - 2));
-  byte y3 = beatsin8(15 + 100, 1, (mHeight - 2));
+  byte y1 = beatsin8(20 + 100, 1, (MATRIX_HEIGHT - 2));
+  byte y2 = beatsin8(26 + 100, 1, (MATRIX_HEIGHT - 2));
+  byte y3 = beatsin8(15 + 100, 1, (MATRIX_HEIGHT - 2));
 
   drawCurve(x1, y1, x2, y2, x3, y3, CHSV(hue, 255, 255));
   hue++;
@@ -322,12 +322,12 @@ void jumpingSquare() {
   static int directionY = 1;
   static CRGB squareColor = CRGB::Red;
 
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
       int ledIndex = XY(squareX + i, squareY + j);
-      if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+      if (ledIndex >= 0 && ledIndex < MATRIX_LEDS) {
         leds[ledIndex] = squareColor;
       }
     }
@@ -337,13 +337,13 @@ void jumpingSquare() {
   squareX += directionX;
   squareY += directionY;
 
-  if (squareX + 3 >= mWidth || squareX < 0) {
+  if (squareX + 3 >= MATRIX_WIDTH || squareX < 0) {
     directionX = -directionX;
-    squareX = max(0, min(squareX, mWidth - 3));
+    squareX = max(0, min(squareX, MATRIX_WIDTH - 3));
   }
-  if (squareY + 3 >= mHeight || squareY < 0) {
+  if (squareY + 3 >= MATRIX_HEIGHT || squareY < 0) {
     directionY = -directionY;
-    squareY = max(0, min(squareY, mHeight - 3));
+    squareY = max(0, min(squareY, MATRIX_HEIGHT - 3));
   }
 
   static int frameCount = 0;
@@ -366,8 +366,8 @@ static Point points[6];
 
 void initPoints() {
   for (int i = 0; i < 6; i++) {
-    points[i].x = ESP8266TrueRandom.random(mWidth);
-    points[i].y = ESP8266TrueRandom.random(mHeight);
+    points[i].x = ESP8266TrueRandom.random(MATRIX_WIDTH);
+    points[i].y = ESP8266TrueRandom.random(MATRIX_HEIGHT);
     points[i].color = CHSV(random8(), 255, 255);
     points[i].directionX = ESP8266TrueRandom.random(2) == 0 ? 1 : -1;
     points[i].directionY = ESP8266TrueRandom.random(2) == 0 ? 1 : -1;
@@ -375,11 +375,11 @@ void initPoints() {
 }
 
 void jumpingPoints() {
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   for (int i = 0; i < 6; i++) {
     int ledIndex = XY(points[i].x, points[i].y);
-    if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+    if (ledIndex >= 0 && ledIndex < MATRIX_LEDS) {
       leds[ledIndex] = points[i].color;
     }
   }
@@ -389,13 +389,13 @@ void jumpingPoints() {
     points[i].x += points[i].directionX;
     points[i].y += points[i].directionY;
 
-    if (points[i].x >= mWidth || points[i].x < 0) {
+    if (points[i].x >= MATRIX_WIDTH || points[i].x < 0) {
       points[i].directionX = -points[i].directionX;
-      points[i].x = max(0, min(points[i].x, mWidth - 1));
+      points[i].x = max(0, min(points[i].x, MATRIX_WIDTH - 1));
     }
-    if (points[i].y >= mHeight || points[i].y < 0) {
+    if (points[i].y >= MATRIX_HEIGHT || points[i].y < 0) {
       points[i].directionY = -points[i].directionY;
-      points[i].y = max(0, min(points[i].y, mHeight - 1));
+      points[i].y = max(0, min(points[i].y, MATRIX_HEIGHT - 1));
     }
   }
 

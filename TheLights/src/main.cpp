@@ -6,19 +6,18 @@
 #include "settings.h"
 #include "modes.h"
 
-
 static void settingsProcessing(void);
 static void mainModesProcessing(void);
 static void paintingProcessing(void);
 static void drawingImagesProcessing(void);
 static void allModesEffect();
 
-CRGB leds_plus_safety_pixel[NUM_LEDS + 1];
+CRGB leds_plus_safety_pixel[MATRIX_LEDS + 1];
 CRGB *const leds(leds_plus_safety_pixel + 1);
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, 4, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(MATRIX_LEDS, 4, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
-    mWidth, mHeight, 4,
+    MATRIX_WIDTH, MATRIX_HEIGHT, 4,
     NEO_MATRIX_BOTTOM + TEXT_POS + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
     NEO_GRB + NEO_KHZ800);
 
@@ -128,7 +127,7 @@ void setup() {
 
   Serial.begin(9600);
   FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
-  FastLED.addLeds<WS2812B, 4, GRB>(leds, NUM_LEDS)
+  FastLED.addLeds<WS2812B, 4, GRB>(leds, MATRIX_LEDS)
       .setCorrection(TypicalSMD5050)
       .setDither(settings.intBrightness <= 255);
   FastLED.setBrightness(settings.intBrightness);
@@ -338,9 +337,9 @@ void allModesEffect() {
 
 int XY(int x, int y) {
   if (x % 2 == 0) {
-    return x * mHeight + y;
+    return x * MATRIX_HEIGHT + y;
   } else {
-    return x * mHeight + (mHeight - 1 - y);
+    return x * MATRIX_HEIGHT + (MATRIX_HEIGHT - 1 - y);
   }
 }
 

@@ -82,21 +82,21 @@ void starSky() {
   }
 }
 
-uint16_t XY7(uint8_t x, uint8_t y) { return (y * mWidth + x); }
+uint16_t XY7(uint8_t x, uint8_t y) { return (y * MATRIX_WIDTH + x); }
 
 byte dir7 = 3;
 
 static void MoveX(int8_t delta) {
   if (delta) {
     if (delta > 0) {
-      for (uint8_t y = 0; y < mHeight; y++) {
-        for (uint8_t x = 0; x < mWidth; x++) {
+      for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
+        for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
           leds[XY7(x, y)] = leds[XY7(x + delta, y)];
         }
       }
     } else {
-      for (uint8_t y = 0; y < mHeight; y++) {
-        for (uint8_t x = mWidth - 1; x > 0; x--) {
+      for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
+        for (uint8_t x = MATRIX_WIDTH - 1; x > 0; x--) {
           leds[XY7(x, y)] = leds[XY7(x + delta, y)];
         }
       }
@@ -107,14 +107,14 @@ static void MoveX(int8_t delta) {
 static void MoveY(int8_t delta) {
   if (delta) {
     if (delta > 0) {
-      for (uint8_t x = 0; x < mWidth; x++) {
-        for (uint8_t y = 0; y < mHeight; y++) {
+      for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
+        for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
           leds[XY7(x, y)] = leds[XY7(x, y + delta)];
         }
       }
     } else {
-      for (uint8_t x = 0; x < mWidth; x++) {
-        for (uint8_t y = mHeight - 1; y > 0; y--) {
+      for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
+        for (uint8_t y = MATRIX_HEIGHT - 1; y > 0; y--) {
           leds[XY7(x, y)] = leds[XY7(x, y + delta)];
         }
       }
@@ -124,7 +124,7 @@ static void MoveY(int8_t delta) {
 
 static void drawPixel(byte x, byte y, CRGB color) {
   leds[XY7(x, y)] += color;
-  if (mWidth > 24 || mHeight > 24) {
+  if (MATRIX_WIDTH > 24 || MATRIX_HEIGHT > 24) {
     leds[XY7(x + 1, y)] += color;
     leds[XY7(x - 1, y)] += color;
     leds[XY7(x, y + 1)] += color;
@@ -133,7 +133,7 @@ static void drawPixel(byte x, byte y, CRGB color) {
 }
 
 void spaceship() {
-  fadeToBlackBy(leds, NUM_LEDS, 16);
+  fadeToBlackBy(leds, MATRIX_LEDS, 16);
   switch (dir7) {
     case 0:
       MoveX(1);
@@ -165,13 +165,13 @@ void spaceship() {
       break;
   }
   for (byte i = 0; i < 8; i++) {
-    byte x = beatsin8(12 + i, 2, mWidth - 3);
-    byte y = beatsin8(15 + i, 2, mHeight - 3);
+    byte x = beatsin8(12 + i, 2, MATRIX_WIDTH - 3);
+    byte y = beatsin8(15 + i, 2, MATRIX_HEIGHT - 3);
     drawPixel(x, y,
               ColorFromPalette(RainbowColors_p, beatsin8(12 + i, 0, 255), 255));
   }
-  XYMap xyMap(mWidth, mHeight);
-  blur2d(leds, mWidth, mHeight, 32, xyMap);
+  XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+  blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 32, xyMap);
   FastLED.show();
   EVERY_N_SECONDS(5) {
     if (dir7 == 7)
@@ -225,8 +225,8 @@ void starFall() {
     for (int j = 0; j < length; ++j) {
       int rowIndex = row - j;
       int colIndex = col - j;
-      if (rowIndex >= 0 && rowIndex < mHeight && colIndex >= 0 &&
-          colIndex < mWidth) {
+      if (rowIndex >= 0 && rowIndex < MATRIX_HEIGHT && colIndex >= 0 &&
+          colIndex < MATRIX_WIDTH) {
         int pixelIndex = XY(colIndex, rowIndex);
         if (clear) {
           leds[pixelIndex] = CRGB::Black;
@@ -254,10 +254,10 @@ void starFall() {
       --currentRow[i];
       --currentCol[i];
     } else {
-      // currentCol[i] = mWidth + 4 + std::rand() % 8;
-      // currentRow[i] = mWidth + 6 + std::rand() % 8;
-      currentCol[i] = mWidth + 4 + ESP8266TrueRandom.random(8);
-      currentRow[i] = mWidth + 6 + ESP8266TrueRandom.random(8);
+      // currentCol[i] = MATRIX_WIDTH + 4 + std::rand() % 8;
+      // currentRow[i] = MATRIX_WIDTH + 6 + std::rand() % 8;
+      currentCol[i] = MATRIX_WIDTH + 4 + ESP8266TrueRandom.random(8);
+      currentRow[i] = MATRIX_WIDTH + 6 + ESP8266TrueRandom.random(8);
     }
   }
 }
@@ -266,17 +266,17 @@ void colorfulSpiral() {
   static bool forward = true;
   static int spiralIndex = 0;
 
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   int x = 0, y = 0;
   int dx = 0, dy = -1;
-  int maxI = max(mWidth, mHeight) * max(mWidth, mHeight);
+  int maxI = max(MATRIX_WIDTH, MATRIX_HEIGHT) * max(MATRIX_WIDTH, MATRIX_HEIGHT);
 
   for (int i = 0; i < maxI; i++) {
-    if (x >= -mWidth / 2 && x < mWidth / 2 && y >= -mHeight / 2 &&
-        y < mHeight / 2) {
-      int ledIndex = XY(x + mWidth / 2, y + mHeight / 2);
-      if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+    if (x >= -MATRIX_WIDTH / 2 && x < MATRIX_WIDTH / 2 && y >= -MATRIX_HEIGHT / 2 &&
+        y < MATRIX_HEIGHT / 2) {
+      int ledIndex = XY(x + MATRIX_WIDTH / 2, y + MATRIX_HEIGHT / 2);
+      if (ledIndex >= 0 && ledIndex < MATRIX_LEDS) {
         leds[ledIndex] = CHSV((i + spiralIndex) % 256, 255, 255);
       }
     }

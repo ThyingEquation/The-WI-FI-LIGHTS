@@ -16,10 +16,10 @@ void rainbows(uint8_t subMode) {
 
 static void DrawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8) {
   byte lineStartHue = startHue8;
-  for (byte Y = 0; Y < mHeight; Y++) {
+  for (byte Y = 0; Y < MATRIX_HEIGHT; Y++) {
     lineStartHue += yHueDelta8;
     byte pixelHue = lineStartHue;
-    for (byte X = 0; X < mWidth; X++) {
+    for (byte X = 0; X < MATRIX_WIDTH; X++) {
       pixelHue += xHueDelta8;
       leds[XY(X, Y)] = CHSV(pixelHue, 255, 255);
     }
@@ -28,8 +28,8 @@ static void DrawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8) {
 
 void rainbowWheel() {
   uint32_t ms = millis();
-  int32_t yHueDelta32 = ((int32_t)cos16(ms * (27 / 1)) * (350 / mWidth));
-  int32_t xHueDelta32 = ((int32_t)cos16(ms * (39 / 1)) * (310 / mHeight));
+  int32_t yHueDelta32 = ((int32_t)cos16(ms * (27 / 1)) * (350 / MATRIX_WIDTH));
+  int32_t xHueDelta32 = ((int32_t)cos16(ms * (39 / 1)) * (310 / MATRIX_HEIGHT));
   DrawOneFrame(ms / 65536, yHueDelta32 / 32768, xHueDelta32 / 32768);
   if (ms < 5000) {
     FastLED.setBrightness(scale8(50, (ms * 256) / 5000));
@@ -57,7 +57,7 @@ void rainbowWave1() {
   sHue16 += deltams * beatsin88(400, 5, 9);
   uint16_t brightnesstheta16 = sPseudotime;
 
-  for (uint16_t i = 0; i < NUM_LEDS; i++) {
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++) {
     hue16 += hueinc16;
     uint8_t hue8 = hue16 / 256;
 
@@ -72,7 +72,7 @@ void rainbowWave1() {
 
     uint16_t pixelnumber = i;
 
-    pixelnumber = (NUM_LEDS - 1) - pixelnumber;
+    pixelnumber = (MATRIX_LEDS - 1) - pixelnumber;
 
     nblend(leds[pixelnumber], newcolor, 64);
   }
@@ -94,7 +94,7 @@ void rainbowWave2() {
 }
 
 static void fadeall() {
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < MATRIX_LEDS; i++) {
     leds[i].nscale8(250);
   }
 }
@@ -104,13 +104,13 @@ void rainbowSnake() {
   static uint16_t waveSnake2 = 0;
   static uint8_t hue = 0;
 
-  if (waveSnake1 < NUM_LEDS) {
+  if (waveSnake1 < MATRIX_LEDS) {
     leds[waveSnake1] = CHSV(hue++, 255, 255);
     FastLED.show();
     fadeall();
     delay(15);
     ++waveSnake1;
-    waveSnake2 = NUM_LEDS - 1;
+    waveSnake2 = MATRIX_LEDS - 1;
   }
 
   else if (waveSnake2 > 0) {
@@ -120,11 +120,11 @@ void rainbowSnake() {
     delay(15);
     --waveSnake2;
   } else {
-    for (int i = 0; i < NUM_LEDS; i++) {
+    for (int i = 0; i < MATRIX_LEDS; i++) {
       strip.setPixelColor(i, strip.Color(0, 0, 0));
     }
     strip.show();
     waveSnake1 = 0;
-    waveSnake2 = (NUM_LEDS)-1;
+    waveSnake2 = (MATRIX_LEDS)-1;
   }
 }

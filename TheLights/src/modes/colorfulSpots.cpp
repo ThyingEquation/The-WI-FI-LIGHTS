@@ -29,9 +29,9 @@ void fillnoise8() {
     dataSmoothing = 400 - (speed * 4);
   }
 
-  for (int i = 0; i < mHeight; i++) {
+  for (int i = 0; i < MATRIX_HEIGHT; i++) {
     int ioffset = scale * i;
-    for (int j = 0; j < mHeight; j++) {
+    for (int j = 0; j < MATRIX_HEIGHT; j++) {
       int joffset = scale * j;
 
       uint8_t data = inoise8(X + ioffset, Y + joffset, Z);
@@ -57,8 +57,8 @@ void fillnoise8() {
 void mapNoiseToLEDsUsingPalette() {
   static uint8_t ihue = 0;
 
-  for (int i = 0; i < mWidth; i++) {
-    for (int j = 0; j < mHeight; j++) {
+  for (int i = 0; i < MATRIX_WIDTH; i++) {
+    for (int j = 0; j < MATRIX_HEIGHT; j++) {
       uint8_t index = noise[j][i];
       uint8_t bri = noise[i][j];
 

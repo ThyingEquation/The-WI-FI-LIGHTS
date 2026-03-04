@@ -52,14 +52,14 @@ static void updateSnake() {
       break;
   }
 
-  if (snakeX[0] < 0) snakeX[0] = mWidth - 1;
-  if (snakeX[0] >= mWidth) snakeX[0] = 0;
-  if (snakeY[0] < 0) snakeY[0] = mHeight - 1;
-  if (snakeY[0] >= mHeight) snakeY[0] = 0;
+  if (snakeX[0] < 0) snakeX[0] = MATRIX_WIDTH - 1;
+  if (snakeX[0] >= MATRIX_WIDTH) snakeX[0] = 0;
+  if (snakeY[0] < 0) snakeY[0] = MATRIX_HEIGHT - 1;
+  if (snakeY[0] >= MATRIX_HEIGHT) snakeY[0] = 0;
 
   if (snakeX[0] == foodX && snakeY[0] == foodY) {
-    foodX = ESP8266TrueRandom.random(mWidth);
-    foodY = ESP8266TrueRandom.random(mHeight);
+    foodX = ESP8266TrueRandom.random(MATRIX_WIDTH);
+    foodY = ESP8266TrueRandom.random(MATRIX_HEIGHT);
   }
 
   if (ESP8266TrueRandom.random(10) == 0) {
@@ -68,18 +68,18 @@ static void updateSnake() {
 }
 
 void snakeGame() {
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
   updateSnake();
 
   for (int i = 0; i < 5; i++) {
     int ledIndex = XY(snakeX[i], snakeY[i]);
-    if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+    if (ledIndex >= 0 && ledIndex < MATRIX_LEDS) {
       leds[ledIndex] = CRGB::Green;
     }
   }
 
   int ledIndex = XY(foodX, foodY);
-  if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+  if (ledIndex >= 0 && ledIndex < MATRIX_LEDS) {
     leds[ledIndex] = CRGB::White;
   }
 
@@ -110,7 +110,7 @@ static bool checkCollision(int figureIndex, int x, int y) {
   for (int i = 0; i < 4; i++) {
     int px = x + figures[figureIndex][i][0];
     int py = y + figures[figureIndex][i][1];
-    if (px < 0 || px >= mWidth || py < 0 || py >= mHeight) {
+    if (px < 0 || px >= MATRIX_WIDTH || py < 0 || py >= MATRIX_HEIGHT) {
       return true;
     }
     for (int j = 0; j < numFallingFigures; j++) {
@@ -147,13 +147,13 @@ static void addNewFigure() {
 }
 
 void tetrisGame() {
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < MATRIX_LEDS; i++) {
     leds[i] = CRGB::Black;
   }
   for (int i = 0; i < numFallingFigures; i++) {
     FallingFigure &fig = fallingFigures[i];
     fig.y++;
-    if (fig.y >= mHeight + 3) {
+    if (fig.y >= MATRIX_HEIGHT + 3) {
       for (int j = i; j < numFallingFigures - 1; j++) {
         fallingFigures[j] = fallingFigures[j + 1];
       }
@@ -162,7 +162,7 @@ void tetrisGame() {
       for (int i = 0; i < 4; i++) {
         int px = fig.x + figures[fig.figureIndex][i][0];
         int py = fig.y + figures[fig.figureIndex][i][1];
-        if (px >= 0 && px < mWidth && py >= 0 && py < mHeight) {
+        if (px >= 0 && px < MATRIX_WIDTH && py >= 0 && py < MATRIX_HEIGHT) {
           leds[XY(px, py)] = fig.color;
         }
       }
@@ -177,7 +177,7 @@ void tetrisGame() {
 }
 
 void arkanoidGame() {
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   static CRGB tileColors[] = {CRGB::Blue, CRGB::Green, CRGB::Yellow, CRGB::Red};
   const int tileWidth = 3, tilesPerRow = 4, totalTiles = 20;
@@ -191,7 +191,7 @@ void arkanoidGame() {
 
     for (int j = 0; j < tileWidth; j++) {
       int ledIndex = mainScheme[startIndex + j] - 1;
-      if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+      if (ledIndex >= 0 && ledIndex < MATRIX_LEDS) {
         leds[ledIndex] = tileColors[col];
       }
     }
@@ -199,7 +199,7 @@ void arkanoidGame() {
 
   static int platformPosition = 4;
   static int platformDirection = 1;
-  int platformRowOffset = (NUM_LEDS / 12) - 1;
+  int platformRowOffset = (MATRIX_LEDS / 12) - 1;
 
   platformPosition += platformDirection;
   if (platformPosition >= 12 - platformWidth || platformPosition < 0) {
@@ -211,7 +211,7 @@ void arkanoidGame() {
     int ledIndex =
         mainScheme[(platformRowOffset * 12) + platformPosition + i] - 1;
 
-    if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+    if (ledIndex >= 0 && ledIndex < MATRIX_LEDS) {
       leds[ledIndex] =
           (i == 0 || i == platformWidth - 1) ? CRGB::Red : CRGB::White;
     }

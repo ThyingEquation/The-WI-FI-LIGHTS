@@ -18,7 +18,7 @@ void matrixFallingLines() {
   auto drawLine = [](int col, int row, int length, bool clear) {
     for (int j = 0; j < length; ++j) {
       int rowIndex = row - j;
-      if (rowIndex >= 0 && rowIndex < mHeight) {
+      if (rowIndex >= 0 && rowIndex < MATRIX_HEIGHT) {
         int pixelIndex = XY(col, rowIndex);
         if (clear) {
           leds[pixelIndex] = CRGB::Black;
@@ -45,8 +45,8 @@ void matrixFallingLines() {
     if (currentRow[i] > 0) {
       --currentRow[i];
     } else {
-      currentCol[i] = ESP8266TrueRandom.random(mWidth);
-      currentRow[i] = mHeight + 8 + ESP8266TrueRandom.random(mHeight + 3);
+      currentCol[i] = ESP8266TrueRandom.random(MATRIX_WIDTH);
+      currentRow[i] = MATRIX_HEIGHT + 8 + ESP8266TrueRandom.random(MATRIX_HEIGHT + 3);
       lineLength[i] = 5 + ESP8266TrueRandom.random(5);
     }
   }

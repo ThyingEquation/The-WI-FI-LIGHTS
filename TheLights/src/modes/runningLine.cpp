@@ -28,7 +28,7 @@ void runningLine(uint8_t subMode) {
   const int messageLengths[] = {100, 173, 137, 85, 183, 98, 98};
 
   static int messageIndex = -1;
-  static int g = mWidth;
+  static int g = MATRIX_WIDTH;
 
   switch (subMode) {
     case 1:
@@ -60,7 +60,7 @@ void runningLine(uint8_t subMode) {
       break;
 
     default:
-      g = mWidth;
+      g = MATRIX_WIDTH;
       break;
   }
 

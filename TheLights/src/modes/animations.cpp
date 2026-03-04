@@ -117,7 +117,7 @@ void animations(uint8_t subMode) {
 }
 
 void mainFunAnime(uint8_t p1[], const int p2[]) {
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < MATRIX_LEDS; i++) {
     if ((p1[i] - 1) <= 155) {
       strip.setPixelColor(p1[i] - 1, pgm_read_dword(&(p2[i])));
     }
@@ -125,25 +125,25 @@ void mainFunAnime(uint8_t p1[], const int p2[]) {
 }
 
 static void shiftArrUp(uint8_t upCount) {
-  for (int i = 0; i < NUM_LEDS - mWidth; i++) {
-    ArrUp[i] = ArrUp[i + mWidth];
+  for (int i = 0; i < MATRIX_LEDS - MATRIX_WIDTH; i++) {
+    ArrUp[i] = ArrUp[i + MATRIX_WIDTH];
   }
-  for (int j = 0; j < mWidth; j++) {
-    ArrUp[NUM_LEDS - mWidth + j] = mainScheme[upCount * mWidth + j];
+  for (int j = 0; j < MATRIX_WIDTH; j++) {
+    ArrUp[MATRIX_LEDS - MATRIX_WIDTH + j] = mainScheme[upCount * MATRIX_WIDTH + j];
   }
 }
 
 static void shiftArrDown() {
-  for (int i = 0; i < NUM_LEDS - mWidth; i++) {
-    ArrDown[i] = ArrDown[i + mWidth];
+  for (int i = 0; i < MATRIX_LEDS - MATRIX_WIDTH; i++) {
+    ArrDown[i] = ArrDown[i + MATRIX_WIDTH];
   }
-  for (int j = 0; j < mWidth; j++) {
-    ArrDown[NUM_LEDS - mWidth + j] = 157;
+  for (int j = 0; j < MATRIX_WIDTH; j++) {
+    ArrDown[MATRIX_LEDS - MATRIX_WIDTH + j] = 157;
   }
 }
 
 static void initArrLetters() {
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < MATRIX_LEDS; i++) {
     ArrUp[i] = 157;
     ArrDown[i] = mainScheme[i];
   }

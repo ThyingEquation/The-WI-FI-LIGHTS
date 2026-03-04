@@ -80,12 +80,12 @@ bool loadSettings()
 }
 
 static void successSave() {
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < MATRIX_LEDS; i++) {
     strip.setPixelColor(i, 0xffffff);
   }
   strip.show();
   delay(950);
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < MATRIX_LEDS; i++) {
     strip.setPixelColor(i, 0x000000);
   }
   strip.show();

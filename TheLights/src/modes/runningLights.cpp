@@ -66,7 +66,7 @@ void runningColorfulLight() {
     leds[currentLED] = CRGB::Black;
 
     currentLED++;
-    if (currentLED >= NUM_LEDS) {
+    if (currentLED >= MATRIX_LEDS) {
       currentLED = 0;
       if (firstPass) {
         firstPass = false;
@@ -136,7 +136,7 @@ void runningLightSlow() {
   static uint8_t color = ESP8266TrueRandom.random(128);
   static uint16_t ledsCount = 0;
 
-  if (ledsCount <= NUM_LEDS) {
+  if (ledsCount <= MATRIX_LEDS) {
     strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[color])));
     strip.show();
     strip.setPixelColor(ledsCount - 1, strip.Color(0, 0, 0));
@@ -153,7 +153,7 @@ void runningLightFast() {
   static uint8_t color = ESP8266TrueRandom.random(128);
   static uint16_t ledsCount = 0;
 
-  if (ledsCount <= NUM_LEDS) {
+  if (ledsCount <= MATRIX_LEDS) {
     strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[color])));
     strip.show();
     strip.setPixelColor(ledsCount - 1, strip.Color(0, 0, 0));
@@ -183,7 +183,7 @@ void colorfulSnake() {
     tail = (tail + 1) % 10;
     snake[tail] = head;
     pixelCounter++;
-    if (pixelCounter >= NUM_LEDS) {
+    if (pixelCounter >= MATRIX_LEDS) {
       pixelCounter = 0;
       color = ESP8266TrueRandom.random(128);
     }

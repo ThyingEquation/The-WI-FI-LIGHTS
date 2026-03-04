@@ -26,7 +26,7 @@ const int colorsCanvas[] PROGMEM = {0x000000,
 void canvas(String mode, uint8_t color, int led) {
   if (mode.indexOf("A") != -1) {
     if (led == 257) {
-      for (int i = 0; i < NUM_LEDS; i++) {
+      for (int i = 0; i < MATRIX_LEDS; i++) {
         strip.setPixelColor(i, colorsCanvas[color]);
       }
       strip.show();
@@ -38,7 +38,7 @@ void canvas(String mode, uint8_t color, int led) {
 
   else if (mode.indexOf("B") != -1) {
     if (led == 257) {
-      for (int i = 0; i < NUM_LEDS; i++) {
+      for (int i = 0; i < MATRIX_LEDS; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0));
       }
       strip.show();

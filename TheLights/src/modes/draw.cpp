@@ -38,7 +38,7 @@ void snakeFast() {
   static unsigned int ledsCount = 0;
   static uint8_t color = 0;
 
-  if (ledsCount <= NUM_LEDS) {
+  if (ledsCount <= MATRIX_LEDS) {
     strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[color])));
     strip.show();
     delay(6);
@@ -55,7 +55,7 @@ void snakeSlow() {
   static unsigned int ledsCount = 0;
   static uint8_t color = 0;
 
-  if (ledsCount <= NUM_LEDS) {
+  if (ledsCount <= MATRIX_LEDS) {
     strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[color])));
     strip.show();
     delay(25);

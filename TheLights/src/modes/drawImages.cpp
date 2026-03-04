@@ -13,7 +13,7 @@ void drawImages(uint8_t subMode) {
                          star,     sun,     pepe};
 
   if (subMode == 0) {
-    for (int i = 0; i < NUM_LEDS; i++) {
+    for (int i = 0; i < MATRIX_LEDS; i++) {
       strip.setPixelColor(i, 0x000000);
     }
     strip.show();
@@ -24,7 +24,7 @@ void drawImages(uint8_t subMode) {
 }
 
 void imageDisplay(uint8_t arr[], const int img2[]) {
-  for (int i = 0; i < NUM_LEDS; i++) {
+  for (int i = 0; i < MATRIX_LEDS; i++) {
     if ((arr[i] - 1) <= 155) {
       strip.setPixelColor(arr[i] - 1, pgm_read_dword(&(img2[i])));
     }
