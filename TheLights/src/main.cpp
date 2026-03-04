@@ -3,8 +3,8 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 #include <LittleFS.h>
-#include <../inc/main.h>
 
+#include <../inc/main.h>
 #include "../modes/modes.h"
 #include "../inc/colors.h"
 
@@ -114,7 +114,7 @@ const std::array<std::pair<uint8_t, uint8_t>, 60> modes = {{
 static uint8_t mode = 255;
 static uint8_t subMode = 255;
 static uint8_t allModesEnable = 0;
-static unsigned int currentIndex = 255;
+static uint8_t currentIndex = 255;
 
 static unsigned long prevTime = 0;
 static unsigned long startingMillis = 0;
@@ -135,13 +135,6 @@ IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
 
 void setup() {
-
-  unsigned long randomInitVal = analogRead(0);
-  randomInitVal ^= analogRead(1) << 8;
-  randomInitVal ^= analogRead(2) << 16;
-  randomInitVal ^= millis() << 24;
-
-  srand(randomInitVal);
 
   if (!LittleFS.begin()) {
     return;
@@ -164,7 +157,7 @@ void setup() {
   matrix.begin();
   matrix.setTextWrap(false);
   matrix.setBrightness(intBrightness);
-  matrix.setTextColor(pgm_read_dword(&(mainColors[rand() % 128])));
+  matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(128)])));
 
   delay(10);
 
@@ -482,7 +475,7 @@ void allModesEffect() {
       currentIndex += 1;
 
     } else {
-      currentIndex = rand() % 60;
+      currentIndex = ESP8266TrueRandom.random(60);
 
       mode = modes[currentIndex].first;
       subMode = modes[currentIndex].second;

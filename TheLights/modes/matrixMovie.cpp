@@ -45,9 +45,9 @@ void matrixFallingLines() {
     if (currentRow[i] > 0) {
       --currentRow[i];
     } else {
-      currentCol[i] = rand() % mWidth;
-      currentRow[i] = mHeight + 8 + rand() % (mHeight + 3);
-      lineLength[i] = 5 + rand() % 5;
+      currentCol[i] = ESP8266TrueRandom.random(mWidth);
+      currentRow[i] = mHeight + 8 + ESP8266TrueRandom.random(mHeight + 3);
+      lineLength[i] = 5 + ESP8266TrueRandom.random(5);
     }
   }
 }

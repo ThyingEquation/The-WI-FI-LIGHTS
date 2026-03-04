@@ -70,7 +70,7 @@ void runningLine(uint8_t subMode) {
     matrix.print(utf8rus(messages[messageIndex]));
     if (--g < -messageLengths[messageIndex]) {
       g = matrix.width();
-      matrix.setTextColor(pgm_read_dword(&(mainColors[rand() % 127])));
+      matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(128)])));
     }
     matrix.show();
     delay(250);

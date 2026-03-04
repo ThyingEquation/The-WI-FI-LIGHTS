@@ -54,29 +54,29 @@ void starSky() {
   static int starcycle = 0;
 
   if (starcycle < 60) {
-    int starnumber = rand() % 256;
-    int starcolor = rand() % 7;
+    int starnumber = ESP8266TrueRandom.random(256);
+    int starcolor = ESP8266TrueRandom.random(7);
 
     showStar(starnumber, strip.Color(255, 240, 245));
     delay(500);
 
-    starnumber = rand() % 256;
+    starnumber = ESP8266TrueRandom.random(256);
     showStar(starnumber, colorStar[starcolor]);
     delay(1100);
 
     for (int i = 0; i < 6; i++) {
-      starnumber = rand() % 256;
+      starnumber = ESP8266TrueRandom.random(256);
       hideStar(starnumber);
       delay(10);
     }
 
     starcycle++;
   } else {
-    int starnumber = rand() % 256;
+    int starnumber = ESP8266TrueRandom.random(256);
     showStar(starnumber, strip.Color(255, 0, 0));
     delay(1000);
 
-    starnumber = rand() % 256;
+    starnumber = ESP8266TrueRandom.random(256);
     showStar(starnumber, strip.Color(0, 0, 255));
     starcycle = 0;
   }
@@ -254,8 +254,10 @@ void starFall() {
       --currentRow[i];
       --currentCol[i];
     } else {
-      currentCol[i] = mWidth + 4 + std::rand() % 8;
-      currentRow[i] = mWidth + 6 + std::rand() % 8;
+      // currentCol[i] = mWidth + 4 + std::rand() % 8;
+      // currentRow[i] = mWidth + 6 + std::rand() % 8;
+      currentCol[i] = mWidth + 4 + ESP8266TrueRandom.random(8);
+      currentRow[i] = mWidth + 6 + ESP8266TrueRandom.random(8);
     }
   }
 }

@@ -58,7 +58,7 @@ void runningColorfulLight() {
     if (firstPass) {
       leds[currentLED] = CHSV(currentLED, 255, 255);
     } else {
-      leds[currentLED] = CHSV(rand() % 256, 255, 255);
+      leds[currentLED] = CHSV(ESP8266TrueRandom.random(256), 255, 255);
     }
 
     FastLED.show();
@@ -78,7 +78,7 @@ void runningColorfulLight() {
 }
 
 void runningLights1() {
-  static uint8_t color = rand() % 129;
+  static uint8_t color = ESP8266TrueRandom.random(128);
 
   for (int j = 0; j < 2; j++) {
     for (int q = 0; q < 3; q++) {
@@ -95,7 +95,7 @@ void runningLights1() {
     }
   }
 
-  color = rand() % 129;
+  color = ESP8266TrueRandom.random(128);
 }
 
 void runningLights2() {
@@ -119,7 +119,7 @@ void runningLights3() {
   for (int j = 0; j < 2; j++) {
     for (int q = 0; q < 3; q++) {
       for (uint16_t i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, pgm_read_dword(&(mainColors[rand() % 129])));
+        strip.setPixelColor(i + q, pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(128)])));
       }
       strip.show();
 
@@ -133,7 +133,7 @@ void runningLights3() {
 }
 
 void runningLightSlow() {
-  static uint8_t color = rand() % 129;
+  static uint8_t color = ESP8266TrueRandom.random(128);
   static uint16_t ledsCount = 0;
 
   if (ledsCount <= NUM_LEDS) {
@@ -145,12 +145,12 @@ void runningLightSlow() {
     ledsCount++;
   } else {
     ledsCount = 0;
-    color = rand() % 129;
+    color = ESP8266TrueRandom.random(128);
   }
 }
 
 void runningLightFast() {
-  static uint8_t color = rand() % 129;
+  static uint8_t color = ESP8266TrueRandom.random(128);
   static uint16_t ledsCount = 0;
 
   if (ledsCount <= NUM_LEDS) {
@@ -162,7 +162,7 @@ void runningLightFast() {
     ledsCount++;
   } else {
     ledsCount = 0;
-    color = rand() % 129;
+    color = ESP8266TrueRandom.random(128);
   }
 }
 
@@ -174,7 +174,7 @@ void colorfulSnake() {
 
   static uint16_t snake[10];
 
-  static uint8_t color = rand() % 129;
+  static uint8_t color = ESP8266TrueRandom.random(128);
 
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= 50) {
@@ -185,7 +185,7 @@ void colorfulSnake() {
     pixelCounter++;
     if (pixelCounter >= NUM_LEDS) {
       pixelCounter = 0;
-      color = rand() % 129;
+      color = ESP8266TrueRandom.random(128);
     }
     for (uint16_t i = 0; i < strip.numPixels(); i++) {
       strip.setPixelColor(i, strip.Color(0, 0, 0));

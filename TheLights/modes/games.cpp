@@ -58,12 +58,12 @@ static void updateSnake() {
   if (snakeY[0] >= mHeight) snakeY[0] = 0;
 
   if (snakeX[0] == foodX && snakeY[0] == foodY) {
-    foodX = rand() % mWidth;
-    foodY = rand() % mHeight;
+    foodX = ESP8266TrueRandom.random(mWidth);
+    foodY = ESP8266TrueRandom.random(mHeight);
   }
 
-  if (rand() % 10 == 0) {
-    snakeDirection = rand() % 4;
+  if (ESP8266TrueRandom.random(10) == 0) {
+    snakeDirection = ESP8266TrueRandom.random(4);
   }
 }
 
@@ -129,12 +129,12 @@ static bool checkCollision(int figureIndex, int x, int y) {
 
 static void addNewFigure() {
   if (numFallingFigures < 5) {
-    int figureIndex = rand() % 14;
+    int figureIndex = ESP8266TrueRandom.random(14);
     int x, y;
     int attempts = 0;
     do {
-      x = rand() % 12;
-      y = 0;  // rand() % 1;
+      x = ESP8266TrueRandom.random(12);
+      y = 0;  // ESP8266TrueRandom.random(1);
       attempts++;
       if (attempts > 100) {
         return;
@@ -168,7 +168,7 @@ void tetrisGame() {
       }
     }
   }
-  if (rand() % 10 < 4) {
+  if (ESP8266TrueRandom.random(10) < 4) {
     addNewFigure();
   }
   delay(25);

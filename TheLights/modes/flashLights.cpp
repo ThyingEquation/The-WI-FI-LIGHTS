@@ -35,11 +35,11 @@ void flashLights2() {
     loadingFlag = 0;
   }
   for (byte i = 0; i < map(128, 1, 255, 2, 16); i++) {
-    uint8_t x = rand() % mWidth;
-    uint8_t y = rand() % mHeight;
+    uint8_t x = ESP8266TrueRandom.random(mWidth);
+    uint8_t y = ESP8266TrueRandom.random(mHeight);
     if (!SF[x][y]) {
       SF[x][y] = 255;
-      FF[x][y] = rand() % 255;
+      FF[x][y] = ESP8266TrueRandom.random(255);
     }
   }
   for (byte x = 0; x < mWidth; x++) {

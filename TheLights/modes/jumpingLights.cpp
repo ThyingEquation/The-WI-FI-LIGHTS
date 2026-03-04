@@ -98,9 +98,9 @@ void jumpingLights1() {
     setUp = false;
     FastLED.clear();
     for (byte i = 0; i < 8; i++) {
-      pos[0][i] = rand() % mHeight;
-      pos[1][i] = rand() % mWidth;
-      dir[i] = rand() % 3;
+      pos[0][i] = ESP8266TrueRandom.random(mHeight);
+      pos[1][i] = ESP8266TrueRandom.random(mWidth);
+      dir[i] = ESP8266TrueRandom.random(3);
     }
   }
 
@@ -149,13 +149,13 @@ void jumpingLights2() {
     loadingFlag6 = false;
     randomSeed(millis());
     for (byte i = 0; i < 32; i++) {
-      lightersSpeedX6[i] = -10 + rand() % (10 - (-10) + 1);
-      lightersSpeedY6[i] = -10 + rand() % (10 - (-10) + 1);
-      mass6[i] = 5 + rand() % (10 - 5 + 1);
-      lightersSpeedZ[i] = 3 + rand() % (25 - 3 + 1);
-      lightersPosX6[i] = rand() % mWidth * 10;
-      lightersPosY6[i] = rand() % mHeight * 10;
-      lcolor6[i] = (rand() % 9) * 28;
+      lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(10 - (-10) + 1);
+      lightersSpeedY6[i] = -10 + ESP8266TrueRandom.random(10 - (-10) + 1);
+      mass6[i] = 5 + ESP8266TrueRandom.random(10 - 5 + 1);
+      lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(25 - 3 + 1);
+      lightersPosX6[i] = ESP8266TrueRandom.random(mWidth * 10);
+      lightersPosY6[i] = ESP8266TrueRandom.random(mHeight * 10);
+      lcolor6[i] = ESP8266TrueRandom.random(9) * 28;
     }
   }
 
@@ -235,10 +235,10 @@ void jumpingLights2() {
   EVERY_N_SECONDS(10) {
     randomSeed(millis());
     for (byte i = 0; i < 32; i++) {
-      lightersSpeedX6[i] = -10 + rand() % (10 - (-10) + 1);
-      lightersSpeedY6[i] = rand() % 360;
-      mass6[i] = 5 + rand() % (10 - 5 + 1);
-      lightersSpeedZ[i] = 3 + rand() % (25 - 3 + 1);
+      lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(10 - (-10) + 1);
+      lightersSpeedY6[i] = ESP8266TrueRandom.random(360);
+      mass6[i] = 5 + ESP8266TrueRandom.random(10 - 5 + 1);
+      lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(25 - 3 + 1);
     }
   }
 
@@ -366,11 +366,11 @@ static Point points[6];
 
 void initPoints() {
   for (int i = 0; i < 6; i++) {
-    points[i].x = rand() % mWidth;
-    points[i].y = rand() % mHeight;
+    points[i].x = ESP8266TrueRandom.random(mWidth);
+    points[i].y = ESP8266TrueRandom.random(mHeight);
     points[i].color = CHSV(random8(), 255, 255);
-    points[i].directionX = rand() % 2 == 0 ? 1 : -1;
-    points[i].directionY = rand() % 2 == 0 ? 1 : -1;
+    points[i].directionX = ESP8266TrueRandom.random(2) == 0 ? 1 : -1;
+    points[i].directionY = ESP8266TrueRandom.random(2) == 0 ? 1 : -1;
   }
 }
 

@@ -126,7 +126,7 @@ void snakeChameleon() {
     } else {
       pos = (pos + chameleon[arrPos]) + 1;
       arrPos++;
-      color = rand() % 128;
+      color = ESP8266TrueRandom.random(128);
       n = pos;
       arrVolume++;
     }
@@ -136,7 +136,7 @@ void snakeChameleon() {
       arrPos = 0;
       pos = 0;
       n = 0;
-      color = rand() % 128;
+      color = ESP8266TrueRandom.random(128);
     }
   }
 }
@@ -182,7 +182,7 @@ void breathingLight() {
 
     if (brightness == 0) {
       step = 0;
-      color = rand() % 128;
+      color = ESP8266TrueRandom.random(128);
     }
   }
 }

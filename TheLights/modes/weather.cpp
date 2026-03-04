@@ -46,8 +46,8 @@ void weatherEffects(uint8_t pieceCount, uint8_t speed, int *currentCol,
     if (currentRow[i] > 0) {
       --currentRow[i];
     } else {
-      currentCol[i] = rand() % mWidth;
-      currentRow[i] = mHeight + rand() % 5;
+      currentCol[i] = ESP8266TrueRandom.random(mWidth);
+      currentRow[i] = mHeight + ESP8266TrueRandom.random(5);
     }
   }
 }

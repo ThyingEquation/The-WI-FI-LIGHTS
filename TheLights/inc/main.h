@@ -8,6 +8,7 @@ ver 4.x.x - 202x
 #include <Adafruit_NeoMatrix.h>
 #include <Arduino.h>
 #include <FastLED.h>
+#include "ESP8266TrueRandom.h"
 
 #define TEXT_POS \
   NEO_MATRIX_LEFT  // NEO_MATRIX_LEFT - текст внутри === NEO_MATRIX_RIGHT -
