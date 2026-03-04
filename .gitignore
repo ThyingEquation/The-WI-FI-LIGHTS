@@ -1,6 +1,6 @@
-TheLights/.pio/
-TheLights/.vscode/
-TheLights/build/
+.pio/
+.vscode/
+build/
 *.launch
 *.o
 *.bin

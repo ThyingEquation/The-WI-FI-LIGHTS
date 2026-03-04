@@ -3,25 +3,10 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 #include <LittleFS.h>
-#include <main.h>
+#include <../inc/main.h>
 
-#include "animations.h"
-#include "canvas.h"
-#include "colorfulSpots.h"
-#include "colorfulWaves.h"
-#include "colors.h"
-#include "draw.h"
-#include "drawImages.h"
-#include "flashLights.h"
-#include "games.h"
-#include "jumpingLights.h"
-#include "matrixMovie.h"
-#include "rainbows.h"
-#include "runningLights.h"
-#include "runningLine.h"
-#include "space.h"
-#include "water.h"
-#include "weather.h"
+#include "../modes/modes.h"
+#include "../inc/colors.h"
 
 static void settingsProcessing(void);
 static void mainModesProcessing(void);

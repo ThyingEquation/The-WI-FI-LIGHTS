@@ -1,4 +1,0 @@
-D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/unity.dir
-D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/INSTALL.dir
-D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/ALL_BUILD.dir
-D:/Projects/TheChristmasLights/The-WI-FI-LIGHTS/TheLights/build/CMakeFiles/ZERO_CHECK.dir
