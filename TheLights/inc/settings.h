@@ -1,6 +1,8 @@
 #pragma once
 
-#include <../inc/main.h>
+#include "main.h"
+
+#include <LittleFS.h>
 
 typedef struct {
   char ssid[15] = "Init name";

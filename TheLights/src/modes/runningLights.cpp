@@ -1,5 +1,5 @@
 #include "modes.h"
-#include "../inc/colors.h"
+#include "colors.h"
 
 static void runningColorfulLight();
 static void runningLights1();

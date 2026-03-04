@@ -1,5 +1,5 @@
 #include "modes.h"
-#include "../inc/image.h"
+#include "image.h"
 
 extern uint8_t mainScheme[];
 

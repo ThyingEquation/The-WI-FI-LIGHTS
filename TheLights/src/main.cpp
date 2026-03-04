@@ -1,11 +1,11 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
+//#include <LittleFS.h>
 
-#include <../inc/main.h>
-#include <../inc/settings.h>
+#include "colors.h"
+#include "settings.h"
+#include "modes.h"
 
-#include "../modes/modes.h"
-#include "../inc/colors.h"
 
 static void settingsProcessing(void);
 static void mainModesProcessing(void);

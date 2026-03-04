@@ -1,5 +1,6 @@
 #pragma once
-#include "../inc/main.h"
+
+#include "main.h"
 
 void animations(uint8_t subMode);
 void canvas(String mode, uint8_t color, int led);

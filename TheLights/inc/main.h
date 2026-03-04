@@ -5,12 +5,11 @@ ver 4.x.x - 202x
 
 #pragma once
 
-#include "ESP8266TrueRandom.h"
+#include <ESP8266TrueRandom.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
 #include <Arduino.h>
 #include <FastLED.h>
-#include <LittleFS.h>
 
 #define TEXT_POS \
   NEO_MATRIX_LEFT  // NEO_MATRIX_LEFT - текст внутри === NEO_MATRIX_RIGHT -

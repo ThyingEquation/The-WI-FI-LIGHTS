@@ -1,6 +1,6 @@
 #include <ArduinoJson.h>
 
-#include <../inc/settings.h>
+#include "settings.h"
 
 bool loadSettings()
 {

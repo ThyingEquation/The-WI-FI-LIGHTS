@@ -12,7 +12,7 @@ http://arduino-kid.ru/blog/adresnaya-lenta-ws2812b-beguschaya-stroka-upravlenie-
 */
 
 #include "modes.h"
-#include "../inc/colors.h"
+#include "colors.h"
 
 static String utf8rus(String source);
 

@@ -1,5 +1,5 @@
 #include "modes.h"
-#include "../inc/pictures.h"
+#include "pictures.h"
 
 static void japaneseLettersAnimation(void);
 static void koreanLettersAnimation(void);
