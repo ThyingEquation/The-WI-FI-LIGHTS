@@ -1,10 +1,9 @@
-#include <ArduinoJson.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
-#include <FS.h>
-#include <LittleFS.h>
 
 #include <../inc/main.h>
+#include <../inc/settings.h>
+
 #include "../modes/modes.h"
 #include "../inc/colors.h"
 
@@ -12,9 +11,6 @@ static void settingsProcessing(void);
 static void mainModesProcessing(void);
 static void paintingProcessing(void);
 static void drawingImagesProcessing(void);
-static bool loadSettings();
-static bool saveSettings();
-static void applyNewParameters(String paramData, uint8_t param);
 static void allModesEffect();
 
 CRGB leds_plus_safety_pixel[NUM_LEDS + 1];
@@ -116,22 +112,10 @@ static uint8_t subMode = 255;
 static uint8_t allModesEnable = 0;
 static uint8_t currentIndex = 255;
 
-static unsigned long prevTime = 0;
 static unsigned long startingMillis = 0;
 
-static uint8_t intBrightness;
-static char brightness[4] = {'0', '0', '0', '\0'};
-static unsigned long allModeDelay = 0;
-static char allModeDelayString[5] = {'0', '0', '0', '0', '\0'};
-static char allModeType[2] = {'0', '\0'};
-static char startMode[3] = {'0', '0', '\0'};
-static char wifiAutoOffType[2] = {'0', '\0'};
-static char ssid[15];
-const char *password = "11111111";
+appSettings_s settings;
 
-IPAddress local_ip(192, 168, 1, 1);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80);
 
 void setup() {
@@ -140,29 +124,33 @@ void setup() {
     return;
   }
 
-  loadSettings();
+  if (loadSettings()) {return;}
 
   Serial.begin(9600);
   FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
   FastLED.addLeds<WS2812B, 4, GRB>(leds, NUM_LEDS)
       .setCorrection(TypicalSMD5050)
-      .setDither(intBrightness <= 255);
-  FastLED.setBrightness(intBrightness);
+      .setDither(settings.intBrightness <= 255);
+  FastLED.setBrightness(settings.intBrightness);
 
   strip.begin();
   strip.show();
-  strip.setBrightness(intBrightness);
+  strip.setBrightness(settings.intBrightness);
   strip.show();
 
   matrix.begin();
   matrix.setTextWrap(false);
-  matrix.setBrightness(intBrightness);
+  matrix.setBrightness(settings.intBrightness);
   matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(128)])));
 
   delay(10);
 
-  WiFi.softAP(ssid, password);
-  WiFi.softAPConfig(local_ip, gateway, subnet);
+  IPAddress localIp(settings.localIpVal[0], settings.localIpVal[1], settings.localIpVal[2], settings.localIpVal[3]);
+  IPAddress gateway(settings.gatewayVal[0], settings.gatewayVal[1], settings.gatewayVal[2], settings.gatewayVal[3]);
+  IPAddress subnet(settings.subnetVal[0], settings.subnetVal[1], settings.subnetVal[2], settings.subnetVal[3]);
+
+  WiFi.softAP(settings.ssid, settings.password);
+  WiFi.softAPConfig(localIp, gateway, subnet);
   delay(100);
 
   server.on("/settings", settingsProcessing);
@@ -171,13 +159,13 @@ void setup() {
   server.on("/drawingImages", drawingImagesProcessing);
   server.begin();
 
-  String modeS = startMode;
-  uint8_t modeNum = modeS.toInt();
+  //String modeS = startMode;
+  //uint8_t modeNum = modeS.toInt();
 
-  if (modeNum != 99) {
-    if (modeNum != 98) {
-      mode = modes[modeNum].first;
-      subMode = modes[modeNum].second;
+  if (settings.modeNum != 99) {
+    if (settings.modeNum != 98) {
+      mode = modes[settings.modeNum].first;
+      subMode = modes[settings.modeNum].second;
     } else {
       currentIndex = 255;
       allModesEnable = 1;
@@ -198,7 +186,7 @@ void loop() {
     lastMillis = currentMillis;
     server.handleClient();
 
-    if (wifiAutoOffType[0] == '1') {
+    if (settings.isWifiAutoOffEnable) {
       if (currentMillis - startingMillis >= 300000) {
         WiFi.softAPdisconnect(true);
       }
@@ -219,26 +207,26 @@ void settingsProcessing() {
   strip.show();
   if (server.hasArg("ssid")) {
     String newSsid = server.arg("ssid");
-    applyNewParameters(newSsid, 1);
+    if (applyNewParameters(newSsid, 1)) {return;}
   } else if (server.hasArg("startMode")) {
     String newStartMode = server.arg("startMode");
-    applyNewParameters(newStartMode, 2);
+    if (applyNewParameters(newStartMode, 2)) {return;}
   } else if (server.hasArg("brightness")) {
     String newBrightness = server.arg("brightness");
-    applyNewParameters(newBrightness, 3);
+    if (applyNewParameters(newBrightness, 3)) {return;}
   } else if (server.hasArg("restart")) {
     ESP.restart();
   } else if (server.hasArg("allModesTime")) {
     String allModeDelayTime = server.arg("allModesTime");
-    applyNewParameters(allModeDelayTime, 4);
+    if (applyNewParameters(allModeDelayTime, 4)) {return;}
   } else if (server.hasArg("allModes")) {
     String allMode = server.arg("allModes");
-    applyNewParameters(allMode, 5);
+    if (applyNewParameters(allMode, 5)) {return;}
   } else if (server.hasArg("wifiOff")) {
     WiFi.softAPdisconnect(true);
   } else if (server.hasArg("wifiAutoOff")) {
     String wifiAutoOff = server.arg("wifiAutoOff");
-    applyNewParameters(wifiAutoOff, 6);
+    if (applyNewParameters(wifiAutoOff, 6)) {return;}
   }
 }
 
@@ -311,160 +299,18 @@ void mainModesProcessing() {
   }
 }
 
-bool loadSettings() {
-  File configFile = LittleFS.open("/config.json", "r");
-  if (!configFile) {
-    return false;
-  }
-
-  size_t size = configFile.size();
-  if (size > 256) {
-    configFile.close();
-    return false;
-  }
-
-  std::unique_ptr<char[]> buf(new char[size]);
-  size_t bytesRead = configFile.readBytes(buf.get(), size);
-  configFile.close();
-
-  if (bytesRead != size) {
-    return false;
-  }
-
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, buf.get());
-  if (error) {
-    return false;
-  }
-
-  const char *jsonStartmode = doc["json_startmode"];
-  if (jsonStartmode) {
-    strncpy(startMode, jsonStartmode, 2);
-  }
-
-  const char *jsonSsid = doc["json_ssid"];
-  if (jsonSsid) {
-    strncpy(ssid, jsonSsid, 15);
-  }
-
-  const char *jsonBrightness = doc["json_brightness"];
-  if (jsonBrightness) {
-    strncpy(brightness, jsonBrightness, 3);
-    String localStr = brightness;
-    intBrightness = (uint8_t)(localStr.toInt());
-  }
-
-  const char *jsonAllModeDelay = doc["json_allModeDelay"];
-  if (jsonAllModeDelay) {
-    strncpy(allModeDelayString, jsonAllModeDelay, 4);
-    String localStr = allModeDelayString;
-    allModeDelay = (unsigned long)(localStr.toInt()) * 1000;
-  }
-
-  const char *jsonAllModeType = doc["json_allMode"];
-  if (jsonSsid) {
-    strncpy(allModeType, jsonAllModeType, 1);
-  }
-
-  const char *jsonWifiAutoOff = doc["json_wifiAutoOff"];
-  if (jsonSsid) {
-    strncpy(wifiAutoOffType, jsonWifiAutoOff, 1);
-  }
-
-  return true;
-}
-
-bool saveSettings() {
-  JsonDocument json;
-
-  json["json_startmode"] = startMode;
-  json["json_ssid"] = ssid;
-  json["json_brightness"] = brightness;
-  json["json_allModeDelay"] = allModeDelayString;
-  json["json_allMode"] = allModeType;
-  json["json_wifiAutoOff"] = wifiAutoOffType;
-
-  File configFile = LittleFS.open("/config.json", "w");
-  if (!configFile) {
-    return false;
-  }
-
-  serializeJson(json, configFile);
-  configFile.close();
-
-  return true;
-}
-
-void successSave() {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, 0xffffff);
-  }
-  strip.show();
-  delay(950);
-  for (int i = 0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, 0x000000);
-  }
-  strip.show();
-}
-
-void applyNewParameters(String paramData, uint8_t param) {
-  // имя сети - 1; стартовый режим - 2; яркость - 3
-  // длительность эффекта для "Все режимы" - 4
-  // "Все режимы" - эффекты подрял или в разброс - 5
-  // Автоотключение wifi через 5 минут после включения
-
-  int paramDataLen = paramData.length() + 1;
-  char webParamData[paramDataLen];
-  paramData.toCharArray(webParamData, paramDataLen);
-
-  switch (param) {
-    case 1:
-      strncpy(ssid, webParamData, sizeof(ssid));
-      break;
-
-    case 2:
-      strncpy(startMode, webParamData, sizeof(startMode));
-      break;
-
-    case 3:
-      strncpy(brightness, webParamData, sizeof(brightness));
-      break;
-
-    case 4: {
-      strncpy(allModeDelayString, webParamData, sizeof(allModeDelayString));
-      String localStr = allModeDelayString;
-      allModeDelay = (unsigned long)(localStr.toInt());
-    } break;
-
-    case 5:
-      strncpy(allModeType, webParamData, sizeof(allModeType));
-      break;
-
-    case 6:
-      strncpy(wifiAutoOffType, webParamData, sizeof(wifiAutoOffType));
-      break;
-  }
-
-  saveSettings();
-
-  if (param == 4) {
-    allModeDelay *= 1000;
-  }
-
-  successSave();
-}
-
 void allModesEffect() {
+  static unsigned long prevTime = 0;
   unsigned long currentTime = millis();
 
-  if (currentIndex == 255 || (currentTime - prevTime >= allModeDelay)) {
+  if (currentIndex == 255 || (currentTime - prevTime >= settings.allModeDelay)) {
     if (currentIndex == 255) {
       currentIndex = 0;
     }
 
     prevTime = currentTime;
 
-    if (allModeType[0] == '1') {
+    if (settings.allModesWorkType == 1) {
       if (currentIndex > sizeof(modes) / sizeof(modes[0])) {
         currentIndex = 0;
       }
