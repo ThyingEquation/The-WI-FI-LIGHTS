@@ -1,7 +1,5 @@
 #pragma once
 
-#include "main.h"
-
 #include <LittleFS.h>
 
 typedef struct {
@@ -16,7 +14,7 @@ typedef struct {
   uint8_t allModesWorkType = 0;
   uint8_t modeNum = 0;
   bool isWifiAutoOffEnable = 0;
-  unsigned long allModeDelay= 0;
+  uint32_t allModeDelay= 0;
 } appSettings_s;
 
 extern appSettings_s settings;

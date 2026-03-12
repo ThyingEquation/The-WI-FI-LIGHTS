@@ -1,4 +1,4 @@
-const int mainColors[] PROGMEM = {
+const uint32_t mainColors[] PROGMEM = { // всего 128 цветов, подобраны вручную
     0x5d8aa8,  // Военно-воздушный синий
     0xe32636,  // Ализариновый красный
     0xffbf00,  // Янтарный

@@ -1,88 +1,119 @@
 #include "modes.h"
 #include "colors.h"
 
-static void snakeFast();
-static void snakeSlow();
-static void fullFill();
-static void snakeChameleon();
-static void breathingLight();
+/*
+  Эта группа эффектов только для матриц 12х13 и 16х16 (для 16х16 требуется замена chameleon[])
 
-void draw(uint8_t subMode) {
-  switch (subMode) {
-    case 1:
-      snakeFast();
-      break;
+  Настраиваемые параметры (drawSettings):
+    1) Скорость быстрой змейки
+    2) Скорость медленной змейки
+    3) Время удержания цвета в полной заливке
+    4) Скорость цветной (хамелион) змейки
+    5) Скорость цветного дыхания
+*/
 
-    case 2:
-      snakeSlow();
-      break;
+enum drawSettings
+{
+  SNAKE_FAST_DELAY = 6,
+  SNAKE_SLOW_DELAY = 25,
+  FULL_FILL_DELAY = 5000,
+  CHAMELEON_SNAKE_DELAY = 70,
+  LIGHT_BREATH_DELAY = 4
+};
 
-    case 3:
-      fullFill();
-      break;
+static void drawSnakeFast();
+static void drawSnakeSlow();
+static void fillFull();
+static void drawChameleonSnake();
+static void drawLightBreath();
 
-    case 4:
-      snakeChameleon();
-      break;
+static uint8_t color;
 
-    case 5:
-      breathingLight();
-      break;
+void drawCanvasEffects(uint8_t subMode)
+{
+  switch (subMode)
+  {
+  case 1:
+    drawSnakeFast();
+    break;
 
-    default:
-      break;
+  case 2:
+    drawSnakeSlow();
+    break;
+
+  case 3:
+    fillFull();
+    break;
+
+  case 4:
+    drawChameleonSnake();
+    break;
+
+  case 5:
+    drawLightBreath();
+    break;
+
+  default:
+    break;
   }
 }
 
-void snakeFast() {
-  static unsigned int ledsCount = 0;
-  static uint8_t color = 0;
+void drawSnakeFast()
+{
+  static uint16_t ledsCount = 0;
 
-  if (ledsCount <= MATRIX_LEDS) {
+  if (ledsCount <= MATRIX_LEDS)
+  {
     strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[color])));
     strip.show();
-    delay(6);
+    delay(SNAKE_FAST_DELAY);
     ledsCount++;
-  } else {
-    if (++color >= 128) {
-      color = 0;
-    }
+  }
+  else
+  {
+    color = ESP8266TrueRandom.random(0, 128);
     ledsCount = 0;
   }
 }
 
-void snakeSlow() {
-  static unsigned int ledsCount = 0;
-  static uint8_t color = 0;
+void drawSnakeSlow()
+{
+  static uint16_t ledsCount = 0;
 
-  if (ledsCount <= MATRIX_LEDS) {
+  if (ledsCount <= MATRIX_LEDS)
+  {
     strip.setPixelColor(ledsCount, pgm_read_dword(&(mainColors[color])));
     strip.show();
-    delay(25);
+    delay(SNAKE_SLOW_DELAY);
     ledsCount++;
-  } else {
-    if (++color >= 128) {
-      color = 0;
-    }
+  }
+  else
+  {
+    color = ESP8266TrueRandom.random(0, 128);
     ledsCount = 0;
   }
 }
 
-void fullFill() {
-  const int maxDistance = max(6, 6);
-  unsigned long currentMillis = millis();
-  static unsigned long previousMillis = 0;
-  static uint8_t color = 0;
+void fillFull()
+{
+  const uint16_t maxDistance = max(6, 6);
+  uint32_t currentMillis = millis();
+  static uint32_t previousMillis = 0;
 
-  if (currentMillis - previousMillis >= 5000) {
+  if (currentMillis - previousMillis >= FULL_FILL_DELAY)
+  {
     previousMillis = currentMillis;
 
-    for (int distance = 0; distance <= maxDistance; distance++) {
-      for (int x = 0; x < 12; x++) {
-        for (int y = 0; y < 13; y++) {
-          int dx = abs(x - 6);
-          int dy = abs(y - 6);
-          if (dx <= distance && dy <= distance) {
+    for (uint16_t distance = 0; distance <= maxDistance; distance++)
+    {
+      for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
+      {
+        for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
+        {
+          uint16_t dx = abs(x - 6);
+          uint16_t dy = abs(y - 6);
+          if (dx <= distance && dy <= distance)
+          {
             strip.setPixelColor(XY(x, y), pgm_read_dword(&(mainColors[color])));
           }
         }
@@ -90,68 +121,73 @@ void fullFill() {
       strip.show();
       delay(50);
     }
-    if (++color >= 128) {
-      color = 0;
-    }
+    color = ESP8266TrueRandom.random(0, 128);
   }
 }
 
-void snakeChameleon() {
-  const int chameleon[] = {
-      3,  20, 5, 10, 5, 1,  3, 6,  2, 8, 7, 2,
-      15, 8,  3, 7,  4, 10, 2, 15, 6, 8, 2, 4};  // длина массива 24
+void drawChameleonSnake()
+{
+  const uint8_t chameleon[] = {
+      3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2,
+      15, 8, 3, 7, 4, 10, 2, 15, 6, 8, 2, 4}; // длина массива 24
 
-  // int chameleon [] = {3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2, 15, 8, 3, 7, 4,
+  // const uint8_t chameleon [] = {3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2, 15, 8, 3, 7, 4,
   // 10, 2, 15, 6, 8, 2, 4, 3, 1, 10, 13, 5, 20, 1, 14, 7, 9, 3, 11, 2, 1}; //
   // длина массива 38 для 16х16
 
-  static unsigned long previousMillis = 0;
+  static uint32_t previousMillis = 0;
 
-  static unsigned char pos = 0;
-  static unsigned char arrPos = 0;
-  static int arrVolume = 0;
-  static int n = 0;
+  static uint8_t pos = 0;
+  static uint8_t arrPos = 0;
+  static uint8_t arrVolume = 0;
+  static uint8_t n = 0;
 
-  static uint8_t color = 0;
+  uint32_t currentMillisD3 = millis();
 
-  unsigned long currentMillisD3 = millis();
-
-  if (currentMillisD3 - previousMillis >= 70) {
+  if (currentMillisD3 - previousMillis >= CHAMELEON_SNAKE_DELAY)
+  {
     previousMillis = currentMillisD3;
 
-    if (n <= (pos + chameleon[arrPos])) {
+    if (n <= (pos + chameleon[arrPos]))
+    {
       strip.setPixelColor(n, pgm_read_dword(&(mainColors[color])));
       strip.show();
       n++;
-    } else {
+    }
+    else
+    {
       pos = (pos + chameleon[arrPos]) + 1;
       arrPos++;
-      color = ESP8266TrueRandom.random(128);
+      color = ESP8266TrueRandom.random(0, 128);
       n = pos;
       arrVolume++;
     }
 
-    if (arrVolume > 23) {
+    if (arrVolume > 23)
+    {
       arrVolume = 0;
       arrPos = 0;
       pos = 0;
       n = 0;
-      color = ESP8266TrueRandom.random(128);
+      color = ESP8266TrueRandom.random(0, 128);
     }
   }
 }
 
-void breathingLight() {
-  static uint8_t color = 0;
-  static int brightness = 0;
-  static int step = 0;
+void drawLightBreath()
+{
+  static uint8_t brightness = 0;
+  static uint8_t step = 0;
 
-  if (brightness < 255 && step == 0) {
+  if (brightness < 255 && step == 0)
+  {
     brightness++;
-    if (brightness == 255) {
+    if (brightness == 255)
+    {
       step = 1;
     }
-    for (uint16_t i = 0; i < strip.numPixels(); i++) {
+    for (uint16_t i = 0; i < strip.numPixels(); i++)
+    {
       strip.setPixelColor(
           i,
           strip.Color(
@@ -163,10 +199,13 @@ void breathingLight() {
                   brightness / 255));
     }
     strip.show();
-    delay(10);
-  } else if (brightness > 0 && step == 1) {
+    delay(LIGHT_BREATH_DELAY);
+  }
+  else if (brightness > 0 && step == 1)
+  {
     brightness--;
-    for (uint16_t i = 0; i < strip.numPixels(); i++) {
+    for (uint16_t i = 0; i < strip.numPixels(); i++)
+    {
       strip.setPixelColor(
           i,
           strip.Color(
@@ -178,11 +217,12 @@ void breathingLight() {
                   brightness / 255));
     }
     strip.show();
-    delay(10);
+    delay(LIGHT_BREATH_DELAY);
 
-    if (brightness == 0) {
+    if (brightness == 0)
+    {
       step = 0;
-      color = ESP8266TrueRandom.random(128);
+      color = ESP8266TrueRandom.random(0, 128);
     }
   }
 }

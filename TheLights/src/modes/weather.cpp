@@ -1,36 +1,47 @@
 #include "modes.h"
 
-static void weatherEffects(uint8_t pieceCount, uint8_t speed, int *currentCol,
-                           int *currentRow, int color);
+/*
+  Эта группа эффектов только для матрицы 12х13
 
-void weather(uint8_t subMode) {
-  static int currentCols[][22] = {
+  Настраиваемые параметры: нет
+*/
+
+static void weatherEffects(uint8_t pieceCount, uint8_t speed, uint8_t *currentCol,
+                           uint8_t *currentRow, uint32_t color);
+
+void drawWeatherEffects(uint8_t subMode)
+{
+  static uint8_t currentCols[][22] = {
       {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11},
       {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11, 9, 4, 2},
       {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11},
       {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11, 9, 4, 2, 0, 2, 5}};
 
-  static int currentRows[][22] = {
+  static uint8_t currentRows[][22] = {
       {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14},
       {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14, 4, 9, 12, 3},
       {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14},
       {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14, 4, 9, 12, 3, 3, 6, 9}};
 
-  static const int lengths[] = {15, 19, 15, 22};
-  static const int delays[] = {180, 95, 60, 30};
-  static const int colors[] = {0xf2f3f4, 0xf2f3f4, 0x007dff, 0x0014a8};
+  static const uint8_t lengths[] = {15, 19, 15, 22};
+  static const uint8_t delays[] = {180, 95, 60, 30};
+  static const uint32_t colors[] = {0xf2f3f4, 0xf2f3f4, 0x007dff, 0x0014a8};
 
-  int index = subMode - 1;
+  uint8_t index = subMode - 1;
   weatherEffects(lengths[index], delays[index], currentCols[index],
                  currentRows[index], colors[index]);
 }
 
-void weatherEffects(uint8_t pieceCount, uint8_t speed, int *currentCol,
-                    int *currentRow, int color) {
-  auto drawPixels = [&](bool clear) {
-    for (int i = 0; i < pieceCount; i++) {
-      if ((currentRow[i] >= 0) && (currentRow[i] < MATRIX_HEIGHT)) {
-        int pixelIndex = XY(currentCol[i], currentRow[i]);
+void weatherEffects(uint8_t pieceCount, uint8_t speed, uint8_t *currentCol,
+                    uint8_t *currentRow, uint32_t color)
+{
+  auto drawPixels = [&](bool clear)
+  {
+    for (uint8_t i = 0; i < pieceCount; i++)
+    {
+      if ((currentRow[i] >= 0) && (currentRow[i] < MATRIX_HEIGHT))
+      {
+        uint16_t pixelIndex = XY(currentCol[i], currentRow[i]);
         strip.setPixelColor(pixelIndex, clear ? 0x000000 : color);
       }
     }
@@ -42,12 +53,16 @@ void weatherEffects(uint8_t pieceCount, uint8_t speed, int *currentCol,
 
   drawPixels(true);
 
-  for (int i = 0; i < pieceCount; i++) {
-    if (currentRow[i] > 0) {
+  for (uint8_t i = 0; i < pieceCount; i++)
+  {
+    if (currentRow[i] > 0)
+    {
       --currentRow[i];
-    } else {
-      currentCol[i] = ESP8266TrueRandom.random(MATRIX_WIDTH);
-      currentRow[i] = MATRIX_HEIGHT + ESP8266TrueRandom.random(5);
+    }
+    else
+    {
+      currentCol[i] = ESP8266TrueRandom.random(0, MATRIX_WIDTH);
+      currentRow[i] = MATRIX_HEIGHT + ESP8266TrueRandom.random(0, 5);
     }
   }
 }
