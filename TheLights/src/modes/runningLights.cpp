@@ -69,13 +69,12 @@ void drawRunningLights(uint8_t subMode)
 void drawRunningColorfulLight()
 {
   static uint32_t previousMillis = 0;
-  static const uint32_t interval = 20;
   static uint16_t currentLED = 0;
   static bool firstPass = true;
 
   uint32_t currentMillis = millis();
 
-  if (currentMillis - previousMillis >= interval)
+  if (currentMillis - previousMillis >= 20)
   {
     previousMillis = currentMillis;
 
