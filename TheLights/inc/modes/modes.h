@@ -9,7 +9,6 @@ void drawOnCanvas(String canvasMode, uint8_t color, uint16_t ledNum);
 void drawColorfulSpots(uint8_t empty);
 void drawColorfulWaves(uint8_t subMode);
 void drawCanvasEffects(uint8_t subMode);
-void drawImages(uint8_t subMode);
 void drawFlashLights(uint8_t subMode);
 void drawGamesEffects(uint8_t subMode);
 void drawJumpingLights(uint8_t subMode);

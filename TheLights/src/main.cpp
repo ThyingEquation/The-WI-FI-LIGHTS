@@ -66,7 +66,6 @@ void setup()
   server.on("/settings", handleSettings);
   server.on("/command", handleMainCommand);
   server.on("/painting", handlePainting);
-  server.on("/drawingImages", handleDrawImage);
   server.begin();
 
   if (settings.modeNum != 99)

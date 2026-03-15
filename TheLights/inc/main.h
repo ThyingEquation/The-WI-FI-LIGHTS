@@ -22,7 +22,7 @@ enum globalSettings
   TEXT_POS = NEO_MATRIX_LEFT,
   PIN = 4,
   ///
-  ALL_MODES_EFFECT_COUNT = 60
+  ALL_MODES_EFFECT_COUNT = 61
 };
 
 extern Adafruit_NeoPixel strip;

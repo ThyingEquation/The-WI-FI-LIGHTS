@@ -1,5 +1,5 @@
 #include "modes.h"
-#include "pictures.h"
+#include "animationFrames.h"
 
 /*
   Эта группа эффектов только для матрицы 12х13

@@ -1,8 +1,9 @@
 #include "modes.h"
 #include "colors.h"
+#include "images.h"
 
 /*
-  Эта группа эффектов только для матриц 12х13 и 16х16 (для 16х16 требуется замена chameleon[])
+  Эта группа эффектов только для матриц 12х13
 
   Настраиваемые параметры (drawSettings):
     1) Скорость быстрой змейки
@@ -10,6 +11,7 @@
     3) Время удержания цвета в полной заливке
     4) Скорость цветной (хамелион) змейки
     5) Скорость цветного дыхания
+    6) Скорость всех картинок подряд
 */
 
 enum drawSettings
@@ -18,7 +20,8 @@ enum drawSettings
   SNAKE_SLOW_DELAY = 25,
   FULL_FILL_DELAY = 5000,
   CHAMELEON_SNAKE_DELAY = 70,
-  LIGHT_BREATH_DELAY = 4
+  LIGHT_BREATH_DELAY = 8,
+  DRAW_IMAGES_DELAY = 5000
 };
 
 static void drawSnakeFast();
@@ -26,6 +29,7 @@ static void drawSnakeSlow();
 static void fillFull();
 static void drawChameleonSnake();
 static void drawLightBreath();
+static void drawImages(uint8_t subMode);
 
 static uint8_t color;
 
@@ -51,6 +55,10 @@ void drawCanvasEffects(uint8_t subMode)
 
   case 5:
     drawLightBreath();
+    break;
+
+  case 99 ... 255:
+    drawImages(subMode);
     break;
 
   default:
@@ -128,12 +136,7 @@ void fillFull()
 void drawChameleonSnake()
 {
   const uint8_t chameleon[] = {
-      3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2,
-      15, 8, 3, 7, 4, 10, 2, 15, 6, 8, 2, 4}; // длина массива 24
-
-  // const uint8_t chameleon [] = {3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2, 15, 8, 3, 7, 4,
-  // 10, 2, 15, 6, 8, 2, 4, 3, 1, 10, 13, 5, 20, 1, 14, 7, 9, 3, 11, 2, 1}; //
-  // длина массива 38 для 16х16
+      3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2, 15, 8, 3, 7, 4, 10, 2, 15, 6, 8, 2, 4};
 
   static uint32_t previousMillis = 0;
 
@@ -224,5 +227,53 @@ void drawLightBreath()
       step = 0;
       color = ESP8266TrueRandom.random(0, 128);
     }
+  }
+}
+
+static void drawImages(uint8_t subMode)
+{
+  const uint32_t *images[] = {pacman1, pacman2, pacman3, pacman4, pacman5,
+                              mushroom, amogus, cup, pineapple, alien,
+                              hummer, cat, teaCup, dino, hammerAndSickle,
+                              apple, bird, rabbit, question, goldenKey,
+                              star, sun, pepe};
+
+  static uint32_t previousMillis = 0;
+  static uint32_t previousMillisImgNum = 0;
+  static uint8_t imageNum = 0;
+  static uint8_t locImgNum = 0;
+
+  uint32_t currentMillis = millis();
+
+  if (subMode == 255)
+  {
+
+    if (currentMillis - previousMillis >= DRAW_IMAGES_DELAY)
+    {
+      previousMillis = currentMillis;
+
+      if (imageNum >= 0 && imageNum < 23)
+      {
+        drawPicture(mainMatrixScheme, images[imageNum]);
+        strip.show();
+        ++imageNum;
+      }
+      else
+      {
+        imageNum = 0;
+      }
+    }
+  }
+  else if ((subMode > 100 && subMode < 124) && (locImgNum != subMode))
+  {
+    locImgNum = subMode;
+    drawPicture(mainMatrixScheme, images[subMode - 101]);
+    strip.show();
+  }
+
+  if (currentMillis - previousMillisImgNum >= 5000)
+  {
+    previousMillisImgNum = currentMillis;
+    locImgNum = 0;
   }
 }
