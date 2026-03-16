@@ -126,13 +126,25 @@ void drawAnimations(uint8_t subMode)
   }
 }
 
+// void drawPicture(uint8_t p1[], const uint32_t p2[])
+// {
+//   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
+//   {
+//     if ((p1[i] - 1) <= 155)
+//     {
+//       strip.setPixelColor(p1[i] - 1, pgm_read_dword(&(p2[i])));
+//     }
+//   }
+// }
+//////////////////////////////////////////////////////////////////////////////// ЗАМЕНА strip на FASTled!!!!!!!
 void drawPicture(uint8_t p1[], const uint32_t p2[])
 {
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
   {
     if ((p1[i] - 1) <= 155)
     {
-      strip.setPixelColor(p1[i] - 1, pgm_read_dword(&(p2[i])));
+      uint32_t rawColor = pgm_read_dword_near(&p2[i]);
+      leds[p1[i] - 1] = CRGB(rawColor);
     }
   }
 }

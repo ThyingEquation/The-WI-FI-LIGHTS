@@ -26,9 +26,9 @@ enum EffectsGroupMode // Главные группы эффектов
 
 const std::array<ModeConfig, ALL_MODES_EFFECT_COUNT> mainModes = {{
     {DRAW, 3, 1},             // [3.0]   - "Полная заливка"
-    {DRAW, 1, 1},             // [3.1]   - "Заливка змейкой 1"
-    {DRAW, 2, 1},             // [3.2]   - "Заливка змейкой 2"
-    {DRAW, 4, 1},             // [3.3]   - "Заливка змейкой 3"
+    {DRAW, 1, 1},             // [3.1]   - "Быстрая заливка змейкой"
+    {DRAW, 2, 1},             // [3.2]   - "Медленная заливка змейкой"
+    {DRAW, 4, 1},             // [3.3]   - "Цветная заливка змейкой"
     {DRAW, 5, 1},             // [3.4]   - "Цветное дыхание"
     {DRAW, 255, 1},            // [3.5]   - "Все картинки подряд"
 
@@ -178,9 +178,10 @@ void handlePainting()
 void handleMainCommand()
 {
   allModesEnable = 0;
-  FastLED.clear();
-  strip.clear();
-  strip.show();
+  FastLED.clear(true);
+  //FastLED.show();
+  //strip.clear();
+  //strip.show();
 
   if (server.hasArg("ok"))
   {

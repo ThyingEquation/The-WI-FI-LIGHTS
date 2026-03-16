@@ -101,7 +101,7 @@ void loop()
 
     if (settings.isWifiAutoOffEnable)
     {
-      if (currentMillis - startingMillis >= 300000)
+      if (currentMillis - startingMillis >= 180000)
       {
         WiFi.softAPdisconnect(true);
       }
@@ -116,5 +116,6 @@ void loop()
   if (effectsGroup < 14)
   {
     modeFunctions[effectsGroup](submode);
+    yield(); 
   }
 }
