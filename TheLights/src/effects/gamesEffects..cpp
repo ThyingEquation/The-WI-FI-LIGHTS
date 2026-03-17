@@ -1,4 +1,4 @@
-#include "modes.h"
+#include "effects.h"
 
 /*
   Эта группа эффектов для любого размера матриц

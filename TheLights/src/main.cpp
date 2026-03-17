@@ -1,6 +1,6 @@
 #include "lightsServer.h"
 #include "lightsSettings.h"
-#include "modes.h"
+#include "effects.h"
 #include "colors.h"
 
 appSettings_s settings;

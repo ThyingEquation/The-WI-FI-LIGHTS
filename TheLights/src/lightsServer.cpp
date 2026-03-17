@@ -2,7 +2,7 @@
 
 #include "lightsServer.h"
 #include "lightsSettings.h"
-#include "modes.h"
+#include "effects.h"
 
 ESP8266WebServer server(80);
 

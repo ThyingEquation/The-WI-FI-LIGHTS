@@ -1,4 +1,4 @@
-#include "modes.h"
+#include "effects.h"
 #include "animationFrames.h"
 
 /*
