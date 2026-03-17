@@ -1,5 +1,8 @@
 #include "modes.h"
 #include "colors.h"
+#include "lightsSettings.h"
+
+#include <Adafruit_NeoMatrix.h>
 
 /*
   Эта группа эффектов для любого размера матриц
@@ -10,12 +13,18 @@
   Настраиваемые параметры (runningLineSettings):
     1) Скорость бегущей строки
     2) Отступ текста от верхней части матрицы
+    3) TEXT_POS позиция текста для режима "Бегущая строка". NEO_MATRIX_LEFT - Текст снаружи; NEO_MATRIX_RIGHT - Текст внутри
+
+    P.S. Ваша гирлянда висит на окне, при этом первый светодиод находится в правом нижнем углу, в таком случае если выбрать "Текст внутри"
+  то бегущая строка будет двигаться справа налево и будет виден внутри помещения. Соответсвенно "Текст снаружи" наоборот
+
 */
 
 enum runningLineSettings
 {
   RUNNING_LINE_DELAY = 250,
-  TOP_MARGIN = 3
+  TOP_MARGIN = 3,
+  TEXT_POS = NEO_MATRIX_LEFT
 };
 
 static String utf8rus(String source);
@@ -30,7 +39,19 @@ const char *text[] = {"С НОВЫМ ГОДОМ!!!",
 
 const int16_t textLength[] = {100, 173, 137, 85, 183, 98, 98};
 
-void drawRunningLines(uint8_t subMode)
+static Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
+    MATRIX_WIDTH, MATRIX_HEIGHT, PIN,
+    NEO_MATRIX_BOTTOM + TEXT_POS + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
+    NEO_GRB + NEO_KHZ800);
+
+void initRunningLine() {
+  matrix.begin();
+  matrix.setTextWrap(false);
+  matrix.setBrightness(settings.intBrightness);
+  matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));
+}
+
+void drawRunningLine(uint8_t subMode)
 {
 
   static int16_t g = MATRIX_WIDTH;
@@ -56,7 +77,7 @@ void drawRunningLines(uint8_t subMode)
   }
 }
 
-String utf8rus(String source)
+static String utf8rus(String source)
 {
   uint8_t a, k;
   String target;

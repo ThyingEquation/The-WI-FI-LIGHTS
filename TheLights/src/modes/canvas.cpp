@@ -1,7 +1,7 @@
 #include "modes.h"
 
 /*
-  Эта группа эффектов только для матриц 12х13 и 16х16
+  Эта группа эффектов только для матриц 8x8, 12х13 и 16х16
 
   Настраиваемые параметры: нет
 */
@@ -34,33 +34,34 @@ void drawOnCanvas(String canvasMode, uint8_t color, uint16_t ledNum)
   {
     if (ledNum == 257)
     {
-      for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-      {
-        strip.setPixelColor(i, colorsCanvas[color]);
-      }
-      strip.show();
+      uint32_t rawColor = pgm_read_dword_near(&colorsCanvas[color]);
+      fill_solid(leds, MATRIX_LEDS, CRGB(rawColor));
+      FastLED.show();
     }
     else
     {
-      strip.setPixelColor(--ledNum, colorsCanvas[color]);
-      strip.show();
+      uint16_t index = --ledNum;
+      if (index < MATRIX_LEDS) {
+        uint32_t rawColor = pgm_read_dword_near(&colorsCanvas[color]);
+        leds[index] = CRGB(rawColor);
+        FastLED.show();
+      }
     }
   }
-
   else if (canvasMode.indexOf("B") != -1)
   {
     if (ledNum == 257)
     {
-      for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-      {
-        strip.setPixelColor(i, strip.Color(0, 0, 0));
-      }
-      strip.show();
+      FastLED.clear();
+      FastLED.show();
     }
     else
     {
-      strip.setPixelColor(--ledNum, strip.Color(0, 0, 0));
-      strip.show();
+      uint16_t index = --ledNum;
+      if (index < MATRIX_LEDS) {
+        leds[index] = CRGB::Black;
+        FastLED.show();
+      }
     }
   }
 }

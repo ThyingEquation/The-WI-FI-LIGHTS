@@ -15,13 +15,15 @@ void drawJumpingLights(uint8_t subMode);
 void drawMatrixMovieEffect(uint8_t subMode);
 void drawRainbows(uint8_t subMode);
 void drawRunningLights(uint8_t subMode);
-void drawRunningLines(uint8_t subMode);
+void drawRunningLine(uint8_t subMode);
 void drawSpaceEffects(uint8_t subMode);
 void drawWaterEffects(uint8_t subMode);
 void drawWeatherEffects(uint8_t subMode);
 
+void initRunningLine();
+
 uint16_t XY(uint16_t x, uint16_t y);
-uint32_t Wheel(byte WheelPos);
+CRGB Wheel(byte WheelPos);
 void drawPicture(uint8_t p1[], const uint32_t p2[]);
 
 extern uint8_t mainMatrixScheme[];

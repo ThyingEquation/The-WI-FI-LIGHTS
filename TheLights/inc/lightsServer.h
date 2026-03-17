@@ -3,15 +3,17 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 
-extern ESP8266WebServer server;
-
-void handleSettings();
-void handleDrawImage();
-void handlePainting();
-void handleMainCommand();
+void initLightServer();
+void checkLightServer();
 void effectAllModes();
 
-extern uint8_t allModesEnable;
-extern uint8_t effectsGroup;
-extern uint8_t submode;
-extern uint8_t currentIndex;
+typedef struct
+{
+    bool isScreenClearEnable = true;
+    bool isAllModesEnable = false;
+    uint8_t effectsGroup = 255;
+    uint8_t submode = 255;
+    uint8_t currentIndex = 255;
+} deviceEffectsState_s;
+
+extern deviceEffectsState_s deviceEffectsState;

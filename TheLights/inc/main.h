@@ -5,13 +5,11 @@
   * Для всех режимов в их .cpp файлах приведены пояснения и локальные настройки режима
   * Настройки используемые при инициализации и сохраняемые в энергонезависимой памяти приведены в файле "settings.h"
   * Глобальные настройки гирлянды-матрицы ниже в enum globalSettings
-    - TEXT_POS позиция текста для режима "Бегущая строка". NEO_MATRIX_LEFT - текст внутри; NEO_MATRIX_RIGHT - текст снаружи
 
 */
 
 #pragma once
 
-#include <Adafruit_NeoMatrix.h>
 #include <FastLED.h>
 
 enum globalSettings
@@ -19,12 +17,9 @@ enum globalSettings
   MATRIX_WIDTH = 12,
   MATRIX_HEIGHT = 13,
   MATRIX_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT,
-  TEXT_POS = NEO_MATRIX_LEFT,
   PIN = 4,
   ///
   ALL_MODES_EFFECT_COUNT = 61
 };
 
-extern Adafruit_NeoPixel strip;
-extern Adafruit_NeoMatrix matrix;
 extern CRGB *const leds;

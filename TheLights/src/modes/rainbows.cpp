@@ -106,14 +106,20 @@ void drawRainbowWave1()
 void drawRainbowWave2()
 {
   static uint16_t waveRainbow = 0;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < RAINBOW_WAVE_2_DELAY) {
+    return;
+  }
+  lastTime = millis();
+
   if (waveRainbow < 256)
   {
-    for (uint16_t i = 0; i < strip.numPixels(); i++)
+    for (uint16_t i = 0; i < MATRIX_LEDS; i++)
     {
-      strip.setPixelColor(i, Wheel((i + waveRainbow) & 255));
+      leds[i] = Wheel((i + waveRainbow) & 255);
     }
-    strip.show();
-    delay(RAINBOW_WAVE_2_DELAY);
+    FastLED.show();
     ++waveRainbow;
   }
   else
@@ -135,49 +141,52 @@ void drawRainbowSnake()
   static uint16_t waveSnake1 = 0;
   static uint16_t waveSnake2 = 0;
   static uint8_t hue = 0;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < RAINBOW_SNAKE_DELAY) {
+    return;
+  }
+  lastTime = millis();
 
   if (waveSnake1 < MATRIX_LEDS)
   {
     leds[waveSnake1] = CHSV(hue++, 255, 255);
+    
+    fadeall(); 
+    
     FastLED.show();
-    fadeall();
-    delay(RAINBOW_SNAKE_DELAY );
     ++waveSnake1;
     waveSnake2 = MATRIX_LEDS - 1;
   }
-
   else if (waveSnake2 > 0)
   {
     leds[waveSnake2] = CHSV(hue++, 255, 255);
-    FastLED.show();
     fadeall();
-    delay(RAINBOW_SNAKE_DELAY );
+    FastLED.show();
     --waveSnake2;
   }
   else
   {
-    for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-    {
-      strip.setPixelColor(i, strip.Color(0, 0, 0));
-    }
-    strip.show();
+    FastLED.clear(); 
+    FastLED.show();
+    
     waveSnake1 = 0;
-    waveSnake2 = (MATRIX_LEDS)-1;
+    waveSnake2 = MATRIX_LEDS - 1;
   }
 }
 
-uint32_t Wheel(byte WheelPos)
+CRGB Wheel(byte WheelPos)
 {
   WheelPos = 255 - WheelPos;
   if (WheelPos < 85)
   {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+    return CRGB(255 - WheelPos * 3, 0, WheelPos * 3);
   }
   if (WheelPos < 170)
   {
     WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+    return CRGB(0, WheelPos * 3, 255 - WheelPos * 3);
   }
   WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+  return CRGB(WheelPos * 3, 255 - WheelPos * 3, 0);
 }

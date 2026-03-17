@@ -10,7 +10,7 @@
 enum spaceSettings
 {
   STAR_SKY_DELAY = 1500,
-  PULSATING_STAR_DELAY = 500,
+  PULSATING_STAR_DELAY = 150,
   STARFALL_DELAY = 100,
   GALAXY_DELAY = 130
 };
@@ -52,31 +52,35 @@ void drawSpaceEffects(uint8_t subMode)
 
 static void addStar(uint8_t starNum, uint32_t color)
 {
-  strip.setPixelColor(starNum, color);
-  strip.show();
+  if (starNum < MATRIX_LEDS) {
+    leds[starNum] = CRGB(color);
+    FastLED.show();
+  }
 }
 
 static void removeStar(uint8_t starNum)
 {
-  strip.setPixelColor(starNum, strip.Color(0, 0, 0));
-  strip.show();
+  if (starNum < MATRIX_LEDS) {
+    leds[starNum] = CRGB::Black;
+    FastLED.show();
+  }
 }
 
-const uint32_t starColors[] = { // Основные цвета звездного неба
-    strip.Color(149, 167, 232),
-    strip.Color(224, 232, 255),
-    strip.Color(255, 159, 19),
-    strip.Color(252, 127, 20),
-    strip.Color(242, 95, 106),
-    strip.Color(199, 0, 17),
-    strip.Color(56, 112, 255),
-    strip.Color(180, 200, 255),
-    strip.Color(110, 140, 220),
-    strip.Color(70, 100, 190),
-    strip.Color(255, 220, 180),
-    strip.Color(200, 210, 230),
-    strip.Color(170, 150, 220),
-    strip.Color(230, 240, 255)
+const uint32_t starColors[] = {
+    0x95A7E8, // (149, 167, 232)
+    0xE0E8FF, // (224, 232, 255)
+    0xFF9F13, // (255, 159, 19)
+    0xFC7F14, // (252, 127, 20)
+    0xF25F6A, // (242, 95, 106)
+    0xC70011, // (199, 0, 17)
+    0x3870FF, // (56, 112, 255)
+    0xB4C8FF, // (180, 200, 255)
+    0x6E8CDC, // (110, 140, 220)
+    0x4664BE, // (70, 100, 190)
+    0xFFDCB4, // (255, 220, 180)
+    0xC8D2E6, // (200, 210, 230)
+    0xAA96DC, // (170, 150, 220)
+    0xE6F0FF  // (230, 240, 255)
 };
 const uint8_t starColorsCount = 14;
 
@@ -131,7 +135,7 @@ void drawStarSky()
   else
   {
     uint16_t rndLed = ESP8266TrueRandom.random(0, MATRIX_LEDS);
-    addStar(rndLed, strip.Color(255, 255, 255));
+    addStar(rndLed, 0xFFFFFF); 
   }
 }
 
@@ -278,7 +282,7 @@ static void drawVortex(int16_t currentRadius, int16_t maxRadius)
 
   static float rotationAngle = 0;
 
-  strip.clear();
+  FastLED.clear();
 
   for (int16_t r = 0; r <= currentRadius; r++)
   {
@@ -288,7 +292,7 @@ static void drawVortex(int16_t currentRadius, int16_t maxRadius)
     uint8_t green = 255 * progress;
     uint8_t blue = 255 * (1.0 - progress);
 
-    uint32_t color = strip.Color(red, green, blue);
+    CRGB color(red, green, blue);
 
     for (int16_t angle = 0; angle < 360; angle += 2)
     {
@@ -299,12 +303,13 @@ static void drawVortex(int16_t currentRadius, int16_t maxRadius)
 
       if (x >= 0 && x < MATRIX_WIDTH && y >= 0 && y < MATRIX_HEIGHT)
       {
-        strip.setPixelColor(XY(x, y), color);
+        leds[XY(x, y)] = color;
       }
     }
   }
 
-  strip.show();
+  FastLED.show();
+  
   rotationAngle += 2.5f;
   if (rotationAngle >= 360)
     rotationAngle -= 360;

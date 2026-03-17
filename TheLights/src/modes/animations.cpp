@@ -56,8 +56,8 @@ void drawAnimations(uint8_t subMode)
   const uint32_t *jumpingManImage[] = {jumpingMan_1, jumpingMan_2};
   const uint32_t *fireballImage[] = {fireball_1, fireball_2, fireball_3, fireball_4};
   const uint32_t *explosionImage[] = {explosion_1, explosion_2, explosion_3, explosion_4, explosion_5,
-                                 explosion_6, explosion_7, explosion_8, explosion_9, explosion_10, explosion_11, explosion_12,
-                                 explosion_13, explosion_14, explosion_15, explosion_16, explosion_17, explosion_18};
+                                      explosion_6, explosion_7, explosion_8, explosion_9, explosion_10, explosion_11, explosion_12,
+                                      explosion_13, explosion_14, explosion_15, explosion_16, explosion_17, explosion_18};
 
   switch (subMode)
   {
@@ -126,17 +126,6 @@ void drawAnimations(uint8_t subMode)
   }
 }
 
-// void drawPicture(uint8_t p1[], const uint32_t p2[])
-// {
-//   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-//   {
-//     if ((p1[i] - 1) <= 155)
-//     {
-//       strip.setPixelColor(p1[i] - 1, pgm_read_dword(&(p2[i])));
-//     }
-//   }
-// }
-//////////////////////////////////////////////////////////////////////////////// ЗАМЕНА strip на FASTled!!!!!!!
 void drawPicture(uint8_t p1[], const uint32_t p2[])
 {
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
@@ -185,7 +174,7 @@ static void initLettersArray()
 static void displayJapaneseLetters()
 {
   const uint32_t *jpLetters[] = {jpLetter_1, jpLetter_2, jpLetter_3, jpLetter_4, jpLetter_5,
-                            jpLetter_6, jpLetter_7, jpLetter_8, jpLetter_9, jpLetter_10};
+                                 jpLetter_6, jpLetter_7, jpLetter_8, jpLetter_9, jpLetter_10};
 
   uint32_t currentMillis = millis();
   static uint32_t previousMillis = 0;
@@ -199,10 +188,10 @@ static void displayJapaneseLetters()
     case 0:
       if (currentStepJp < 13)
       {
-        strip.clear();
+        FastLED.clear();
         shiftArrayUp(currentStepJp);
         drawPicture(upArray, jpLetter_1);
-        strip.show();
+        FastLED.show();
         currentStepJp++;
       }
       else
@@ -219,7 +208,7 @@ static void displayJapaneseLetters()
       {
         if (currentStepJp < 16)
         {
-          strip.clear();
+          FastLED.clear();
           if (currentStepJp < 13)
           {
             shiftArrayDown();
@@ -230,7 +219,8 @@ static void displayJapaneseLetters()
             shiftArrayUp(currentStepJp - 3);
             drawPicture(upArray, jpLetters[currentLetterJp + 1]);
           }
-          strip.show();
+          FastLED.show();
+
           currentStepJp++;
         }
         else
@@ -251,10 +241,10 @@ static void displayJapaneseLetters()
     case 2:
       if (currentStepJp < 13)
       {
-        strip.clear();
+        FastLED.clear();
         shiftArrayDown();
         drawPicture(downArray, jpLetter_10);
-        strip.show();
+        FastLED.show();
         currentStepJp++;
       }
       else
@@ -288,10 +278,10 @@ void displayKoreanLetters()
     case 0:
       if (currentStepKr < 13)
       {
-        strip.clear();
+        FastLED.clear();
         shiftArrayUp(currentStepKr);
         drawPicture(upArray, krLetter_1);
-        strip.show();
+        FastLED.show();
         currentStepKr++;
       }
       else
@@ -308,7 +298,7 @@ void displayKoreanLetters()
       {
         if (currentStepKr < 16)
         {
-          strip.clear();
+          FastLED.clear();
           if (currentStepKr < 13)
           {
             shiftArrayDown();
@@ -319,7 +309,7 @@ void displayKoreanLetters()
             shiftArrayUp(currentStepKr - 3);
             drawPicture(upArray, krLetters[currentLetterKr + 1]);
           }
-          strip.show();
+          FastLED.show();
           currentStepKr++;
         }
         else
@@ -340,10 +330,10 @@ void displayKoreanLetters()
     case 2:
       if (currentStepKr < 13)
       {
-        strip.clear();
+        FastLED.clear();
         shiftArrayDown();
         drawPicture(downArray, krLetter_5);
-        strip.show();
+        FastLED.show();
         currentStepKr++;
       }
       else
@@ -366,22 +356,25 @@ void shiftLeft(uint8_t a)
   const uint32_t *signalsImage[] = {signal_1, signal_2, signal_3, signal_4, signal_5, signal_6, signal_7};
 
   static uint16_t shift = 0;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < 100) {
+    return;
+  }
+  lastTime = millis();
 
   for (uint8_t row = 0; row < 13; row++)
   {
     for (uint8_t col = 0; col < 12; col++)
     {
       uint16_t index = (col + shift) % 12;
-      uint32_t color = pgm_read_dword(&(signalsImage[a][row * 12 + index]));
-      uint8_t r = (color >> 16) & 0xFF;
-      uint8_t g = (color >> 8) & 0xFF;
-      uint8_t b = color & 0xFF;
-      strip.setPixelColor(XY(col, row), strip.Color(r, g, b));
+      uint32_t color = pgm_read_dword_near(&(signalsImage[a][row * 12 + index]));
+      leds[XY(col, row)] = CRGB(color);
     }
   }
-  strip.show();
-  delay(100);
 
+  FastLED.show();
+  
   shift = (shift + 1) % 12;
 }
 
@@ -399,7 +392,7 @@ void drawAnimation(const uint32_t *images[], uint32_t numImages, uint32_t interv
     initialized = true;
     previousMillisJP = currentMillis;
     drawPicture(mainMatrixScheme, images[currentImageIndex]);
-    strip.show();
+    FastLED.show();
     currentImageIndex = (currentImageIndex + 1) % numImages;
   }
 }

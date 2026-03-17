@@ -39,18 +39,17 @@ void weatherEffects(uint8_t pieceCount, uint8_t speed, uint8_t *currentCol,
   {
     for (uint8_t i = 0; i < pieceCount; i++)
     {
-      if ((currentRow[i] >= 0) && (currentRow[i] < MATRIX_HEIGHT))
+      if (currentRow[i] < MATRIX_HEIGHT)
       {
         uint16_t pixelIndex = XY(currentCol[i], currentRow[i]);
-        strip.setPixelColor(pixelIndex, clear ? 0x000000 : color);
+
+        if (clear)
+          leds[pixelIndex] = CRGB::Black;
+        else
+          leds[pixelIndex] = CRGB(color);
       }
     }
-    strip.show();
   };
-
-  drawPixels(false);
-  delay(speed);
-
   drawPixels(true);
 
   for (uint8_t i = 0; i < pieceCount; i++)
@@ -65,4 +64,9 @@ void weatherEffects(uint8_t pieceCount, uint8_t speed, uint8_t *currentCol,
       currentRow[i] = MATRIX_HEIGHT + ESP8266TrueRandom.random(0, 5);
     }
   }
+
+  drawPixels(false);
+  FastLED.show();
+
+  delay(speed);
 }

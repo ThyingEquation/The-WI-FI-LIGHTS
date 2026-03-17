@@ -3,6 +3,8 @@
 #include "lightsSettings.h"
 #include "main.h"
 
+static void successSave();
+
 bool loadSettings()
 {
 
@@ -80,21 +82,6 @@ bool loadSettings()
   return 0;
 }
 
-static void successSave()
-{
-  for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-  {
-    strip.setPixelColor(i, 0xffffff);
-  }
-  strip.show();
-  delay(250);
-  for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-  {
-    strip.setPixelColor(i, 0x000000);
-  }
-  strip.show();
-}
-
 bool applyNewParameters(String paramData, uint8_t param)
 {
   StaticJsonDocument<512> json;
@@ -149,4 +136,19 @@ bool applyNewParameters(String paramData, uint8_t param)
   successSave();
 
   return true;
+}
+
+static void successSave()
+{
+  FastLED.clear(true);
+
+  CRGB saveColor = CHSV(96, 255, 80);
+
+  fill_solid(leds, MATRIX_LEDS, saveColor);
+  FastLED.show();
+  
+  delay(500);
+
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+  FastLED.show();
 }
