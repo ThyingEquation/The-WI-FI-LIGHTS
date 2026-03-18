@@ -10,9 +10,9 @@ CRGB leds_plus_safety_pixel[MATRIX_LEDS + 1];
 CRGB *const leds(leds_plus_safety_pixel + 1);
 
 void (*modeFunctions[14])(uint8_t) = {
-    drawRunningLine, drawColorfulSpots, drawRainbows, drawCanvasEffects, drawRunningLights,
-    drawSpaceEffects, drawFlashLights, drawWaterEffects, drawWeatherEffects, drawColorfulWaves,
-    drawAnimations, drawGamesEffects, drawJumpingLights, drawMatrixMovieEffect};
+    drawCanvasEffects, drawRunningLine, drawColorfulSpots, drawRainbows, drawRunningLights,
+    drawJumpingLights, drawSpaceEffects, drawFlashLights, drawWaterEffects, drawWeatherEffects,
+    drawColorfulWaves, drawAnimations, drawGamesEffects, drawMatrixMovieEffect};
 
 static uint32_t startingMillis = 0;
 

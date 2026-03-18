@@ -64,6 +64,13 @@ static void drawSnake(uint16_t delay)
   static uint16_t ledsCount = 0;
   static uint32_t previousMillis = 0;
 
+  if (checkCommandReceived())
+  {
+    color = 0;
+    ledsCount = 0;
+    previousMillis = 0;
+  }
+
   if (millis() - previousMillis < delay)
   {
     return;
@@ -87,11 +94,19 @@ static void drawSnake(uint16_t delay)
 static void fillFull()
 {
   static uint8_t color = 0;
+  static bool isPaused = true;
   static uint16_t currentDistance = 0;
   static uint32_t lastUpdateTime = 0;
-  
-  static bool isPaused = true;
   static uint32_t pauseStartTime = 0;
+
+  if (checkCommandReceived())
+  {
+    color = 0;
+    isPaused = true;
+    currentDistance = 0;
+    lastUpdateTime = 0;
+    pauseStartTime = 0;
+  }
 
   if (isPaused)
   {
@@ -104,7 +119,8 @@ static void fillFull()
     return;
   }
 
-  if (millis() - lastUpdateTime < 65) {
+  if (millis() - lastUpdateTime < 65)
+  {
     return;
   }
   lastUpdateTime = millis();
@@ -140,12 +156,22 @@ static void drawChameleonSnake()
 {
   const uint8_t chameleon[] = {3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2, 15, 8, 3, 7, 4, 10, 2, 15, 6, 8, 2, 4};
 
-  static uint32_t previousMillis = 0;
-  static uint8_t color = 0;
-  static uint16_t pos = 0;
   static uint8_t arrPos = 0;
   static uint8_t arrVolume = 0;
+  static uint8_t color = 0;
+  static uint16_t pos = 0;
   static uint16_t n = 0;
+  static uint32_t previousMillis = 0;
+
+  if (checkCommandReceived())
+  {
+    arrPos = 0;
+    arrVolume = 0;
+    color = 0;
+    pos = 0;
+    n = 0;
+    previousMillis = 0;
+  }
 
   if (millis() - previousMillis < CHAMELEON_SNAKE_DELAY)
   {
@@ -196,7 +222,16 @@ static void drawLightBreath()
   static int8_t direction = 1;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < LIGHT_BREATH_DELAY) {
+  if (checkCommandReceived())
+  {
+    color = 0;
+    brightness = 0;
+    direction = 1;
+    lastTime = 0;
+  }
+
+  if (millis() - lastTime < LIGHT_BREATH_DELAY)
+  {
     return;
   }
   lastTime = millis();
@@ -207,10 +242,12 @@ static void drawLightBreath()
   fill_solid(leds, MATRIX_LEDS, baseColor);
   FastLED.show();
 
-  if (brightness >= 255) {
+  if (brightness >= 255)
+  {
     direction = -1;
-  } 
-  else if (brightness == 0) {
+  }
+  else if (brightness == 0)
+  {
     direction = 1;
     color = ESP8266TrueRandom.random(0, 128);
   }
@@ -224,12 +261,20 @@ static void drawImages(uint8_t subMode)
                               apple, bird, rabbit, question, goldenKey,
                               star, sun, pepe};
 
-  static uint32_t previousMillis = 0;
-  static uint32_t previousMillisImgNum = 0;
   static uint8_t imageNum = 0;
   static uint8_t locImgNum = 0;
+  static uint32_t previousMillis = 0;
+  static uint32_t previousMillisImgNum = 0;
 
   uint32_t currentMillis = millis();
+
+  if (checkCommandReceived())
+  {
+    imageNum = 0;
+    locImgNum = 0;
+    previousMillis = 0;
+    previousMillisImgNum = 0;
+  }
 
   if (subMode == 255)
   {

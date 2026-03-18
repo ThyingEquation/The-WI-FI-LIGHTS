@@ -8,9 +8,9 @@
     2) Масштаб, переменная scale
 */
 
-static void fillNoise8();
-static void mapNoiseToLedsUsingPalette();
-static void changePaletteAndSettingsPeriodically();
+static void fillNoise8(bool resetVal);
+static void mapNoiseToLedsUsingPalette(bool resetVal);
+static void changePaletteAndSettingsPeriodically(bool resetVal);
 
 static CRGBPalette16 currentPalette(CloudColors_p);
 
@@ -22,17 +22,39 @@ static uint8_t noise[16][16];
 
 void drawColorfulSpots(uint8_t empty)
 {
-  changePaletteAndSettingsPeriodically();
-  fillNoise8();
-  mapNoiseToLedsUsingPalette();
+
+  if (checkCommandReceived())
+  {
+    speed = 10;
+    scale = 25;
+    colorLoop = 1;
+
+    changePaletteAndSettingsPeriodically(true);
+    fillNoise8(true);
+    mapNoiseToLedsUsingPalette(true);
+  }
+  else
+  {
+    changePaletteAndSettingsPeriodically(false);
+    fillNoise8(false);
+    mapNoiseToLedsUsingPalette(false);
+  }
+
   FastLED.show();
 }
 
-static void fillNoise8()
+static void fillNoise8(bool resetVal)
 {
   static uint16_t X = random16();
   static uint16_t Y = random16();
   static uint16_t Z = random16();
+
+  if (resetVal)
+  {
+    X = random16();
+    Y = random16();
+    Z = random16();
+  }
 
   uint8_t dataSmoothing = 0;
   if (speed < 50)
@@ -68,9 +90,14 @@ static void fillNoise8()
   Y -= speed / 16;
 }
 
-static void mapNoiseToLedsUsingPalette()
+static void mapNoiseToLedsUsingPalette(bool resetVal)
 {
   static uint8_t ihue = 0;
+
+  if (resetVal)
+  {
+    ihue = 0;
+  }
 
   for (uint8_t i = 0; i < MATRIX_WIDTH; i++)
   {
@@ -108,10 +135,15 @@ static void SetupRandomPalette()
                     CHSV(random8(), 128, 255), CHSV(random8(), 255, 255));
 }
 
-static void changePaletteAndSettingsPeriodically()
+static void changePaletteAndSettingsPeriodically(bool resetVal)
 {
   uint8_t secondHand = ((millis() / 1000) / 10) % 60;
   static uint8_t lastSecond = 99;
+
+  if (resetVal)
+  {
+    lastSecond = 99;
+  }
 
   if (lastSecond != secondHand)
   {

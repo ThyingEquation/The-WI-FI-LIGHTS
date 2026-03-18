@@ -146,7 +146,7 @@ static void successSave()
 
   fill_solid(leds, MATRIX_LEDS, saveColor);
   FastLED.show();
-  
+
   delay(500);
 
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);

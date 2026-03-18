@@ -21,6 +21,7 @@ void drawWaterEffects(uint8_t subMode);
 void drawWeatherEffects(uint8_t subMode);
 
 void initRunningLine();
+bool checkCommandReceived();
 
 uint16_t XY(uint16_t x, uint16_t y);
 CRGB Wheel(byte WheelPos);

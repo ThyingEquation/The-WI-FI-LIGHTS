@@ -108,7 +108,8 @@ void drawRainbowWave2()
   static uint16_t waveRainbow = 0;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < RAINBOW_WAVE_2_DELAY) {
+  if (millis() - lastTime < RAINBOW_WAVE_2_DELAY)
+  {
     return;
   }
   lastTime = millis();
@@ -143,7 +144,16 @@ void drawRainbowSnake()
   static uint8_t hue = 0;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < RAINBOW_SNAKE_DELAY) {
+  if (checkCommandReceived())
+  {
+    waveSnake1 = 0;
+    waveSnake2 = 0;
+    hue = 0;
+    lastTime = 0;
+  }
+
+  if (millis() - lastTime < RAINBOW_SNAKE_DELAY)
+  {
     return;
   }
   lastTime = millis();
@@ -151,9 +161,9 @@ void drawRainbowSnake()
   if (waveSnake1 < MATRIX_LEDS)
   {
     leds[waveSnake1] = CHSV(hue++, 255, 255);
-    
-    fadeall(); 
-    
+
+    fadeall();
+
     FastLED.show();
     ++waveSnake1;
     waveSnake2 = MATRIX_LEDS - 1;
@@ -167,9 +177,9 @@ void drawRainbowSnake()
   }
   else
   {
-    FastLED.clear(); 
+    FastLED.clear();
     FastLED.show();
-    
+
     waveSnake1 = 0;
     waveSnake2 = MATRIX_LEDS - 1;
   }
