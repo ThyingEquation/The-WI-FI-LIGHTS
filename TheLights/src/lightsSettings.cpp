@@ -1,154 +1,83 @@
-#include <ArduinoJson.h>
-
 #include "lightsSettings.h"
 #include "main.h"
 
 static void successSave();
 
+const char *SETTINGS_FILE = "/appSettings.bin";
+
 bool loadSettings()
 {
 
-  const char *appSettingsData = NULL;
-  String localStr = "";
+    if (!LittleFS.begin())
+    {
+        return false;
+    }
 
-  File configFile = LittleFS.open("/appSettings.json", "r");
-  if (!configFile)
-  {
-    return 1;
-  }
+    File settingsFile = LittleFS.open(SETTINGS_FILE, "r");
+    if (!settingsFile)
+    {
+        saveSettings();
+        return true;
+    }
 
-  size_t size = configFile.size();
-  if (size > 256)
-  {
-    configFile.close();
-    return 1;
-  }
+    size_t sz = settingsFile.size();
+    if (sz != sizeof(appSettings_s))
+    {
+        settingsFile.close();
+        saveSettings();
+        return true;
+    }
 
-  std::unique_ptr<char[]> buf(new char[size]);
-  size_t bytesRead = configFile.readBytes(buf.get(), size);
-  configFile.close();
+    size_t read = settingsFile.read((uint8_t *)&settings, sizeof(appSettings_s));
+    settingsFile.close();
 
-  if (bytesRead != size)
-  {
-    return 1;
-  }
+    if (read != sizeof(appSettings_s))
+    {
+        saveSettings();
+        return false;
+    }
 
-  JsonDocument json;
-  DeserializationError errJson = deserializeJson(json, buf.get());
-  if (errJson)
-  {
-    return 1;
-  }
-
-  appSettingsData = json["ssid"];
-  if (appSettingsData)
-  {
-    strncpy(settings.ssid, appSettingsData, 15);
-  }
-
-  appSettingsData = json["startMode"];
-  if (appSettingsData)
-  {
-    settings.modeNum = atoi(appSettingsData);
-  }
-
-  appSettingsData = json["brightness"];
-  if (appSettingsData)
-  {
-    settings.intBrightness = atoi(appSettingsData);
-  }
-
-  appSettingsData = json["allModeDelay"];
-  if (appSettingsData)
-  {
-    char allModeDelayString[5] = {'0', '0', '0', '0', '\0'};
-    strncpy(allModeDelayString, appSettingsData, 4);
-    localStr = allModeDelayString;
-    settings.allModeDelay = (uint32_t)((localStr.toInt()) * 1000);
-  }
-
-  appSettingsData = json["allModeType"];
-  if (appSettingsData)
-  {
-    settings.allModesWorkType = atoi(appSettingsData);
-  }
-
-  appSettingsData = json["isWifiAutoOffEnable"];
-  if (appSettingsData)
-  {
-    settings.isWifiAutoOffEnable = atoi(appSettingsData);
-  }
-
-  return 0;
+    return true;
 }
 
-bool applyNewParameters(String paramData, uint8_t param)
+void saveSettings()
 {
-  StaticJsonDocument<512> json;
-
-  File configFile = LittleFS.open("/appSettings.json", "r");
-  if (configFile)
-  {
-    DeserializationError errJson = deserializeJson(json, configFile);
-    if (errJson)
+    File settingsFile = LittleFS.open(SETTINGS_FILE, "w");
+    if (!settingsFile)
     {
-      return 1;
+        Serial.println("Ошибка. Файл настроек невозможно открыть. Возможно не загружена файловая система в ESP");
+        return;
     }
-    configFile.close();
-  }
 
-  switch (param)
-  {
-  case 1:
-    json["ssid"] = paramData;
-    break;
-  case 2:
-    json["startMode"] = paramData;
-    break;
-  case 3:
-    json["brightness"] = paramData;
-    break;
-  case 4:
-    json["allModeDelay"] = paramData;
-    break;
-  case 5:
-    json["allModeType"] = paramData;
-    break;
-  case 6:
-    json["isWifiAutoOffEnable"] = paramData;
-    break;
-  }
+    settingsFile.write((const uint8_t *)&settings, sizeof(appSettings_s));
+    settingsFile.close();
 
-  configFile = LittleFS.open("/appSettings.json", "w");
-  if (!configFile)
-  {
-    return false;
-  }
+    successSave();
+}
 
-  serializeJson(json, configFile);
-  configFile.close();
+void resetSettings()
+{
 
-  if (param == 4)
-  {
-    settings.allModeDelay = ((uint32_t)json["allModeDelay"]) * 1000UL;
-  }
+    File settingsFile = LittleFS.open(SETTINGS_FILE, "r");
+    if (settingsFile)
+    {
+        settingsFile.close();
+    }
 
-  successSave();
-
-  return true;
+    LittleFS.remove(SETTINGS_FILE);
 }
 
 static void successSave()
 {
-  FastLED.clear(true);
+    FastLED.clear(true);
 
-  CRGB saveColor = CHSV(96, 255, 80);
+    CRGB saveColor = CHSV(96, 255, 80);
 
-  fill_solid(leds, MATRIX_LEDS, saveColor);
-  FastLED.show();
+    fill_solid(leds, MATRIX_LEDS, saveColor);
+    FastLED.show();
 
-  delay(500);
+    delay(500);
 
-  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-  FastLED.show();
+    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+    FastLED.show();
 }

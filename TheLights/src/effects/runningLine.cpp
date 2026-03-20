@@ -47,7 +47,7 @@ static Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
 void initRunningLine() {
   matrix.begin();
   matrix.setTextWrap(false);
-  matrix.setBrightness(settings.intBrightness);
+  matrix.setBrightness(settings.globalBrightness);
   matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));
 }
 

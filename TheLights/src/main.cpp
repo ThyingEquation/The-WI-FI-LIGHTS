@@ -18,47 +18,47 @@ static uint32_t startingMillis = 0;
 
 void setup()
 {
-  if (!LittleFS.begin())
+  Serial.begin(9600);
+
+  if (!loadSettings())
   {
     return;
   }
-
-  if (loadSettings())
-  {
-    return;
-  }
-
-  // Serial.begin(9600); // Для отладки
 
   initRunningLine();
 
   delay(100);
+
   FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
   FastLED.addLeds<WS2812B, PIN, GRB>(leds, MATRIX_LEDS)
       .setCorrection(TypicalSMD5050)
-      .setDither(settings.intBrightness <= 255);
-  FastLED.setBrightness(settings.intBrightness);
+      .setDither(settings.globalBrightness <= 255);
+  FastLED.setBrightness(settings.globalBrightness);
+
   delay(10);
+
   FastLED.clear(true);
+  
   delay(100);
 
   initLightServer();
 
-  if (settings.modeNum != 99)
+  if (settings.startingEffectsGroup != 99)
   {
-    if (settings.modeNum != 98)
+    if (settings.startingEffectsGroup != 98)
     {
-      deviceEffectsState.effectsGroup = mainModes[settings.modeNum].effectsGroup;
-      deviceEffectsState.submode = mainModes[settings.modeNum].subMode;
+      deviceEffectsState.effectsGroup = mainModes[settings.startingEffectsGroup].effectsGroup;
+      deviceEffectsState.effectSubmode = mainModes[settings.startingEffectSubMode].subMode;
     }
     else
     {
       deviceEffectsState.currentIndex = 255;
       deviceEffectsState.isAllModesEnable = true;
       deviceEffectsState.effectsGroup = 255;
-      deviceEffectsState.submode = 255;
+      deviceEffectsState.effectSubmode = 255;
     }
   }
+  
   delay(2000);
 
   startingMillis = millis();
@@ -97,7 +97,7 @@ void loop()
 
   if (deviceEffectsState.effectsGroup < 14)
   {
-    modeFunctions[deviceEffectsState.effectsGroup](deviceEffectsState.submode);
+    modeFunctions[deviceEffectsState.effectsGroup](deviceEffectsState.effectSubmode);
     yield();
   }
 }

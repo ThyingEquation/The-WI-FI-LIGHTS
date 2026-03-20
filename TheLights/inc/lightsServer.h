@@ -12,7 +12,7 @@ typedef struct
     bool isScreenClearEnable = true;
     bool isAllModesEnable = false;
     uint8_t effectsGroup = 255;
-    uint8_t submode = 255;
+    uint8_t effectSubmode = 255;
     uint8_t currentIndex = 255;
 } deviceEffectsState_s;
 

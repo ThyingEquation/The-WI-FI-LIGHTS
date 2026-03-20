@@ -31,8 +31,7 @@ extern uint8_t mainMatrixScheme[];
 
 struct ModeConfig {
     uint8_t effectsGroup;
-    uint8_t subMode;
-    bool isAllModesEffectEnable; 
+    uint8_t subMode; 
 };
 
 extern const std::array<ModeConfig, ALL_MODES_EFFECT_COUNT> mainModes;
