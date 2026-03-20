@@ -2,7 +2,7 @@
 #include "colors.h"
 #include "lightsSettings.h"
 
-#include <Adafruit_NeoMatrix.h>
+#include <FastLED_NeoMatrix.h>
 
 /*
   Эта группа эффектов для любого размера матриц
@@ -24,7 +24,7 @@ enum runningLineSettings
 {
   RUNNING_LINE_DELAY = 250,
   TOP_MARGIN = 3,
-  TEXT_POS = NEO_MATRIX_LEFT
+  MATRIX_CONFIG = NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG
 };
 
 static String utf8rus(String source);
@@ -39,42 +39,52 @@ const char *text[] = {"С НОВЫМ ГОДОМ!!!",
 
 const int16_t textLength[] = {100, 173, 137, 85, 183, 98, 98};
 
-static Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
-    MATRIX_WIDTH, MATRIX_HEIGHT, PIN,
-    NEO_MATRIX_BOTTOM + TEXT_POS + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
-    NEO_GRB + NEO_KHZ800);
+static FastLED_NeoMatrix matrix = FastLED_NeoMatrix(leds, MATRIX_WIDTH, MATRIX_HEIGHT, MATRIX_CONFIG);
 
-void initRunningLine() {
+void initRunningLine()
+{
   matrix.begin();
   matrix.setTextWrap(false);
-  matrix.setBrightness(settings.globalBrightness);
   matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));
 }
 
 void drawRunningLine(uint8_t subMode)
 {
+  static int16_t x = MATRIX_WIDTH; 
+  static uint32_t lastTime = 0;
+  static uint8_t lastSubMode = 255;
 
-  static int16_t g = MATRIX_WIDTH;
-
-  if (subMode > 7)
+  if (subMode == 0 || subMode > 7 || subMode != lastSubMode)
   {
-    g = MATRIX_WIDTH;
+    x = MATRIX_WIDTH;
+    lastSubMode = subMode;
+    
+    if (subMode == 0 || subMode > 7) return;
+  }
+  if (millis() - lastTime < RUNNING_LINE_DELAY)
+  {
+    return;
+  }
+  
+  lastTime = millis();
+
+  uint8_t idx = subMode - 1;
+
+  FastLED.clear(); 
+  matrix.fillScreen(0); 
+
+  matrix.setCursor(x, TOP_MARGIN);
+  matrix.print(utf8rus(text[idx]));
+
+
+  x--;
+  if (x < -textLength[idx] - 10)
+  {
+    x = MATRIX_WIDTH;
+    matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));
   }
 
-  if ((subMode - 1) != -1)
-  {
-    matrix.fillScreen(matrix.Color(0, 0, 0));
-    matrix.setCursor(g, TOP_MARGIN);
-    matrix.print(utf8rus(text[subMode - 1]));
-
-    if (--g < -textLength[subMode - 1])
-    {
-      g = matrix.width();
-      matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));
-    }
-    matrix.show();
-    delay(RUNNING_LINE_DELAY);
-  }
+  matrix.show();
 }
 
 static String utf8rus(String source)

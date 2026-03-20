@@ -22,4 +22,4 @@ enum globalSettings
   ALL_MODES_EFFECT_COUNT = 61
 };
 
-extern CRGB *const leds;
+extern CRGB leds[MATRIX_LEDS]; 

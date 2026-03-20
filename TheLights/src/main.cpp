@@ -6,8 +6,7 @@
 appSettings_s settings;
 deviceEffectsState_s deviceEffectsState;
 
-CRGB leds_plus_safety_pixel[MATRIX_LEDS + 1];
-CRGB *const leds(leds_plus_safety_pixel + 1);
+CRGB leds[MATRIX_LEDS];
 
 void (*modeFunctions[14])(uint8_t) = {
     drawCanvasEffects, drawRunningLine, drawColorfulSpots, drawRainbows, drawRunningLights,
@@ -25,11 +24,8 @@ void setup()
     return;
   }
 
-  initRunningLine();
-
   delay(100);
 
-  FastLED.setMaxPowerInVoltsAndMilliamps(5, 10000);
   FastLED.addLeds<WS2812B, PIN, GRB>(leds, MATRIX_LEDS)
       .setCorrection(TypicalSMD5050)
       .setDither(settings.globalBrightness <= 255);
@@ -37,9 +33,9 @@ void setup()
 
   delay(10);
 
-  FastLED.clear(true);
-  
-  delay(100);
+  initRunningLine();
+
+  deviceEffectsState.isScreenClearEnable = true;
 
   initLightServer();
 
@@ -58,7 +54,7 @@ void setup()
       deviceEffectsState.effectSubmode = 255;
     }
   }
-  
+
   delay(2000);
 
   startingMillis = millis();
@@ -83,10 +79,12 @@ void loop()
     }
   }
 
-  if (deviceEffectsState.isScreenClearEnable)
+  if (deviceEffectsState.isScreenClearEnable && deviceEffectsState.effectsGroup == 255)
   {
     deviceEffectsState.isScreenClearEnable = false;
     FastLED.clear(true);
+    // fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+    // FastLED.show();
   }
 
   if (deviceEffectsState.isAllModesEnable)
