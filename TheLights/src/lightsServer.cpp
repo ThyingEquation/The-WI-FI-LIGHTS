@@ -5,6 +5,7 @@
 #include "effects.h"
 
 static void handleSettings();
+static void handleConnectionState();
 static void handleCanvas();
 static void handleMainCommand();
 
@@ -127,8 +128,9 @@ void initLightServer()
   delay(500);
 
   server.on("/settings", handleSettings);
+  server.on("/connectionState", handleConnectionState);
   server.on("/command", handleMainCommand);
-  server.on("/painting", handleCanvas);
+  server.on("/canvas", handleCanvas);
 
   server.begin();
 }
@@ -252,6 +254,14 @@ static void handleSettings()
   }
 }
 
+static void handleConnectionState()
+{
+  if (server.hasArg("check"))
+  {
+    server.send(200, "text/plain", "imHere");
+  }
+}
+
 static void handleCanvas()
 {
   isCommandReceived = true;
@@ -267,12 +277,19 @@ static void handleMainCommand()
   deviceEffectsState.isScreenClearEnable = true;
   deviceEffectsState.isAllModesEnable = false;
 
-  if (server.hasArg("ok"))
-  {
-  }
-  else if (server.hasArg("stop"))
+  if (server.hasArg("stop"))
   {
     deviceEffectsState.effectsGroup = 255;
+  }
+  else if (server.hasArg("canvasEffects"))
+  {
+    deviceEffectsState.effectsGroup = CANVAS_EFFECTS;
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("canvasEffects")).toInt());
+  }
+  else if (server.hasArg("runningLine"))
+  {
+    deviceEffectsState.effectsGroup = RUNNING_LINE;
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("runningLine")).toInt());
   }
   else if (server.hasArg("allModes"))
   {
@@ -282,50 +299,44 @@ static void handleMainCommand()
     deviceEffectsState.effectSubmode = 255;
     effectAllModes();
   }
-  else if (server.hasArg("runLine"))
-  {
-    deviceEffectsState.effectsGroup = RUNNING_LINE;
-    drawRunningLine(99);
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("runLine")).toInt());
-  }
-  else if (server.hasArg("spots"))
+  else if (server.hasArg("colorfulSpots"))
   {
     deviceEffectsState.effectsGroup = COLORFUL_SPOTS;
   }
-  else if (server.hasArg("rainbow"))
+  else if (server.hasArg("rainbows"))
   {
     deviceEffectsState.effectsGroup = RAINBOWS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("rainbow")).toInt());
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("rainbows")).toInt());
   }
-  else if (server.hasArg("draw"))
-  {
-    deviceEffectsState.effectsGroup = CANVAS_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("draw")).toInt());
-  }
-  else if (server.hasArg("runLights"))
+  else if (server.hasArg("runningLights"))
   {
     deviceEffectsState.effectsGroup = RUNNING_LIGHTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("runLights")).toInt());
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("runningLights")).toInt());
   }
-  else if (server.hasArg("space"))
+  else if (server.hasArg("jumpingLights"))
+  {
+    deviceEffectsState.effectsGroup = JUMPING_LIGHTS;
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("jumpingLights")).toInt());
+  }
+  else if (server.hasArg("spaceEffects"))
   {
     deviceEffectsState.effectsGroup = SPACE_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("space")).toInt());
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("spaceEffects")).toInt());
   }
   else if (server.hasArg("flashLights"))
   {
     deviceEffectsState.effectsGroup = FLASH_LIGHTS;
     deviceEffectsState.effectSubmode = (uint8_t)((server.arg("flashLights")).toInt());
   }
-  else if (server.hasArg("water"))
+  else if (server.hasArg("waterEffects"))
   {
     deviceEffectsState.effectsGroup = WATER_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("water")).toInt());
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("waterEffects")).toInt());
   }
-  else if (server.hasArg("weather"))
+  else if (server.hasArg("weatherEffects"))
   {
     deviceEffectsState.effectsGroup = WEATHER_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("weather")).toInt());
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("weatherEffects")).toInt());
   }
   else if (server.hasArg("colorfulWaves"))
   {
@@ -338,19 +349,14 @@ static void handleMainCommand()
     drawAnimations(99);
     deviceEffectsState.effectSubmode = (uint8_t)((server.arg("animations")).toInt());
   }
-  else if (server.hasArg("games"))
+  else if (server.hasArg("gamesEffects"))
   {
     deviceEffectsState.effectsGroup = GAMES_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("games")).toInt());
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("gamesEffects")).toInt());
   }
-  else if (server.hasArg("jumpingLights"))
-  {
-    deviceEffectsState.effectsGroup = JUMPING_LIGHTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("jumpingLights")).toInt());
-  }
-  else if (server.hasArg("matrix"))
+  else if (server.hasArg("matrixMovieEffect"))
   {
     deviceEffectsState.effectsGroup = MATRIX_MOVIE_EFFECT;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("matrix")).toInt());
+    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("matrixMovieEffect")).toInt());
   }
 }

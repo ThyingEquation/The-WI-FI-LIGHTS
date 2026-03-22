@@ -35,11 +35,9 @@ void setup()
 
   initRunningLine();
 
-  deviceEffectsState.isScreenClearEnable = true;
-
   initLightServer();
 
-  if (settings.startingEffectsGroup != 99)
+  if (settings.startingEffectsGroup != 255)
   {
     if (settings.startingEffectsGroup != 98)
     {
@@ -56,6 +54,12 @@ void setup()
   }
 
   delay(2000);
+
+  Serial.println(deviceEffectsState.effectsGroup);
+  Serial.println(deviceEffectsState.effectSubmode);
+
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+  FastLED.show();
 
   startingMillis = millis();
 }
@@ -79,23 +83,20 @@ void loop()
     }
   }
 
-  if (deviceEffectsState.isScreenClearEnable && deviceEffectsState.effectsGroup == 255)
+  if (deviceEffectsState.isScreenClearEnable)
   {
     deviceEffectsState.isScreenClearEnable = false;
-    FastLED.clear(true);
-    // fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-    // FastLED.show();
+    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+    FastLED.show();
   }
 
   if (deviceEffectsState.isAllModesEnable)
   {
     effectAllModes();
-    yield();
   }
 
   if (deviceEffectsState.effectsGroup < 14)
   {
     modeFunctions[deviceEffectsState.effectsGroup](deviceEffectsState.effectSubmode);
-    yield();
   }
 }

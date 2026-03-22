@@ -29,13 +29,13 @@ enum runningLineSettings
 
 static String utf8rus(String source);
 
-const char *text[] = {"С НОВЫМ ГОДОМ!!!",
+const char *text[] = {"С НОВЫМ ГОДОМ !!!",
                       "ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА",
                       "ПРИВЕТ, Я УМНАЯ ГИРЛЯНДА",
                       "ВВЕДИТЕ ТЕКСТ",
-                      "С НАСТУПАЮЩИМ НОВЫМ ГОДОМ!!!",
-                      "С РОЖДЕСТВОМ!!!",
-                      "HAPPY NEW YEAR!!!"};
+                      "С НАСТУПАЮЩИМ НОВЫМ ГОДОМ !!!",
+                      "С РОЖДЕСТВОМ !!!",
+                      "HAPPY NEW YEAR !!!"};
 
 const int16_t textLength[] = {100, 173, 137, 85, 183, 98, 98};
 
@@ -61,6 +61,7 @@ void drawRunningLine(uint8_t subMode)
     
     if (subMode == 0 || subMode > 7) return;
   }
+  
   if (millis() - lastTime < RUNNING_LINE_DELAY)
   {
     return;
