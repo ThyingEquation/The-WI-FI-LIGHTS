@@ -29,15 +29,11 @@ enum runningLineSettings
 
 static String utf8rus(String source);
 
-const char *text[] = {"С НОВЫМ ГОДОМ !!!",
-                      "ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА",
-                      "ПРИВЕТ, Я УМНАЯ ГИРЛЯНДА",
-                      "ВВЕДИТЕ ТЕКСТ",
-                      "С НАСТУПАЮЩИМ НОВЫМ ГОДОМ !!!",
-                      "С РОЖДЕСТВОМ !!!",
-                      "HAPPY NEW YEAR !!!"};
+const char *text[] = {"С НАСТУПАЮЩИМ НОВЫМ ГОДОМ !!!", "С НОВЫМ ГОДОМ !!!", "HAPPY NEW YEAR !!!",
+                      "С РОЖДЕСТВОМ !!!", "ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА", "ПРИВЕТ, Я УМНАЯ ГИРЛЯНДА",
+                      "ВВЕДИТЕ ТЕКСТ"};
 
-const int16_t textLength[] = {100, 173, 137, 85, 183, 98, 98};
+const int16_t textLength[] = {183, 100, 98, 98, 173, 137, 85};
 
 static FastLED_NeoMatrix matrix = FastLED_NeoMatrix(leds, MATRIX_WIDTH, MATRIX_HEIGHT, MATRIX_CONFIG);
 
@@ -50,7 +46,7 @@ void initRunningLine()
 
 void drawRunningLine(uint8_t subMode)
 {
-  static int16_t x = MATRIX_WIDTH; 
+  static int16_t x = MATRIX_WIDTH;
   static uint32_t lastTime = 0;
   static uint8_t lastSubmode = 255;
 
@@ -58,25 +54,25 @@ void drawRunningLine(uint8_t subMode)
   {
     x = MATRIX_WIDTH;
     lastSubmode = subMode;
-    
-    if (subMode == 0 || subMode > 7) return;
+
+    if (subMode == 0 || subMode > 7)
+      return;
   }
-  
+
   if (millis() - lastTime < RUNNING_LINE_DELAY)
   {
     return;
   }
-  
+
   lastTime = millis();
 
   uint8_t idx = subMode - 1;
 
-  FastLED.clear(); 
-  matrix.fillScreen(0); 
+  FastLED.clear();
+  matrix.fillScreen(0);
 
   matrix.setCursor(x, TOP_MARGIN);
   matrix.print(utf8rus(text[idx]));
-
 
   x--;
   if (x < -textLength[idx] - 10)
