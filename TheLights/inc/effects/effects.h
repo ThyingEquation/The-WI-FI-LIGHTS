@@ -1,11 +1,12 @@
 #pragma once
 
+#include <string_view>
 #include <ESP8266TrueRandom.h>
 
 #include "main.h"
 
 void drawAnimations(uint8_t subMode);
-void drawOnCanvas(String canvasMode, uint8_t color, uint16_t ledNum);
+void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum);
 void drawColorfulSpots(uint8_t empty);
 void drawColorfulWaves(uint8_t subMode);
 void drawCanvasEffects(uint8_t subMode);

@@ -11,6 +11,7 @@ typedef struct
 {
     bool isScreenClearEnable = true;
     bool isAllModesEnable = false;
+    bool isWifiActive = 0;
     uint8_t effectsGroup = 255;
     uint8_t effectSubmode = 255;
     uint8_t currentIndex = 255;

@@ -28,9 +28,9 @@ const uint32_t colorsCanvas[] PROGMEM = {0x000000,  // Чёрный
                                     0xd76e00,  // Темно-оранжевый
                                     0x7cfc00}; // Зеленая лужайка
 
-void drawOnCanvas(String canvasMode, uint8_t color, uint16_t ledNum)
+void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum)
 {
-  if (canvasMode.indexOf("A") != -1)
+  if (mode == "A")
   {
     if (ledNum == 257)
     {
@@ -48,7 +48,7 @@ void drawOnCanvas(String canvasMode, uint8_t color, uint16_t ledNum)
       }
     }
   }
-  else if (canvasMode.indexOf("B") != -1)
+  else if (mode == "B")
   {
     if (ledNum == 257)
     {

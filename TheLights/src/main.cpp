@@ -42,7 +42,7 @@ void setup()
     if (settings.startingEffectsGroup != 98)
     {
       deviceEffectsState.effectsGroup = mainModes[settings.startingEffectsGroup].effectsGroup;
-      deviceEffectsState.effectSubmode = mainModes[settings.startingEffectSubMode].subMode;
+      deviceEffectsState.effectSubmode = mainModes[settings.startingEffectSubmode].subMode;
     }
     else
     {
@@ -69,16 +69,18 @@ void loop()
   static uint32_t lastMillis = 0;
   uint32_t currentMillis = millis();
 
-  if (currentMillis - lastMillis >= 100)
+  checkLightServer();
+
+  if (deviceEffectsState.isWifiActive && currentMillis - lastMillis >= 1000)
   {
     lastMillis = currentMillis;
-    checkLightServer();
 
     if (settings.isWifiAutoOffEnable)
     {
       if (currentMillis - startingMillis >= 180000)
       {
         WiFi.softAPdisconnect(true);
+        deviceEffectsState.isWifiActive = false;
       }
     }
   }
@@ -86,7 +88,7 @@ void loop()
   if (deviceEffectsState.isScreenClearEnable)
   {
     deviceEffectsState.isScreenClearEnable = false;
-    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+    FastLED.clear();
     FastLED.show();
   }
 

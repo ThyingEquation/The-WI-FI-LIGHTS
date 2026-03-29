@@ -52,12 +52,12 @@ void drawRunningLine(uint8_t subMode)
 {
   static int16_t x = MATRIX_WIDTH; 
   static uint32_t lastTime = 0;
-  static uint8_t lastSubMode = 255;
+  static uint8_t lastSubmode = 255;
 
-  if (subMode == 0 || subMode > 7 || subMode != lastSubMode)
+  if (subMode == 0 || subMode > 7 || subMode != lastSubmode)
   {
     x = MATRIX_WIDTH;
-    lastSubMode = subMode;
+    lastSubmode = subMode;
     
     if (subMode == 0 || subMode > 7) return;
   }

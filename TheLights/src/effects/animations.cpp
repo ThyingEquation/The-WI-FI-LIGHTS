@@ -117,7 +117,7 @@ void drawAnimations(uint8_t subMode)
     shiftLeft(6);
     break;
 
-  case 99:
+  case 255:
     resetLettersAnimation();
     break;
 

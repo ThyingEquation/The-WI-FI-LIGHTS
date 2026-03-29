@@ -1,15 +1,18 @@
 #include <deque>
+#include <string>
+
+#include <WiFiUdp.h>
 
 #include "lightsServer.h"
 #include "lightsSettings.h"
 #include "effects.h"
 
-static void handleSettings();
-static void handleConnectionState();
-static void handleCanvas();
-static void handleMainCommand();
+static void handleConnectionState(std::string_view command);
+static void handleSettings(std::string_view command);
+static void handleCanvas(std::string_view command);
+static void handleMainCommand(std::string_view command);
 
-ESP8266WebServer server(80);
+WiFiUDP Udp;
 
 enum EffectsGroupMode // Главные группы эффектов. Пародяк эффектов аналогичен андроид приложению
 {
@@ -110,34 +113,61 @@ static bool isCommandReceived = false;
 void initLightServer()
 {
   WiFi.mode(WIFI_AP);
-
   delay(50);
 
   IPAddress localIp(settings.localIpVal[0], settings.localIpVal[1], settings.localIpVal[2], settings.localIpVal[3]);
   IPAddress gateway(settings.gatewayVal[0], settings.gatewayVal[1], settings.gatewayVal[2], settings.gatewayVal[3]);
   IPAddress subnet(settings.subnetVal[0], settings.subnetVal[1], settings.subnetVal[2], settings.subnetVal[3]);
-
   delay(50);
 
   WiFi.softAPConfig(localIp, gateway, subnet);
-
+  delay(50);
+  WiFi.softAP(settings.ssid, settings.password);
   delay(50);
 
-  WiFi.softAP(settings.ssid, settings.password);
-
-  delay(500);
-
-  server.on("/settings", handleSettings);
-  server.on("/connectionState", handleConnectionState);
-  server.on("/command", handleMainCommand);
-  server.on("/canvas", handleCanvas);
-
-  server.begin();
+  Udp.begin(1653);
 }
 
 void checkLightServer()
 {
-  server.handleClient();
+
+  constexpr std::array<std::string_view, 4> commands = {"connectionState?", "settings?", "canvas?", "command?"};
+
+  int packetSize = Udp.parsePacket();
+  if (packetSize)
+  {
+    char incomingPacket[255];
+    int len = Udp.read(incomingPacket, 255);
+    if (len > 0)
+    {
+      incomingPacket[len] = 0;
+    }
+
+    std::string_view command = std::string_view(incomingPacket);
+
+    if (command.rfind(commands[0]) == 0)
+    {
+      handleConnectionState(command.substr(commands[0].length()));
+    }
+    else if (command.find(commands[1]) == 0)
+    {
+      handleSettings(command.substr(commands[1].length()));
+    }
+    else if (command.find(commands[2]) == 0)
+    {
+      handleCanvas(command.substr(commands[2].length()));
+    }
+    else if (command.find(commands[3]) == 0)
+    {
+      handleMainCommand(command.substr(commands[3].length()));
+    }
+    else
+    {
+      Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+      Udp.write("Error main");
+      Udp.endPacket();
+    }
+  }
 }
 
 bool checkCommandReceived()
@@ -209,89 +239,203 @@ void effectAllModes()
   }
 }
 
-static void handleSettings()
+static void handleConnectionState(std::string_view command)
 {
-  FastLED.clear(true);
+  if (command == "check")
+  {
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write("imHere");
+    Udp.endPacket();
+  }
+}
 
-  if (server.hasArg("ssid"))
+static void handleSettings(std::string_view command)
+{
+
+  // settings?startingEffect=1-3
+  constexpr std::array<std::string_view, 8> commands = {"ssid=", "startingEffect=", "brightness=", "restart",
+                                                        "allModesTime=", "allModes=", "wifiOff", "wifiAutoOff="};
+
+  bool isFailed = false;
+
+  if (command.rfind(commands[0]) == 0)
   {
-    server.arg("ssid").toCharArray(settings.ssid, sizeof(settings.ssid));
-    saveSettings();
+    command.remove_prefix(commands[0].length());
+    size_t len = std::min(command.size(), size_t(32));
+    command.copy(settings.ssid, len);
+    settings.ssid[len] = '\0';
   }
-  else if (server.hasArg("startMode") && server.hasArg("startSubMode")) // ?startMode=5&startSubMode=2
+  else if (command.rfind(commands[1]) == 0)
   {
-    settings.startingEffectsGroup = server.arg("startMode").toInt();
-    settings.startingEffectSubMode = server.arg("startSubMode").toInt();
-    saveSettings();
+    command.remove_prefix(commands[1].length());
+    size_t separatorPos = command.find('-');
+    if (separatorPos != std::string_view::npos)
+    {
+      uint32_t groupTemp = std::stoi(std::string(command.substr(0, separatorPos)));
+      uint32_t submodeTemp = std::stoi(std::string(command.substr(separatorPos + 1)));
+      if (groupTemp <= 255 && submodeTemp <= 255)
+      {
+        settings.startingEffectsGroup = static_cast<uint8_t>(groupTemp);
+        settings.startingEffectSubmode = static_cast<uint8_t>(submodeTemp);
+      }
+      else
+      {
+        isFailed = true;
+      }
+    }
   }
-  else if (server.hasArg("brightness"))
+  else if (command.rfind(commands[2]) == 0)
   {
-    settings.globalBrightness = server.arg("brightness").toInt();
-    saveSettings();
+    command.remove_prefix(commands[2].length());
+    uint32_t brightnessTemp = std::stoi(std::string(command));
+    if (brightnessTemp <= 255)
+    {
+      settings.globalBrightness = static_cast<uint8_t>(brightnessTemp);
+    }
+    else
+    {
+      isFailed = true;
+    }
   }
-  else if (server.hasArg("restart"))
+  else if (command.rfind(commands[3]) == 0)
   {
+    saveSettings();
     ESP.restart();
   }
-  else if (server.hasArg("allModesTime"))
+  else if (command.rfind(commands[4]) == 0)
   {
-    settings.allModeDelay = server.arg("allModesTime").toInt();
-    saveSettings();
+    command.remove_prefix(commands[4].length());
+    uint32_t allModeDelayTemp = std::stoi(std::string(command));
+    if (allModeDelayTemp <= 3600)
+    {
+      settings.allModeDelay = static_cast<uint32_t>(allModeDelayTemp) * 1000;
+    }
+    else
+    {
+      isFailed = true;
+    }
   }
-  else if (server.hasArg("allModes"))
+  else if (command.rfind(commands[5]) == 0)
   {
-    settings.allModesWorkType = server.arg("allModes").toInt();
-    saveSettings();
+    command.remove_prefix(commands[5].length());
+    uint32_t allModesWorkTypeTemp = std::stoi(std::string(command));
+    if (allModesWorkTypeTemp <= 1)
+    {
+      settings.allModesWorkType = static_cast<uint8_t>(allModesWorkTypeTemp);
+    }
+    else
+    {
+      isFailed = true;
+    }
   }
-  else if (server.hasArg("wifiOff"))
+  else if (command.rfind(commands[6]) == 0)
   {
+    deviceEffectsState.isWifiActive = false;
     WiFi.softAPdisconnect(true);
   }
-  else if (server.hasArg("wifiAutoOff"))
+  else if (command.rfind(commands[7]) == 0)
   {
-    settings.allModesWorkType = server.arg("wifiAutoOff").toInt();
-    saveSettings();
+    command.remove_prefix(commands[7].length());
+    uint32_t isWifiAutoOffEnableTemp = std::stoi(std::string(command));
+    if (isWifiAutoOffEnableTemp <= 1)
+    {
+      settings.isWifiAutoOffEnable = static_cast<bool>(isWifiAutoOffEnableTemp);
+    }
+    else
+    {
+      isFailed = true;
+    }
+  }
+  else
+  {
+    isFailed = true;
+  }
+
+  if (isFailed)
+  {
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write("Error settings");
+    Udp.endPacket();
+  }
+  else
+  {
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write("Ok");
+    Udp.endPacket();
   }
 }
 
-static void handleConnectionState()
+static void handleCanvas(std::string_view command)
 {
-  if (server.hasArg("check"))
+  isCommandReceived = true;
+
+  bool isFailed = false;
+
+  size_t modeStart = command.find("mode=");
+  size_t modeEnd = command.find('&', modeStart);
+  std::string_view modeString = command.substr(modeStart + 5, modeEnd - (modeStart + 5));
+
+  size_t colorStart = command.find("color=");
+  size_t colorEnd = command.find('&', colorStart);
+  std::string_view colorString = command.substr(colorStart + 6, colorEnd - (colorStart + 6));
+
+  uint32_t colorTemp = std::stoi(std::string(colorString));
+  uint8_t color = 0;
+
+  if (colorTemp <= 20)
   {
-    server.send(200, "text/plain", "imHere");
+    color = static_cast<uint8_t>(colorTemp);
+  }
+  else
+  {
+    isFailed = true;
+  }
+
+  size_t ledStart = command.find("led=");
+  std::string_view ledString = command.substr(ledStart + 4);
+
+  uint32_t ledNumTemp = std::stoi(std::string(ledString));
+  uint16_t ledNum = 0;
+
+  if (ledNumTemp <= 257)
+  {
+    ledNum = static_cast<uint16_t>(ledNumTemp);
+  }
+  else
+  {
+    isFailed = true;
+  }
+
+  if (isFailed)
+  {
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write("Error canvas");
+    Udp.endPacket();
+  }
+  else
+  {
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write("Ok");
+    Udp.endPacket();
+
+    drawOnCanvas(modeString, color, ledNum);
   }
 }
 
-static void handleCanvas()
+static void handleMainCommand(std::string_view command)
 {
   isCommandReceived = true;
 
-  uint16_t ledNum = (uint16_t)(server.arg("led").toInt());
-  uint8_t canvasColor = (uint8_t)(server.arg("color").toInt());
-  drawOnCanvas(server.arg("mode"), canvasColor, ledNum);
-}
+  bool isFailed = false;
 
-static void handleMainCommand()
-{
-  isCommandReceived = true;
   deviceEffectsState.isScreenClearEnable = true;
   deviceEffectsState.isAllModesEnable = false;
 
-  if (server.hasArg("stop"))
+  if (command.rfind("stop") == 0)
   {
     deviceEffectsState.effectsGroup = 255;
   }
-  else if (server.hasArg("canvasEffects"))
-  {
-    deviceEffectsState.effectsGroup = CANVAS_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("canvasEffects")).toInt());
-  }
-  else if (server.hasArg("runningLine"))
-  {
-    deviceEffectsState.effectsGroup = RUNNING_LINE;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("runningLine")).toInt());
-  }
-  else if (server.hasArg("allModes"))
+  else if (command.rfind("allModes") == 0)
   {
     deviceEffectsState.currentIndex = 255;
     deviceEffectsState.isAllModesEnable = true;
@@ -299,64 +443,44 @@ static void handleMainCommand()
     deviceEffectsState.effectSubmode = 255;
     effectAllModes();
   }
-  else if (server.hasArg("colorfulSpots"))
+  else if (command.find("-") != std::string_view::npos)
   {
-    deviceEffectsState.effectsGroup = COLORFUL_SPOTS;
+    size_t separatorPos = command.find('-');
+    if (separatorPos != std::string_view::npos)
+    {
+      uint32_t groupTemp = std::stoi(std::string(command.substr(0, separatorPos)));
+      uint32_t submodeTemp = std::stoi(std::string(command.substr(separatorPos + 1)));
+      if (groupTemp <= 255 && submodeTemp <= 255)
+      {
+        deviceEffectsState.effectsGroup = static_cast<uint8_t>(groupTemp);
+        deviceEffectsState.effectSubmode = static_cast<uint8_t>(submodeTemp);
+
+        if (deviceEffectsState.effectsGroup == 11)
+        {
+          drawAnimations(255);
+        }
+      }
+      else
+      {
+        isFailed = true;
+      }
+    }
   }
-  else if (server.hasArg("rainbows"))
+  else
   {
-    deviceEffectsState.effectsGroup = RAINBOWS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("rainbows")).toInt());
+    isFailed = true;
   }
-  else if (server.hasArg("runningLights"))
+
+  if (isFailed)
   {
-    deviceEffectsState.effectsGroup = RUNNING_LIGHTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("runningLights")).toInt());
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write("Error commands");
+    Udp.endPacket();
   }
-  else if (server.hasArg("jumpingLights"))
+  else
   {
-    deviceEffectsState.effectsGroup = JUMPING_LIGHTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("jumpingLights")).toInt());
-  }
-  else if (server.hasArg("spaceEffects"))
-  {
-    deviceEffectsState.effectsGroup = SPACE_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("spaceEffects")).toInt());
-  }
-  else if (server.hasArg("flashLights"))
-  {
-    deviceEffectsState.effectsGroup = FLASH_LIGHTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("flashLights")).toInt());
-  }
-  else if (server.hasArg("waterEffects"))
-  {
-    deviceEffectsState.effectsGroup = WATER_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("waterEffects")).toInt());
-  }
-  else if (server.hasArg("weatherEffects"))
-  {
-    deviceEffectsState.effectsGroup = WEATHER_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("weatherEffects")).toInt());
-  }
-  else if (server.hasArg("colorfulWaves"))
-  {
-    deviceEffectsState.effectsGroup = COLORFUL_WAVES;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("colorfulWaves")).toInt());
-  }
-  else if (server.hasArg("animations"))
-  {
-    deviceEffectsState.effectsGroup = ANIMATIONS;
-    drawAnimations(99);
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("animations")).toInt());
-  }
-  else if (server.hasArg("gamesEffects"))
-  {
-    deviceEffectsState.effectsGroup = GAMES_EFFECTS;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("gamesEffects")).toInt());
-  }
-  else if (server.hasArg("matrixMovieEffect"))
-  {
-    deviceEffectsState.effectsGroup = MATRIX_MOVIE_EFFECT;
-    deviceEffectsState.effectSubmode = (uint8_t)((server.arg("matrixMovieEffect")).toInt());
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write("Ok");
+    Udp.endPacket();
   }
 }

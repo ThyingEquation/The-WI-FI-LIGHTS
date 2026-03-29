@@ -14,7 +14,7 @@ typedef struct // Настройки по умолчанию
 
   // Стартовый режим
   uint8_t startingEffectsGroup = 255; // ==255 - отключен, иначе включен
-  uint8_t startingEffectSubMode = 255;
+  uint8_t startingEffectSubmode = 255;
 
   uint8_t globalBrightness = 128; // 50%, самая оптимальная яркость для всех эффектов
 
