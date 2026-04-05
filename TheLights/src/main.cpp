@@ -41,8 +41,8 @@ void setup()
   {
     if (settings.startingEffectsGroup != 250) // все режимы подряд
     {
-      deviceEffectsState.effectsGroup = mainModes[settings.startingEffectsGroup].effectsGroup;
-      deviceEffectsState.effectSubmode = mainModes[settings.startingEffectSubmode].subMode;
+      deviceEffectsState.effectsGroup = settings.startingEffectsGroup;
+      deviceEffectsState.effectSubmode = settings.startingEffectSubmode;
     }
     else
     {

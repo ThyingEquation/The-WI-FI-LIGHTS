@@ -252,7 +252,6 @@ static void handleConnectionState(std::string_view command)
 static void handleSettings(std::string_view command)
 {
 
-  // settings?startingEffect=1-3
   constexpr std::array<std::string_view, 8> commands = {"ssid=", "startingEffect=", "brightness=", "restart",
                                                         "allModesTime=", "allModes=", "wifiOff", "wifiAutoOff="};
 
@@ -360,7 +359,7 @@ static void handleSettings(std::string_view command)
   else
   {
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write("Ok");
+    Udp.write("Setting ok");
     Udp.endPacket();
   }
 }

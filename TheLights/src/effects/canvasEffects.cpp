@@ -30,15 +30,15 @@ void drawCanvasEffects(uint8_t subMode)
   switch (subMode)
   {
   case 1:
-    drawSnake(SNAKE_FAST_DELAY);
+    fillFull();
     break;
 
   case 2:
-    drawSnake(SNAKE_SLOW_DELAY);
+    drawSnake(SNAKE_FAST_DELAY);
     break;
 
   case 3:
-    fillFull();
+    drawSnake(SNAKE_SLOW_DELAY);
     break;
 
   case 4:
