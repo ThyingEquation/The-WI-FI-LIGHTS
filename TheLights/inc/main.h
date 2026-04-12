@@ -15,7 +15,7 @@
 enum globalSettings
 {
   MATRIX_WIDTH = 12,
-  MATRIX_HEIGHT = 13,
+  MATRIX_HEIGHT = 12,
   MATRIX_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT,
   PIN = 4,
   ///

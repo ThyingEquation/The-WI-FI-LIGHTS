@@ -2,10 +2,10 @@
 #include "animationFrames.h"
 
 /*
-  Эта группа эффектов только для матрицы 12х13
+  Эта группа эффектов только для матрицы 12х12
 
-  Jp - Japanese (японский)
-  Kr - Korean (корейский)
+  Jp - Japanese (японский). Текст на оригинале: "あけましておめでとう". Корректное отображение текста "снаружи"
+  Kr - Korean (корейский).  Текст на оригинале: "안녕하세요". Корректное отображение текста "снаружи"
 
   Настраиваемые параметры (animationsSettings):
     1) Время отображения одного кадра (задержка)
@@ -33,21 +33,22 @@ static uint8_t currentStepKr = 0;
 static uint8_t currentPhaseKr = 0;
 static uint8_t currentLetterKr = 0;
 
-static uint8_t downArray[156];
-static uint8_t upArray[156];
+static uint8_t downArray[144];
+static uint8_t upArray[144];
 
 uint8_t mainMatrixScheme[] = {
-    144, 143, 118, 117, 92, 91, 66, 65, 40, 39, 14, 13, 145, 142, 119,
-    116, 93, 90, 67, 64, 41, 38, 15, 12, 146, 141, 120, 115, 94, 89,
-    68, 63, 42, 37, 16, 11, 147, 140, 121, 114, 95, 88, 69, 62, 43,
-    36, 17, 10, 148, 139, 122, 113, 96, 87, 70, 61, 44, 35, 18, 9,
-    149, 138, 123, 112, 97, 86, 71, 60, 45, 34, 19, 8, 150, 137, 124,
-    111, 98, 85, 72, 59, 46, 33, 20, 7, 151, 136, 125, 110, 99, 84,
-    73, 58, 47, 32, 21, 6, 152, 135, 126, 109, 100, 83, 74, 57, 48,
-    31, 22, 5, 153, 134, 127, 108, 101, 82, 75, 56, 49, 30, 23, 4,
-    154, 133, 128, 107, 102, 81, 76, 55, 50, 29, 24, 3, 155, 132, 129,
-    106, 103, 80, 77, 54, 51, 28, 25, 2, 156, 131, 130, 105, 104, 79,
-    78, 53, 52, 27, 26, 1};
+    133, 132, 109, 108, 85, 84, 61, 60, 37, 36, 13, 12,
+    134, 131, 110, 107, 86, 83, 62, 59, 38, 35, 14, 11,
+    135, 130, 111, 106, 87, 82, 63, 58, 39, 34, 15, 10,
+    136, 129, 112, 105, 88, 81, 64, 57, 40, 33, 16, 9,
+    137, 128, 113, 104, 89, 80, 65, 56, 41, 32, 17, 8,
+    138, 127, 114, 103, 90, 79, 66, 55, 42, 31, 18, 7,
+    139, 126, 115, 102, 91, 78, 67, 54, 43, 30, 19, 6, 
+    140, 125, 116, 101, 92, 77, 68, 53, 44, 29, 20, 5,
+    141, 124, 117, 100, 93, 76, 69, 52, 45, 28, 21, 4,
+    142, 123, 118, 99,  94, 75, 70, 51, 46, 27, 22, 3,
+    143, 122, 119, 98,  95, 74, 71, 50, 47, 26, 23, 2,
+    144, 121, 120, 97,  96, 73, 72, 49, 48, 25, 24, 1};
 
 void drawAnimations(uint8_t subMode)
 {
@@ -130,7 +131,7 @@ void drawPicture(uint8_t p1[], const uint32_t p2[])
 {
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
   {
-    if ((p1[i] - 1) <= 155)
+    if ((p1[i] - 1) <= 143)
     {
       uint32_t rawColor = pgm_read_dword_near(&p2[i]);
       leds[p1[i] - 1] = CRGB(rawColor);
@@ -158,7 +159,7 @@ static void shiftArrayDown()
   }
   for (uint8_t j = 0; j < MATRIX_WIDTH; j++)
   {
-    downArray[MATRIX_LEDS - MATRIX_WIDTH + j] = 157;
+    downArray[MATRIX_LEDS - MATRIX_WIDTH + j] = 145;
   }
 }
 
@@ -166,7 +167,7 @@ static void initLettersArray()
 {
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
   {
-    upArray[i] = 157;
+    upArray[i] = 145;
     downArray[i] = mainMatrixScheme[i];
   }
 }
@@ -186,7 +187,7 @@ static void displayJapaneseLetters()
     switch (currentPhaseJp)
     {
     case 0:
-      if (currentStepJp < 13)
+      if (currentStepJp < 12)
       {
         FastLED.clear();
         shiftArrayUp(currentStepJp);
@@ -206,10 +207,10 @@ static void displayJapaneseLetters()
     case 1:
       if (currentLetterJp < 9)
       {
-        if (currentStepJp < 16)
+        if (currentStepJp < 15)
         {
           FastLED.clear();
-          if (currentStepJp < 13)
+          if (currentStepJp < 12)
           {
             shiftArrayDown();
             drawPicture(downArray, jpLetters[currentLetterJp]);
@@ -239,7 +240,7 @@ static void displayJapaneseLetters()
       break;
 
     case 2:
-      if (currentStepJp < 13)
+      if (currentStepJp < 12)
       {
         FastLED.clear();
         shiftArrayDown();
@@ -276,7 +277,7 @@ void displayKoreanLetters()
     switch (currentPhaseKr)
     {
     case 0:
-      if (currentStepKr < 13)
+      if (currentStepKr < 12)
       {
         FastLED.clear();
         shiftArrayUp(currentStepKr);
@@ -296,10 +297,10 @@ void displayKoreanLetters()
     case 1:
       if (currentLetterKr < 4)
       {
-        if (currentStepKr < 16)
+        if (currentStepKr < 15)
         {
           FastLED.clear();
-          if (currentStepKr < 13)
+          if (currentStepKr < 12)
           {
             shiftArrayDown();
             drawPicture(downArray, krLetters[currentLetterKr]);
@@ -328,7 +329,7 @@ void displayKoreanLetters()
       break;
 
     case 2:
-      if (currentStepKr < 13)
+      if (currentStepKr < 12)
       {
         FastLED.clear();
         shiftArrayDown();
@@ -363,7 +364,7 @@ void shiftLeft(uint8_t a)
   }
   lastTime = millis();
 
-  for (uint8_t row = 0; row < 13; row++)
+  for (uint8_t row = 0; row < 12; row++)
   {
     for (uint8_t col = 0; col < 12; col++)
     {
