@@ -259,7 +259,8 @@ static void drawImages(uint8_t subMode)
                               mushroom, amogus, cup, pineapple, alien,
                               hummer, cat, teaCup, dino, hammerAndSickle,
                               apple, bird, rabbit, question, goldenKey,
-                              star, sun, pepe};
+                              star, sun, pepe, pokeball, microsoft, battery,
+                              redHeart, thundercloud};
 
   static uint8_t imageNum = 0;
   static uint8_t locImgNum = 0;
@@ -283,7 +284,7 @@ static void drawImages(uint8_t subMode)
     {
       previousMillis = currentMillis;
 
-      if (imageNum >= 0 && imageNum < 23)
+      if (imageNum >= 0 && imageNum < 28)
       {
         drawPicture(mainMatrixScheme, images[imageNum]);
         FastLED.show();
@@ -295,7 +296,7 @@ static void drawImages(uint8_t subMode)
       }
     }
   }
-  else if ((subMode > 100 && subMode < 124) && (locImgNum != subMode))
+  else if ((subMode > 100 && subMode < 129) && (locImgNum != subMode))
   {
     locImgNum = subMode;
     drawPicture(mainMatrixScheme, images[subMode - 101]);
