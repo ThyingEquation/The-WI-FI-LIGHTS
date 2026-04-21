@@ -1,3 +1,5 @@
+#include <deque>
+
 #include "effects.h"
 #include "colors.h"
 #include "images.h"
@@ -267,6 +269,9 @@ static void drawImages(uint8_t subMode)
   static uint32_t previousMillis = 0;
   static uint32_t previousMillisImgNum = 0;
 
+  static uint8_t randomCounter = 0;
+  std::deque<uint8_t> usedImg;
+
   uint32_t currentMillis = millis();
 
   if (checkCommandReceived())
@@ -277,7 +282,7 @@ static void drawImages(uint8_t subMode)
     previousMillisImgNum = 0;
   }
 
-  if (subMode == 255)
+  if (subMode == 254)
   {
 
     if (currentMillis - previousMillis >= DRAW_IMAGES_DELAY)
@@ -289,6 +294,37 @@ static void drawImages(uint8_t subMode)
         drawPicture(mainMatrixScheme, images[imageNum]);
         FastLED.show();
         ++imageNum;
+      }
+      else
+      {
+        imageNum = 0;
+      }
+    }
+  }
+  else if (subMode == 255)
+  {
+
+    if (currentMillis - previousMillis >= DRAW_IMAGES_DELAY)
+    {
+      previousMillis = currentMillis;
+
+      if (imageNum >= 0 && imageNum < 28)
+      {
+        drawPicture(mainMatrixScheme, images[imageNum]);
+        FastLED.show();
+      do
+      {
+        imageNum = ESP8266TrueRandom.random(0, 29);
+        randomCounter++;
+        if (randomCounter > 15)
+          break;
+      } while (std::find(usedImg.begin(), usedImg.end(), imageNum) != usedImg.end());
+
+      usedImg.push_back(imageNum);
+      if (usedImg.size() > 14)
+      {
+        usedImg.pop_front();
+      }
       }
       else
       {
