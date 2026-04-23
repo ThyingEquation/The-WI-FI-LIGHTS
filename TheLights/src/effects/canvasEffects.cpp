@@ -5,7 +5,7 @@
 #include "images.h"
 
 /*
-  Эта группа эффектов только для матриц 12х13
+  Эта группа эффектов только для матриц 12х12
 
   Настраиваемые параметры (drawSettings):
     1) Скорости эффектов
@@ -156,7 +156,7 @@ static void fillFull()
 
 static void drawChameleonSnake()
 {
-  const uint8_t chameleon[] = {3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2, 15, 8, 3, 7, 4, 10, 2, 15, 6, 8, 2, 4};
+  const uint8_t chameleon[] = {3, 20, 5, 10, 5, 1, 3, 6, 2, 8, 7, 2, 15, 8, 3, 7, 4, 10, 2, 15, 6, 2};
 
   static uint8_t arrPos = 0;
   static uint8_t arrVolume = 0;
