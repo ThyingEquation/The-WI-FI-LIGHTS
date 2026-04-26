@@ -12,7 +12,7 @@ enum spaceSettings
   STAR_SKY_DELAY = 1500,
   PULSATING_STAR_DELAY = 150,
   STARFALL_DELAY = 100,
-  GALAXY_DELAY = 130
+  NEBULA_DELAY = 130
 };
 
 static void drawStarSky();
@@ -52,7 +52,8 @@ void drawSpaceEffects(uint8_t subMode)
 
 static void addStar(uint8_t starNum, uint32_t color)
 {
-  if (starNum < MATRIX_LEDS) {
+  if (starNum < MATRIX_LEDS)
+  {
     leds[starNum] = CRGB(color);
     FastLED.show();
   }
@@ -60,7 +61,8 @@ static void addStar(uint8_t starNum, uint32_t color)
 
 static void removeStar(uint8_t starNum)
 {
-  if (starNum < MATRIX_LEDS) {
+  if (starNum < MATRIX_LEDS)
+  {
     leds[starNum] = CRGB::Black;
     FastLED.show();
   }
@@ -135,7 +137,7 @@ void drawStarSky()
   else
   {
     uint16_t rndLed = ESP8266TrueRandom.random(0, MATRIX_LEDS);
-    addStar(rndLed, 0xFFFFFF); 
+    addStar(rndLed, 0xFFFFFF);
   }
 }
 
@@ -308,8 +310,19 @@ static void drawVortex(int16_t currentRadius, int16_t maxRadius)
     }
   }
 
+  if (currentRadius == 4)
+  {
+    leds[126] = CRGB(0x000000);
+    leds[82] = CRGB(0x000000);
+  }
+  else if (currentRadius == 2)
+  {
+    leds[102] = CRGB(0x000000);
+    leds[80] = CRGB(0x000000);
+  }
+
   FastLED.show();
-  
+
   rotationAngle += 2.5f;
   if (rotationAngle >= 360)
     rotationAngle -= 360;
@@ -408,7 +421,7 @@ void drawSpiralNebula()
 
   int16_t x = 0, y = 0;
   int16_t dx = 0, dy = -1;
-  int16_t maxI = max(MATRIX_WIDTH, MATRIX_HEIGHT) * max(MATRIX_WIDTH, MATRIX_HEIGHT);
+  uint16_t maxI = MATRIX_WIDTH * MATRIX_HEIGHT * 2;
 
   for (uint16_t i = 0; i < maxI; i++)
   {
@@ -441,5 +454,5 @@ void drawSpiralNebula()
     forward = !forward;
   }
 
-  FastLED.delay(GALAXY_DELAY);
+  FastLED.delay(NEBULA_DELAY);
 }

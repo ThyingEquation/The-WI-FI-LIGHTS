@@ -3,36 +3,36 @@
 /*
   Эта группа эффектов для любого размера матриц
 
-  Настраиваемые параметры (flashLightsSettings):
+  Настраиваемые параметры (flickeringLightsSettings):
     1) Скорости эффектов
 */
 
-enum flashLightsSettings
+enum flickeringLightsSettings
 {
   FLASH_LIGHT_1_DELAY = 75,
   FLASH_LIGHT_2_DELAY = 20,
   FLASH_LIGHT_3_DELAY = 1000 / 60
 };
 
-static void drawFlashLight1();
-static void drawFlashLight2();
-static void drawFlashLight3();
+static void drawFlickeringLights1();
+static void drawFlickeringLights2();
+static void drawFlickeringLights3();
 static uint16_t getIndex(uint16_t x, uint16_t y);
 
-void drawFlashLights(uint8_t subMode)
+void drawFlickeringLights(uint8_t subMode)
 {
   switch (subMode)
   {
   case 1:
-    drawFlashLight1();
+    drawFlickeringLights1();
     break;
 
   case 2:
-    drawFlashLight2();
+    drawFlickeringLights2();
     break;
 
   case 3:
-    drawFlashLight3();
+    drawFlickeringLights3();
     break;
 
   default:
@@ -40,7 +40,7 @@ void drawFlashLights(uint8_t subMode)
   }
 }
 
-static void drawFlashLight1()
+static void drawFlickeringLights1()
 {
   EVERY_N_MILLIS(FLASH_LIGHT_1_DELAY)
   {
@@ -52,7 +52,17 @@ static void drawFlashLight1()
         {
           leds[getIndex(col, row)] = CRGB(27, 130, 39);
           if (row < MATRIX_HEIGHT - 1)
-            leds[getIndex(col, row + 1)] = CRGB(175, 255, 175);
+          {
+            int8_t drift = random8(3) - 1;
+            int8_t nextCol = col + drift;
+
+            if (nextCol < 0)
+              nextCol = 0;
+            if (nextCol >= MATRIX_WIDTH)
+              nextCol = MATRIX_WIDTH - 1;
+
+            leds[getIndex(nextCol, row + 1)] = CRGB(175, 255, 175);
+          }
         }
       }
     }
@@ -60,8 +70,9 @@ static void drawFlashLight1()
     for (uint16_t i = 0; i < MATRIX_LEDS; i++)
     {
       if (leds[i].g != 255)
-        leds[i].nscale8(192);
+        leds[i].nscale8(180);
     }
+
     bool emptyScreen = true;
     for (uint16_t i = 0; i < MATRIX_LEDS; i++)
     {
@@ -72,7 +83,7 @@ static void drawFlashLight1()
       }
     }
 
-    if (random8(3) == 0 || emptyScreen)
+    if (random8(5) == 0 || emptyScreen)
     {
       int8_t spawnX = random8(MATRIX_WIDTH);
       leds[getIndex(spawnX, 0)] = CRGB(175, 255, 175);
@@ -82,7 +93,7 @@ static void drawFlashLight1()
   }
 }
 
-static void drawFlashLight2()
+static void drawFlickeringLights2()
 {
   static bool loadingFlag = true;
 
@@ -140,7 +151,7 @@ static uint16_t getIndex(uint16_t x, uint16_t y)
   return index;
 }
 
-static void drawFlashLight3()
+static void drawFlickeringLights3()
 {
   fadeToBlackBy(leds, MATRIX_LEDS, 20);
   uint16_t pos = random16(MATRIX_LEDS);

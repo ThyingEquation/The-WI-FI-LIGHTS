@@ -10,7 +10,7 @@ CRGB leds[MATRIX_LEDS];
 
 void (*modeFunctions[14])(uint8_t) = {
     drawCanvasEffects, drawRunningLine, drawColorfulSpots, drawRainbows, drawRunningLights,
-    drawJumpingLights, drawSpaceEffects, drawFlashLights, drawWaterEffects, drawWeatherEffects,
+    drawJumpingLights, drawSpaceEffects, drawFlickeringLights, drawWaterEffects, drawWeatherEffects,
     drawColorfulWaves, drawAnimations, drawGamesEffects, drawMatrixMovieEffect};
 
 static uint32_t startingMillis = 0;

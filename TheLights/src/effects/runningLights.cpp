@@ -124,7 +124,7 @@ static void drawLights(uint8_t lightsMode)
       RUNNING_LIGHTS_2_DELAY,
       RUNNING_LIGHTS_3_DELAY};
 
-  int currentDelay = RUNNING_LIGHTS_1_DELAY;
+  uint32_t currentDelay = RUNNING_LIGHTS_1_DELAY;
   if (lightsMode >= 1 && lightsMode <= 3)
   {
     currentDelay = delays[lightsMode - 1];

@@ -350,16 +350,18 @@ static void drawPixelXYFB3(float x, float y, const CRGB &color)
 #undef WU_WEIGHT
 }
 
-static void drawCurve(float x, float y, float x2, float y2, float x3, float y3,
-                      CRGB coll)
+static void drawCurve(float x, float y, float x2, float y2, float x3, float y3, CRGB coll)
 {
-  float xu = 0.0, yu = 0.0, u = 0.0;
-  for (u = 0.0; u <= 1.0; u += 0.01)
+  for (float u = 0.0; u <= 1.0; u += 0.02)
   {
-    xu = pow(1 - u, 3) * x + 3 * u * pow(1 - u, 2) * x2 +
-         3 * pow(u, 2) * (1 - u) * x3 + pow(u, 3) * x3;
-    yu = pow(1 - u, 3) * y + 3 * u * pow(1 - u, 2) * y2 +
-         3 * pow(u, 2) * (1 - u) * y3 + pow(u, 3) * y3;
+    float invU = 1.0 - u;
+    float b0 = invU * invU;
+    float b1 = 2 * invU * u;
+    float b2 = u * u;
+
+    float xu = b0 * x + b1 * x2 + b2 * x3;
+    float yu = b0 * y + b1 * y2 + b2 * y3;
+
     drawPixelXYFB3(xu, yu, coll);
   }
 }
@@ -368,13 +370,13 @@ byte hue;
 static void drawJumpingLights4()
 {
   fadeToBlackBy(leds, MATRIX_LEDS, 30);
-  byte x1 = beatsin8(18 + 100, 1, (MATRIX_WIDTH - 2));
-  byte x2 = beatsin8(23 + 100, 1, (MATRIX_WIDTH - 2));
-  byte x3 = beatsin8(27 + 100, 1, (MATRIX_WIDTH - 2));
+  byte x1 = beatsin8(18, 0, MATRIX_WIDTH - 1);
+  byte x2 = beatsin8(23, 0, MATRIX_WIDTH - 1);
+  byte x3 = beatsin8(27, 0, MATRIX_WIDTH - 1);
 
-  byte y1 = beatsin8(20 + 100, 1, (MATRIX_HEIGHT - 2));
-  byte y2 = beatsin8(26 + 100, 1, (MATRIX_HEIGHT - 2));
-  byte y3 = beatsin8(15 + 100, 1, (MATRIX_HEIGHT - 2));
+  byte y1 = beatsin8(20, 0, MATRIX_HEIGHT - 1);
+  byte y2 = beatsin8(26, 0, MATRIX_HEIGHT - 1);
+  byte y3 = beatsin8(15, 0, MATRIX_HEIGHT - 1);
 
   drawCurve(x1, y1, x2, y2, x3, y3, CHSV(hue, 255, 255));
   hue++;
@@ -383,10 +385,10 @@ static void drawJumpingLights4()
 
 static void drawJumpingSquare()
 {
-  static int16_t squareX = 0;
-  static int16_t squareY = 0;
-  static int16_t directionX = 1;
-  static int16_t directionY = 1;
+  static float squareX = 0;
+  static float squareY = 0;
+  static float directionX = 1.0f;
+  static float directionY = 0.95f;
   static CRGB squareColor = CRGB::Red;
 
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
@@ -410,12 +412,12 @@ static void drawJumpingSquare()
   if (squareX + 3 >= MATRIX_WIDTH || squareX < 0)
   {
     directionX = -directionX;
-    squareX = max((int16_t)0, min(squareX, (int16_t)(MATRIX_WIDTH - 3)));
+    squareX = max((float)0, min(squareX, (float)(MATRIX_WIDTH - 3)));
   }
   if (squareY + 3 >= MATRIX_HEIGHT || squareY < 0)
   {
     directionY = -directionY;
-    squareY = max((int16_t)0, min(squareY, (int16_t)(MATRIX_HEIGHT - 3)));
+    squareY = max((float)0, min(squareY, (float)(MATRIX_HEIGHT - 3)));
   }
 
   static uint8_t frameCount = 0;
@@ -461,11 +463,18 @@ static void drawJumpingPoints()
     if (points[i].x >= MATRIX_WIDTH || points[i].x < 0)
     {
       points[i].directionX = -points[i].directionX;
+      if (random8(10) > 7)
+        points[i].directionY = (random8(2) == 0) ? 1 : -1;
+
       points[i].x = max((int16_t)0, min(points[i].x, (int16_t)(MATRIX_WIDTH - 1)));
     }
+
     if (points[i].y >= MATRIX_HEIGHT || points[i].y < 0)
     {
       points[i].directionY = -points[i].directionY;
+      if (random8(10) > 7)
+        points[i].directionX = (random8(2) == 0) ? 1 : -1;
+
       points[i].y = max((int16_t)0, min(points[i].y, (int16_t)(MATRIX_HEIGHT - 1)));
     }
   }

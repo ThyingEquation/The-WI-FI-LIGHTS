@@ -26,9 +26,9 @@ static uint8_t numFallingFigures = 0;
 
 struct FallingFigure
 {
-  uint8_t figureIndex;
-  uint8_t x;
-  uint8_t y;
+  int8_t figureIndex;
+  int8_t x;
+  int8_t y;
   CRGB color;
 };
 
@@ -129,24 +129,27 @@ static void drawSnakeGame()
   FastLED.delay(SNAKE_GAME_DELAY);
 }
 
-static bool checkCollision(uint8_t figureIndex, uint8_t x, uint8_t y)
+static bool checkCollision(uint8_t figureIndex, int8_t x, int8_t y)
 {
   for (uint8_t i = 0; i < 4; i++)
   {
-    uint8_t px = x + figures[figureIndex][i][0];
-    uint8_t py = y + figures[figureIndex][i][1];
-    if (px < 0 || px >= MATRIX_WIDTH || py < 0 || py >= MATRIX_HEIGHT)
+    int8_t px = x + figures[figureIndex][i][0];
+    int8_t py = y + figures[figureIndex][i][1];
+
+    if (px < 0 || px >= MATRIX_WIDTH || py < -4)
     {
       return true;
     }
+
     for (uint8_t j = 0; j < numFallingFigures; j++)
     {
       FallingFigure &fig = fallingFigures[j];
       for (uint8_t k = 0; k < 4; k++)
       {
-        uint8_t fx = fig.x + figures[fig.figureIndex][k][0];
-        uint8_t fy = fig.y + figures[fig.figureIndex][k][1];
-        if (abs(px - fx) <= 2 && abs(py - fy) <= 2)
+        int8_t fx = fig.x + figures[fig.figureIndex][k][0];
+        int8_t fy = fig.y + figures[fig.figureIndex][k][1];
+
+        if (px == fx && py == fy)
         {
           return true;
         }
@@ -158,21 +161,20 @@ static bool checkCollision(uint8_t figureIndex, uint8_t x, uint8_t y)
 
 static void addNewFigure()
 {
-  if (numFallingFigures < 5)
+  if (numFallingFigures < 6)
   {
-    uint8_t figureIndex = ESP8266TrueRandom.random(0, 14);
-    uint8_t x, y;
+    int8_t figureIndex = ESP8266TrueRandom.random(0, 14);
+    int8_t x, y;
     uint8_t attempts = 0;
     do
     {
-      x = ESP8266TrueRandom.random(0, 12);
-      y = 0;
+      x = ESP8266TrueRandom.random(0, MATRIX_WIDTH - 2);
+      y = MATRIX_HEIGHT - 1;
       attempts++;
-      if (attempts > 100)
-      {
+      if (attempts > 20)
         return;
-      }
     } while (checkCollision(figureIndex, x, y));
+
     CRGB color = CHSV(random8(), 255, 255);
     fallingFigures[numFallingFigures] = {figureIndex, x, y, color};
     numFallingFigures++;
@@ -182,27 +184,29 @@ static void addNewFigure()
 static void drawTetrisGame()
 {
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-  {
     leds[i] = CRGB::Black;
-  }
-  for (uint8_t i = 0; i < numFallingFigures; i++)
+
+  for (int8_t i = 0; i < numFallingFigures; i++)
   {
     FallingFigure &fig = fallingFigures[i];
-    fig.y++;
-    if (fig.y >= MATRIX_HEIGHT + 3)
+    fig.y--;
+
+    if (fig.y < -4)
     {
       for (uint8_t j = i; j < numFallingFigures - 1; j++)
       {
         fallingFigures[j] = fallingFigures[j + 1];
       }
       numFallingFigures--;
+      i--;
     }
     else
     {
-      for (uint8_t i = 0; i < 4; i++)
+      for (uint8_t f = 0; f < 4; f++)
       {
-        uint8_t px = fig.x + figures[fig.figureIndex][i][0];
-        uint8_t py = fig.y + figures[fig.figureIndex][i][1];
+        int16_t px = (int16_t)fig.x + figures[fig.figureIndex][f][0];
+        int16_t py = (int16_t)fig.y + figures[fig.figureIndex][f][1];
+
         if (px >= 0 && px < MATRIX_WIDTH && py >= 0 && py < MATRIX_HEIGHT)
         {
           leds[XY(px, py)] = fig.color;
@@ -210,11 +214,12 @@ static void drawTetrisGame()
       }
     }
   }
-  if (ESP8266TrueRandom.random(0, 10) < 4)
+
+  if (random8(100) < 25)
   {
     addNewFigure();
   }
-  delay(25);
+
   FastLED.show();
   delay(TETRIS_GAME_DELAY);
 }
