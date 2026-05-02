@@ -9,32 +9,86 @@
 
 enum spaceSettings
 {
+  CONSTELLATION_DELAY = 10000,
   STAR_SKY_DELAY = 1500,
   PULSATING_STAR_DELAY = 150,
+  ECLIPSING_ROTATION_SPEED = 20,
   STARFALL_DELAY = 100,
-  NEBULA_DELAY = 130
+  NEBULA_DELAY = 130,
+  WAVES_DELAY = 20
 };
 
+struct Star {
+  uint8_t x; uint8_t y;
+  uint8_t bright; 
+  CRGB color;
+};
+
+struct Constellation {
+  Star stars[15];
+  uint8_t count;
+};
+
+const uint32_t starColors[] = {
+    0x95A7E8,
+    0xE0E8FF,
+    0xFF9F13,
+    0xFC7F14,
+    0xF25F6A,
+    0xC70011,
+    0x3870FF,
+    0xB4C8FF,
+    0x6E8CDC,
+    0x4664BE,
+    0xFFDCB4,
+    0xC8D2E6,
+    0xAA96DC,
+    0xE6F0FF
+};
+
+Constellation coordinates[] = {
+  {{{11,3,180}, {7,0,255}, {5,5,200}, {2,6,255}, {0,11,180}}, 5}, // Кассиопея
+  {{{0,6,190}, {2,8,180}, {2,9,10}, {4,7,220}, {6,7,70}, {7,4,180}, {10,5,210}, {11,9,255}}, 8}, // Большая Медведица
+  {{{0,2,100}, {2,4,150}, {3,4,190}, {3,11,30}, {4,4,150}, {5,0,255}, {5,11,10}, {7,8,100}, {11,8,30},
+  {11,6,30}, {10,4,100}, {9,3,30}, {8,3,30}}, 13}, // Орион
+  {{{4,5,100}, {5,8,100}, {6,11,255}, {7,0,110}, {8,3,110}}, 5}, // Лира 
+  {{{6,10,255}, {3,5,210}, {9,5,210}, {6,0,240}, {7,3,130}}, 5}, // Южный Крест (инверсия, положение относительно экватора)
+  {{{1,4,160}, {3,0,200}, {6,1,255}, {9,5,200}, {8,10,160}}, 5}, // Северная Корона
+};
+
+static void drawConstellation();
 static void drawStarSky();
-static void drawSpaceship();
 static void drawStarFall();
 static void drawPulsatingStar();
+static void drawEclipsingBinaryStars();
 static void drawSpiralNebula();
+static void drawSpiralGalaxy();
+static void drawSinusoidWaves(uint8_t sinNum);
+static void drawAurora();
+static void drawMoonPhases();
 
 void drawSpaceEffects(uint8_t subMode)
 {
   switch (subMode)
   {
   case 1:
-    drawStarSky();
+    drawConstellation();
     break;
 
   case 2:
-    drawSpaceship();
+    drawStarSky();
     break;
 
   case 3:
     drawPulsatingStar();
+    break;
+
+  case 34:
+    drawEclipsingBinaryStars();
+    break;
+
+  case 35:
+    drawSpiralGalaxy();
     break;
 
   case 4:
@@ -45,9 +99,47 @@ void drawSpaceEffects(uint8_t subMode)
     drawSpiralNebula();
     break;
 
+  case 6:
+    drawSinusoidWaves(0);
+    delay(WAVES_DELAY);
+    FastLED.show();
+    break;
+
+  case 7:
+    drawSinusoidWaves(1);
+    delay(WAVES_DELAY);
+    FastLED.show();
+    break;
+
+  case 8:
+    drawAurora();
+    break;
+
+  case 9:
+    drawMoonPhases();
+    break;
+
   default:
     break;
   }
+}
+
+int16_t getIndex(uint16_t x, uint16_t y)
+{
+  uint16_t index;
+  if (y == 0)
+  {
+    index = x;
+  }
+  else if (y % 2 == 0)
+  {
+    index = y * MATRIX_WIDTH + x;
+  }
+  else
+  {
+    index = ((y * MATRIX_WIDTH) + (MATRIX_WIDTH - 1)) - x;
+  }
+  return index;
 }
 
 static void addStar(uint8_t starNum, uint32_t color)
@@ -55,7 +147,6 @@ static void addStar(uint8_t starNum, uint32_t color)
   if (starNum < MATRIX_LEDS)
   {
     leds[starNum] = CRGB(color);
-    FastLED.show();
   }
 }
 
@@ -64,35 +155,59 @@ static void removeStar(uint8_t starNum)
   if (starNum < MATRIX_LEDS)
   {
     leds[starNum] = CRGB::Black;
-    FastLED.show();
   }
 }
 
-const uint32_t starColors[] = {
-    0x95A7E8, // (149, 167, 232)
-    0xE0E8FF, // (224, 232, 255)
-    0xFF9F13, // (255, 159, 19)
-    0xFC7F14, // (252, 127, 20)
-    0xF25F6A, // (242, 95, 106)
-    0xC70011, // (199, 0, 17)
-    0x3870FF, // (56, 112, 255)
-    0xB4C8FF, // (180, 200, 255)
-    0x6E8CDC, // (110, 140, 220)
-    0x4664BE, // (70, 100, 190)
-    0xFFDCB4, // (255, 220, 180)
-    0xC8D2E6, // (200, 210, 230)
-    0xAA96DC, // (170, 150, 220)
-    0xE6F0FF  // (230, 240, 255)
-};
-const uint8_t starColorsCount = 14;
+void drawConstellation() {
+
+static uint8_t currentID = 0;
+static uint32_t lastSwitch = 0;
+
+uint32_t ms = millis();
+  
+  if (ms - lastSwitch > CONSTELLATION_DELAY) {
+    lastSwitch = ms;
+    currentID = (currentID + 1) % 6;
+  }
+
+  FastLED.clear();
+
+  uint8_t pulse = beatsin8(12, 160, 255); 
+
+  Constellation &c = coordinates[currentID];
+  
+  for (uint8_t i = 0; i < c.count; i++) {
+    
+    uint16_t idx = XY(c.stars[i].x, c.stars[i].y);
+    
+    uint8_t flicker = random8(190, 255); 
+    
+    uint8_t finalBright = scale8(c.stars[i].bright, pulse);
+    finalBright = scale8(finalBright, flicker);
+    
+    leds[idx] = CRGB(200, 225, 255);;
+    leds[idx].nscale8(finalBright);
+  }
+
+  FastLED.show();
+  delay(30);
+}
 
 void drawStarSky()
 {
+  const uint8_t starColorsCount = 14;
+
   static uint8_t starCycle = 0;
   static uint8_t step = 0;
   static uint32_t lastTime = 0;
 
   uint32_t currentMillis = millis();
+
+  uint8_t pulse = beatsin8(15, 150, 255);
+  uint8_t flicker = random8(210, 255);
+  
+  FastLED.setBrightness(scale8(pulse, flicker)); 
+  FastLED.show(); 
 
   uint16_t neededDelay = STAR_SKY_DELAY;
   if (step >= 3 && step < 13)
@@ -138,142 +253,6 @@ void drawStarSky()
   {
     uint16_t rndLed = ESP8266TrueRandom.random(0, MATRIX_LEDS);
     addStar(rndLed, 0xFFFFFF);
-  }
-}
-
-uint16_t XY7(uint8_t x, uint8_t y)
-{
-  if (x >= MATRIX_WIDTH || y >= MATRIX_HEIGHT)
-    return 0;
-  return (y * MATRIX_WIDTH + x);
-}
-
-byte dir7 = 3;
-
-static void MoveX(int8_t delta)
-{
-  if (delta > 0)
-  {
-    for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
-    {
-      for (uint8_t x = 0; x < MATRIX_WIDTH - 1; x++)
-      {
-        leds[XY7(x, y)] = leds[XY7(x + 1, y)];
-      }
-      leds[XY7(MATRIX_WIDTH - 1, y)] = CRGB(0, 0, 0);
-    }
-  }
-  else if (delta < 0)
-  {
-    for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
-    {
-      for (uint8_t x = MATRIX_WIDTH - 1; x > 0; x--)
-      {
-        leds[XY7(x, y)] = leds[XY7(x - 1, y)];
-      }
-      leds[XY7(0, y)] = CRGB(0, 0, 0);
-    }
-  }
-}
-
-static void MoveY(int8_t delta)
-{
-  if (delta > 0)
-  {
-    for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
-    {
-      for (uint8_t y = MATRIX_HEIGHT - 1; y > 0; y--)
-      {
-        leds[XY7(x, y)] = leds[XY7(x, y - 1)];
-      }
-      leds[XY7(x, 0)] = CRGB(0, 0, 0);
-    }
-  }
-  else if (delta < 0)
-  {
-    for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
-    {
-      for (uint8_t y = 0; y < MATRIX_HEIGHT - 1; y++)
-      {
-        leds[XY7(x, y)] = leds[XY7(x, y + 1)];
-      }
-      leds[XY7(x, MATRIX_HEIGHT - 1)] = CRGB(0, 0, 0);
-    }
-  }
-}
-
-static void drawPixel(byte x, byte y, CRGB color)
-{
-  if (x >= MATRIX_WIDTH || y >= MATRIX_HEIGHT)
-    return;
-
-  leds[XY7(x, y)] += color;
-
-  if (MATRIX_WIDTH > 24 || MATRIX_HEIGHT > 24)
-  {
-    if (x > 0)
-      leds[XY7(x - 1, y)] += color;
-    if (x < MATRIX_WIDTH - 1)
-      leds[XY7(x + 1, y)] += color;
-    if (y > 0)
-      leds[XY7(x, y - 1)] += color;
-    if (y < MATRIX_HEIGHT - 1)
-      leds[XY7(x, y + 1)] += color;
-  }
-}
-
-void drawSpaceship()
-{
-  fadeToBlackBy(leds, MATRIX_LEDS, 16);
-
-  switch (dir7)
-  {
-  case 0:
-    MoveX(1);
-    break;
-  case 1:
-    MoveX(1);
-    MoveY(-1);
-    break;
-  case 2:
-    MoveY(-1);
-    break;
-  case 3:
-    MoveX(-1);
-    MoveY(-1);
-    break;
-  case 4:
-    MoveX(-1);
-    break;
-  case 5:
-    MoveX(-1);
-    MoveY(1);
-    break;
-  case 6:
-    MoveY(1);
-    break;
-  case 7:
-    MoveX(1);
-    MoveY(1);
-    break;
-  }
-
-  for (byte i = 0; i < 8; i++)
-  {
-    byte x = beatsin8(12 + i, 1, MATRIX_WIDTH - 2);
-    byte y = beatsin8(15 + i, 1, MATRIX_HEIGHT - 2);
-
-    drawPixel(x, y,
-              ColorFromPalette(RainbowColors_p, beatsin8(12 + i, 0, 255), 255));
-  }
-
-  FastLED.show();
-
-  EVERY_N_SECONDS(5)
-  {
-    dir7++;
-    if (dir7 > 7)
-      dir7 = 0;
   }
 }
 
@@ -353,6 +332,123 @@ static void drawPulsatingStar()
       direction = 1;
     }
   }
+}
+
+static float mapStar(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+// static float fmap(const float x, const float inMin, const float inMax,
+//                   const float outMin, const float outMax)
+// {
+//   return (outMax - outMin) * (x - inMin) / (inMax - inMin) + outMin;
+// }
+
+static void drawStar(float x, float y, float r, CRGB color) {
+  for (int8_t ix = (int)x - 4; ix <= (int)x + 4; ix++) {
+    for (int8_t iy = (int)y - 4; iy <= (int)y + 4; iy++) {
+      if (ix >= 0 && ix < MATRIX_WIDTH && iy >= 0 && iy < MATRIX_HEIGHT) {
+        
+        float dist = sqrt((ix - x) * (ix - x) + (iy - y) * (iy - y));
+        
+        if (dist < r) {
+          uint16_t idx = getIndex(iy, ix);
+          
+          float edgeSoftness = 0.8;
+          float centerFactor = 1.0 - (dist / r);
+          
+          CRGB finalColor = blend(color, CRGB::White, pow(centerFactor, 2) * 255);
+          
+          uint8_t alpha = 255;
+          if (dist > r - edgeSoftness) {
+            alpha = mapStar(dist, r - edgeSoftness, r, 255, 0);
+          }
+
+          leds[idx] = finalColor;
+          leds[idx].nscale8(alpha);
+        }
+      }
+    }
+  }
+}
+
+static void drawEclipsingBinaryStars() {
+  static float angle = 0;
+  angle += float(ECLIPSING_ROTATION_SPEED)/1000;
+
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++) leds[i] = CRGB::Black;
+
+  float centerX = 5.5;
+  float centerY = 5.5;
+  float orbitRadius = 4.0;
+
+  float xA = centerX + cos(angle) * orbitRadius;
+  float zA = sin(angle); 
+
+  float xB = centerX + cos(angle + PI) * orbitRadius;
+  float zB = sin(angle + PI);
+
+  float sizeA = mapStar(zA, -1.0, 1.0, 1.0, 3.0);
+  float sizeB = mapStar(zB, -1.0, 1.0, 1.0, 3.0);
+
+  if (zA < zB) {
+    drawStar(xA, centerY, sizeA, CRGB(255, 60, 0));
+    drawStar(xB, centerY, sizeB, CRGB(0, 50, 255));
+  } else {
+    drawStar(xB, centerY, sizeB, CRGB(0, 50, 255));
+    drawStar(xA, centerY, sizeA, CRGB(255, 60, 0));
+  }
+
+  FastLED.show();
+}
+
+static void drawSpiralGalaxy() {
+ static float rotationOffset = 0;
+  rotationOffset += 0.010;
+
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++) leds[i] = CRGB::Black;
+
+  float centerX = 5.5;
+  float centerY = 5.5;
+  
+  float tightness = 0.8;
+  uint8_t numArms = 2;
+
+  for (int8_t y = 0; y < 12; y++) {
+    for (int8_t x = 0; x < 12; x++) {
+      
+      float dx = x - centerX;
+      float dy = y - centerY;
+      float r = sqrt(dx * dx + dy * dy);
+      float angle = atan2(dy, dx);
+
+      float spiral = (sin(numArms * angle - tightness * r + rotationOffset) + 1.0) / 2.0;
+      
+      float armVal = pow(spiral, 3); 
+
+      float bulge = exp(-r * 0.6) * 1.5; 
+
+      float finalBright = (armVal * 0.7) + bulge;
+      if (finalBright > 1.0) finalBright = 1.0;
+
+      float mask = 1.0;
+      if (r > 3.5) mask = max(0.0f, 1.0f - (r - 3.5f) / 2.5f);
+      
+      finalBright *= mask;
+
+      if (finalBright > 0.05) {
+        CRGB baseColor = CRGB(0, 0, 150);
+        
+        CRGB finalColor = blend(baseColor, CRGB(120, 50, 0), finalBright * 200);
+        
+        uint16_t idx = getIndex(y, x);
+        leds[idx] = finalColor;
+        leds[idx].nscale8(finalBright * 255);
+      }
+    }
+  }
+
+  FastLED.show();
 }
 
 void drawStarFall()
@@ -455,4 +551,127 @@ void drawSpiralNebula()
   }
 
   FastLED.delay(NEBULA_DELAY);
+}
+
+static void drawSinusoidWaves(uint8_t sinNum)
+{
+  const uint8_t semikMatrixHeightMajor = MATRIX_HEIGHT / 2 + (MATRIX_HEIGHT % 2);
+  const uint8_t semikMatrixWidthMajor = MATRIX_WIDTH / 2 + (MATRIX_WIDTH % 2);
+  const float eS3Speed = 0.004 * 15 + 0.015;
+  const float eS3Size = mapStar(255, 1, 255, 3, 9);
+  const uint8_t scale = map8(55, 50, 150);
+  const float timeShift = millis();
+
+  auto calculateColor = [&](uint8_t x, uint8_t y, float freq1, float freq2,
+                            float timeMult = 1.0f) -> uint8_t
+  {
+    float cx =
+        (y - semikMatrixHeightMajor) +
+        float(eS3Size * sin16(eS3Speed * freq1 * timeShift * timeMult)) /
+            32767.0;
+    float cy =
+        (x - semikMatrixWidthMajor) +
+        float(eS3Size * cos16(eS3Speed * freq2 * timeShift * timeMult)) /
+            32767.0;
+    return static_cast<uint8_t>(
+        127 * (1 + sin16(127 * scale * sqrt(cx * cx + cy * cy)) / 32767.0));
+  };
+
+  for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
+  {
+    for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
+    {
+      switch (sinNum)
+      {
+      case 0:
+        leds[XY(x, y)].r = 255 - calculateColor(x, y, 98.301, 72.0874);
+        leds[XY(x, y)].b = 255 - calculateColor(x, y, 134.3447, 170.3884);
+        break;
+
+      case 1:
+      {
+        CRGB color;
+        color.r = 255 - calculateColor(x, y, 98.301, 72.0874);
+        color.g = 255 - calculateColor(x, y, 68.8107, 65.534);
+        color.b = 255 - calculateColor(x, y, 134.3447, 170.3884);
+        leds[XY(x, y)] = color;
+        break;
+      }
+
+      default:
+        break;
+      }
+    }
+  }
+}
+
+static void drawAurora() {
+
+  uint32_t ms = millis();
+
+  for (uint8_t x = 0; x < 12; x++) {
+    uint8_t curtain = inoise8(x * 50 + ms / 40, ms / 60);
+
+    curtain = qsub8(curtain, 100);
+    curtain = qadd8(curtain, scale8(curtain, 100));
+
+    for (uint8_t y = 0; y < 12; y++) {
+      uint8_t y_gradient = map(y, 0, 11, 240, 20);
+      uint8_t rays = inoise8(x * 100, y * 50 + ms / 20);
+      uint8_t brightness = scale8(curtain, y_gradient);
+      brightness = scale8(brightness, rays);
+      uint8_t hue = 100 + scale8(curtain, 40); 
+
+      uint16_t idx = XY(x, y);
+      leds[idx] = CHSV(hue, 255, brightness);
+    }
+  }
+  
+  FastLED.show();
+}
+
+
+static void drawMoonPhases() {
+
+  uint32_t ms = millis();
+  
+  float phase = ms * 0.0001; 
+
+  FastLED.clear();
+
+  float centerX = 5.5;
+  float centerY = 5.5;
+  float radius = 5.6;
+
+  for (uint8_t y = 0; y < 12; y++) {
+    for (uint8_t x = 0; x < 12; x++) {
+      float dx = x - centerX;
+      float dy = y - centerY;
+      float distSq = dx * dx + dy * dy;
+
+      if (distSq <= radius * radius) {
+        float dz = sqrt(radius * radius - distSq);
+        float lightX = sin(phase);
+        float lightZ = cos(phase);
+
+        float intensity = (dx / radius) * lightX + (dz / radius) * lightZ;
+
+        if (intensity < 0) intensity = 0;
+
+        uint8_t crater = ( (x * 7 + y * 13) % 10 < 3 ) ? 180 : 255;
+
+        uint8_t bright = intensity * 255;
+        bright = scale8(bright, crater);
+
+        CRGB moonColor = CRGB(200, 215, 255); // лунный цвет
+        
+        if (bright < 15) {
+           leds[XY(x, y)] = CRGB(2, 2, 5); 
+        } else {
+           leds[XY(x, y)] = moonColor.nscale8(bright);
+        }
+      }
+    }
+  }
+  FastLED.show();
 }

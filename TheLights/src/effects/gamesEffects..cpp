@@ -11,12 +11,9 @@ enum gamesSettings
 {
   SNAKE_GAME_DELAY = 8000 / 60,
   TETRIS_GAME_DELAY = 350,
-  ARKANOID_GAME_DELAY = 100
+  ARKANOID_GAME_DELAY = 100,
+  SPACESHIP_GAME_DELAY = 50
 };
-
-static void drawSnakeGame();
-static void drawTetrisGame();
-static void drawArkanoidGame();
 
 static int8_t snakeX[5];
 static int8_t snakeY[5];
@@ -37,6 +34,18 @@ static FallingFigure fallingFigures[5];
 const uint8_t figures[14][4][2] = {
     {{0, 0}, {1, 0}, {2, 0}, {3, 0}}, {{0, 0}, {1, 0}, {0, 1}, {1, 1}}, {{0, 0}, {1, 0}, {2, 0}, {1, 1}}, {{0, 0}, {1, 0}, {1, 1}, {2, 1}}, {{0, 0}, {0, 1}, {1, 1}, {2, 1}}, {{0, 0}, {1, 0}, {2, 0}, {2, 1}}, {{0, 0}, {1, 0}, {2, 0}, {0, 1}}, {{0, 0}, {0, 1}, {0, 2}, {0, 3}}, {{0, 0}, {0, 1}, {1, 0}, {1, 1}}, {{0, 0}, {0, 1}, {0, 2}, {1, 1}}, {{0, 0}, {0, 1}, {1, 1}, {1, 2}}, {{0, 0}, {1, 0}, {0, 1}, {1, 1}}, {{0, 0}, {0, 1}, {0, 2}, {1, 2}}, {{0, 0}, {0, 1}, {0, 2}, {1, 0}}};
 
+float shipX = 5.5; 
+float enemyX[3] = {2, 6, 10};
+float enemyY[3] = {-1, -3, -5};
+bool enemyAlive[3] = {true, true, true};
+float bX = -1, bY = -1;
+bool bActive = false;
+
+static void drawSnakeGame();
+static void drawTetrisGame();
+static void drawArkanoidGame();
+static void drawSpaceshipGame();
+
 void drawGamesEffects(uint8_t subMode)
 {
   switch (subMode)
@@ -51,6 +60,10 @@ void drawGamesEffects(uint8_t subMode)
 
   case 3:
     drawArkanoidGame();
+    break;
+
+  case 4:
+    drawSpaceshipGame();
     break;
 
   default:
@@ -292,4 +305,74 @@ static void drawArkanoidGame()
 
   FastLED.show();
   delay(ARKANOID_GAME_DELAY);
+}
+
+void setPixelSafe(float y, float x, CRGB color) {
+  int8_t iy = (int8_t)round(y);
+  int8_t ix = (int8_t)round(x);
+  if (iy < 0 || iy >= 12 || ix < 0 || ix >= 12) return;
+  leds[getIndex(iy, ix)] = color;
+}
+
+static void drawSpaceshipGame() {
+  static float eSpeed = float(SPACESHIP_GAME_DELAY)/1000;
+
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++) leds[i].nscale8(140);
+
+  int8_t target = -1;
+  float minY = -10;
+  for(int i = 0; i < 3; i++) {
+    if (enemyAlive[i] && enemyY[i] > minY) {
+      minY = enemyY[i];
+      target = i;
+    }
+  }
+
+  if (target != -1) {
+    if (shipX < enemyX[target]) shipX += 0.12;
+    if (shipX > enemyX[target]) shipX -= 0.12;
+  }
+  shipX = constrain(shipX, 0, 11);
+
+  if (!bActive && target != -1 && enemyY[target] > 0) { 
+    bX = shipX; bY = 10; bActive = true;
+  }
+  
+  if (bActive) {
+    bY -= 0.4; 
+    if (bY < 0) bActive = false;
+    
+    for(int i = 0; i < 3; i++) {
+      if (enemyAlive[i] && abs(bX - enemyX[i]) < 1.0 && abs(bY - enemyY[i]) < 1.0) {
+        enemyAlive[i] = false; 
+        bActive = false;
+      }
+    }
+  }
+
+  for(int i = 0; i < 3; i++) {
+    enemyY[i] += eSpeed; 
+
+    if (!enemyAlive[i] || enemyY[i] > 12) {
+      enemyAlive[i] = true;
+      enemyY[i] = -random8(1, 5);
+      enemyX[i] = random8(0, 12);
+    }
+  }
+
+  setPixelSafe(11, (int)shipX, CRGB::Green);
+  
+  for(int i = 0; i < 3; i++) {
+    if (enemyAlive[i]) {
+      setPixelSafe((int)enemyY[i], (int)enemyX[i], CRGB::Red);
+      setPixelSafe((int)enemyY[i] - 1, (int)enemyX[i], CRGB(50, 0, 0));
+    }
+  }
+  
+  if (bActive) {
+    setPixelSafe((int)bY, (int)bX, CRGB::LightBlue);
+    setPixelSafe((int)bY + 1, (int)bX, CRGB(0, 50, 80));
+  }
+
+  FastLED.show();
 }

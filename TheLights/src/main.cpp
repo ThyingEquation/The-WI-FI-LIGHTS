@@ -90,6 +90,7 @@ void loop()
     deviceEffectsState.isScreenClearEnable = false;
     FastLED.clear();
     FastLED.show();
+    // Serial.println("очистка");
   }
 
   if (deviceEffectsState.isAllModesEnable)

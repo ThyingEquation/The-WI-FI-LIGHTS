@@ -17,7 +17,6 @@ enum flickeringLightsSettings
 static void drawFlickeringLights1();
 static void drawFlickeringLights2();
 static void drawFlickeringLights3();
-static uint16_t getIndex(uint16_t x, uint16_t y);
 
 void drawFlickeringLights(uint8_t subMode)
 {
@@ -131,24 +130,6 @@ static void drawFlickeringLights2()
   }
   delay(FLASH_LIGHT_2_DELAY);
   FastLED.show();
-}
-
-static uint16_t getIndex(uint16_t x, uint16_t y)
-{
-  uint16_t index;
-  if (y == 0)
-  {
-    index = x;
-  }
-  else if (y % 2 == 0)
-  {
-    index = y * MATRIX_WIDTH + x;
-  }
-  else
-  {
-    index = ((y * MATRIX_WIDTH) + (MATRIX_WIDTH - 1)) - x;
-  }
-  return index;
 }
 
 static void drawFlickeringLights3()
