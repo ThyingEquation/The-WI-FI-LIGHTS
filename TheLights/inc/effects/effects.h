@@ -9,7 +9,6 @@ void drawColorfulEffects(uint8_t subMode);
 
 void drawAnimations(uint8_t subMode);
 void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum);
-void drawColorfulWaves(uint8_t subMode);
 void drawCanvasEffects(uint8_t subMode);
 void drawFlickeringLights(uint8_t subMode);
 void drawGamesEffects(uint8_t subMode);
@@ -28,6 +27,7 @@ uint16_t XY(uint16_t x, uint16_t y);
 CRGB Wheel(byte WheelPos);
 void drawPicture(uint8_t p1[], const uint32_t p2[]);
 int16_t getIndex(uint16_t x, uint16_t y);
+void drawPixelXYFB3(float x, float y, const CRGB &color);
 
 extern uint8_t mainMatrixScheme[];
 

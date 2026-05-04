@@ -9,12 +9,13 @@ deviceEffectsState_s deviceEffectsState;
 CRGB leds[MATRIX_LEDS];
 
 // void (*modeFunctions[14])(uint8_t) = {
-//     drawCanvasEffects, drawRunningLine, drawColorfulSpots, drawRainbows, drawRunningLights,
-//     drawJumpingLights, drawSpaceEffects, drawFlickeringLights, drawWaterEffects, drawWeatherEffects,
-//     drawColorfulWaves, drawAnimations, drawGamesEffects, drawMatrixMovieEffect};
+//     drawCanvasEffects, drawRunningLine,
+//     drawSpaceEffects, ,
+//     drawColorfulWaves, drawAnimations,};
 
-void (*modeFunctions[14])(uint8_t) = {
-    drawColorfulEffects};
+void (*modeFunctions[14])(uint8_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
+    drawColorfulEffects, drawRunningLights, drawJumpingLights, drawFlickeringLights,
+  drawWaterEffects, drawWeatherEffects, drawGamesEffects};
 
 static uint32_t startingMillis = 0;
 

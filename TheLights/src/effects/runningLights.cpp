@@ -10,13 +10,13 @@
 
 enum runningLightsSettings
 {
-  RUNNING_COLORFUL_LIGHT_DELAY = 35,
+  SLOW_LIGHT_DELAY = 100,
+  FAST_LIGHT_DELAY = 20,
+  COLORFUL_LIGHT_DELAY = 35,
+  COLORFUL_SNAKE_DELAY = 50,
   RUNNING_LIGHTS_1_DELAY = 200,
   RUNNING_LIGHTS_2_DELAY = 200,
-  RUNNING_LIGHTS_3_DELAY = 200,
-  RUNNING_LIGHTS_SLOW_DELAY = 100,
-  RUNNING_LIGHTS_FAST_DELAY = 20,
-  COLORFUL_SNAKE_DELAY = 50
+  RUNNING_LIGHTS_3_DELAY = 200
 };
 
 static void drawColorfulLight();
@@ -30,16 +30,20 @@ void drawRunningLights(uint8_t subMode)
 {
   switch (subMode)
   {
+  case 0:
+    drawLight(SLOW_LIGHT_DELAY);
+    break;
+
   case 1:
-    drawLight(RUNNING_LIGHTS_SLOW_DELAY);
+    drawLight(FAST_LIGHT_DELAY);
     break;
 
   case 2:
-    drawLight(RUNNING_LIGHTS_FAST_DELAY);
+    drawColorfulLight();
     break;
 
   case 3:
-    drawColorfulLight();
+    drawColorfulSnake();
     break;
 
   case 4:
@@ -51,10 +55,6 @@ void drawRunningLights(uint8_t subMode)
     break;
 
   case 6:
-    drawColorfulSnake();
-    break;
-
-  case 7:
     drawLights(3);
     break;
 
@@ -92,7 +92,7 @@ void drawColorfulLight()
     }
 
     FastLED.show();
-    delay(RUNNING_COLORFUL_LIGHT_DELAY);
+    delay(COLORFUL_LIGHT_DELAY);
     leds[currentLED] = CRGB::Black;
 
     currentLED++;

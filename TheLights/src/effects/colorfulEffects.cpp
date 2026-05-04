@@ -13,7 +13,8 @@
 
 enum rainbowsSettings
 {
-  RAINBOW_WAVE_2_DELAY = 10,
+  LIGHT_NOISE_DELAY = 20,
+  RAINBOW_WAVE_DELAY = 10,
   RAINBOW_SNAKE_DELAY = 15
 };
 
@@ -25,11 +26,10 @@ static uint8_t colorLoop = 1;
 
 static uint8_t noise[16][16];
 
-static void fillNoise8(bool resetVal);
-static void mapNoiseToLedsUsingPalette(bool resetVal);
 static void changePaletteAndSettingsPeriodically(bool resetVal);
 
 static void drawColorfulSpots();
+static void drawLightNoise();
 static void drawDiagonalWaves();
 static void drawRainbowWheel();
 static void drawRainbowRipples();
@@ -45,50 +45,32 @@ void drawColorfulEffects(uint8_t subMode)
     break;
 
   case 1:
-    drawDiagonalWaves();
+    drawLightNoise();
     break;
 
   case 2:
-    drawRainbowWheel();
+    drawDiagonalWaves();
     break;
 
   case 3:
-    drawRainbowRipples();
+    drawRainbowWheel();
     break;
 
   case 4:
-    drawRainbowWave();
+    drawRainbowRipples();
     break;
 
   case 5:
+    drawRainbowWave();
+    break;
+
+  case 6:
     drawRainbowSnake();
     break;
 
   default:
     break;
   }
-}
-
-static void drawColorfulSpots()
-{
-  if (checkCommandReceived())
-  {
-    speed = 10;
-    scale = 25;
-    colorLoop = 1;
-
-    changePaletteAndSettingsPeriodically(true);
-    fillNoise8(true);
-    mapNoiseToLedsUsingPalette(true);
-  }
-  else
-  {
-    changePaletteAndSettingsPeriodically(false);
-    fillNoise8(false);
-    mapNoiseToLedsUsingPalette(false);
-  }
-
-  FastLED.show();
 }
 
 static void fillNoise8(bool resetVal)
@@ -276,6 +258,152 @@ static void changePaletteAndSettingsPeriodically(bool resetVal)
   }
 }
 
+static void drawColorfulSpots()
+{
+  if (checkCommandReceived())
+  {
+    speed = 10;
+    scale = 25;
+    colorLoop = 1;
+
+    changePaletteAndSettingsPeriodically(true);
+    fillNoise8(true);
+    mapNoiseToLedsUsingPalette(true);
+  }
+  else
+  {
+    changePaletteAndSettingsPeriodically(false);
+    fillNoise8(false);
+    mapNoiseToLedsUsingPalette(false);
+  }
+
+  FastLED.show();
+}
+
+static void drawLightNoise()
+{
+  static uint16_t lightersPosX6[32];
+  static uint16_t lightersPosY6[32];
+  static uint16_t lightersSpeedX6[32];
+  static uint16_t lightersSpeedY6[32];
+  static byte lightersSpeedZ[32];
+  static byte lcolor6[32];
+  static byte mass6[32];
+  static bool loadingFlag6 = true;
+
+  XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+  if (loadingFlag6)
+  {
+    loadingFlag6 = false;
+    randomSeed(millis());
+    for (byte i = 0; i < 32; i++)
+    {
+      lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(0, 21);
+      lightersSpeedY6[i] = -10 + ESP8266TrueRandom.random(0, 21);
+      mass6[i] = 5 + ESP8266TrueRandom.random(0, 6);
+      lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(0, 23);
+      lightersPosX6[i] = ESP8266TrueRandom.random(0, MATRIX_WIDTH * 10);
+      lightersPosY6[i] = ESP8266TrueRandom.random(0, MATRIX_HEIGHT * 10);
+      lcolor6[i] = ESP8266TrueRandom.random(0, 9) * 28;
+    }
+  }
+
+  switch (2)
+  {
+  case 0:
+    FastLED.clear();
+    break;
+  case 1:
+    fadeToBlackBy(leds, MATRIX_LEDS, 50);
+    break;
+  case 2:
+    blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 30, xyMap);
+    fadeToBlackBy(leds, MATRIX_LEDS, 5);
+    break;
+  case 3:
+    fadeToBlackBy(leds, MATRIX_LEDS, 200);
+    break;
+  }
+
+  for (byte i = 0; i < 32; i++)
+  {
+    lcolor6[i]++;
+    switch (3)
+    {
+    case 0:
+      lightersPosX6[i] +=
+          beatsin88(lightersSpeedX6[0] * 255, 0,
+                    mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
+          mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
+      lightersPosY6[i] +=
+          beatsin88(lightersSpeedY6[0] * 255, 0,
+                    mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
+          mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
+      break;
+    case 1:
+      lightersPosX6[i] = beatsin16(
+          lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0, (MATRIX_WIDTH - 1) * 10);
+      lightersPosY6[i] =
+          beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
+                    (MATRIX_HEIGHT - 1) * 10);
+      break;
+    case 2:
+      lightersPosX6[i] += lightersSpeedX6[i] / map(255, 1, 255, 10, 1);
+      lightersPosY6[i] += lightersSpeedY6[i] / map(255, 1, 255, 10, 1);
+      break;
+    case 3:
+      lightersPosX6[i] += mass6[i] * cos(radians(lightersSpeedY6[i])) /
+                          map(255, 1, 255, 10, 1);
+      lightersPosY6[i] += mass6[i] * sin(radians(lightersSpeedY6[i])) /
+                          map(255, 1, 255, 10, 1);
+      lightersSpeedY6[i] += lightersSpeedX6[i] / map(255, 1, 255, 20, 2);
+      break;
+    }
+
+    if (lightersPosY6[i] < 0)
+    {
+      lightersPosY6[i] = 1;
+      lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
+    }
+    if (lightersPosX6[i] < 0)
+    {
+      lightersPosX6[i] = 1;
+      lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
+    }
+    if (lightersPosY6[i] >= (MATRIX_HEIGHT - 1) * 10)
+    {
+      lightersPosY6[i] = ((MATRIX_HEIGHT - 1) * 10) - 1;
+      lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
+    }
+    if (lightersPosX6[i] >= (MATRIX_WIDTH - 1) * 10)
+    {
+      lightersPosX6[i] = ((MATRIX_WIDTH - 1) * 10) - 1;
+      lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
+    }
+
+    CRGB color =
+        CHSV(lcolor6[i], 255,
+             beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1), 128, 255));
+    drawPixelXYFB3((float)lightersPosX6[i] / 10, (float)lightersPosY6[i] / 10,
+                 color);
+  }
+
+  EVERY_N_SECONDS(10)
+  {
+    randomSeed(millis());
+    for (byte i = 0; i < 32; i++)
+    {
+      lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(0, 21);
+      lightersSpeedY6[i] = ESP8266TrueRandom.random(0, 360);
+      mass6[i] = 5 + ESP8266TrueRandom.random(0, 6);
+      lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(0, 23);
+    }
+  }
+
+  FastLED.delay(LIGHT_NOISE_DELAY);
+  FastLED.show();
+}
+
 static void drawDiagonalWaves()
 {
   static uint8_t hue = 0;
@@ -373,7 +501,7 @@ void drawRainbowWave()
   static uint16_t waveRainbow = 0;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < RAINBOW_WAVE_2_DELAY)
+  if (millis() - lastTime < RAINBOW_WAVE_DELAY)
   {
     return;
   }

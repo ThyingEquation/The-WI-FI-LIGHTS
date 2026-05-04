@@ -6,67 +6,81 @@
   Настраиваемые параметры: нет
 */
 
-static void weatherEffects(uint8_t pieceCount, uint8_t speed, uint8_t *currentCol,
-                           uint8_t *currentRow, uint32_t color);
+struct Particle {
+  float x, y;
+  float speed;
+};
 
-void drawWeatherEffects(uint8_t subMode)
-{
-  static uint8_t currentCols[][22] = {
-      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11},
-      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11, 9, 4, 2},
-      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11},
-      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 10, 11, 9, 4, 2, 0, 2, 5}};
+#define MAX_PARTICLES 25
+Particle particles[MAX_PARTICLES];
 
-  static uint8_t currentRows[][22] = {
-      {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14},
-      {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14, 4, 9, 12, 3},
-      {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14},
-      {1, 3, 2, 12, 6, 9, 2, 7, 11, 1, 10, 5, 8, 0, 14, 4, 9, 12, 3, 3, 6, 9}};
+void initWeather();
+void drawWeather(uint8_t count, uint32_t color, float minSpeed, float maxSpeed, uint8_t drift, uint8_t trail);
 
-  static const uint8_t lengths[] = {15, 19, 15, 22};
-  static const uint8_t delays[] = {180, 95, 60, 30};
-  static const uint32_t colors[] = {0xf2f3f4, 0xf2f3f4, 0x007dff, 0x0014a8};
+void drawWeatherEffects(uint8_t subMode) {
 
-  uint8_t index = subMode - 1;
-  weatherEffects(lengths[index], delays[index], currentCols[index],
-                 currentRows[index], colors[index]);
-}
-
-void weatherEffects(uint8_t pieceCount, uint8_t speed, uint8_t *currentCol,
-                    uint8_t *currentRow, uint32_t color)
-{
-  auto drawPixels = [&](bool clear)
-  {
-    for (uint8_t i = 0; i < pieceCount; i++)
-    {
-      if (currentRow[i] < MATRIX_HEIGHT)
-      {
-        uint16_t pixelIndex = XY(currentCol[i], currentRow[i]);
-
-        if (clear)
-          leds[pixelIndex] = CRGB::Black;
-        else
-          leds[pixelIndex] = CRGB(color);
-      }
-    }
-  };
-  drawPixels(true);
-
-  for (uint8_t i = 0; i < pieceCount; i++)
-  {
-    if (currentRow[i] > 0)
-    {
-      --currentRow[i];
-    }
-    else
-    {
-      currentCol[i] = ESP8266TrueRandom.random(0, MATRIX_WIDTH);
-      currentRow[i] = MATRIX_HEIGHT + ESP8266TrueRandom.random(0, 5);
-    }
+  static bool isInit = false;
+  if (!isInit) {
+    isInit = true;
+    initWeather();
   }
 
-  drawPixels(false);
-  FastLED.show();
+  static uint32_t lastUpdate = 0;
 
-  delay(speed);
+  if (millis() - lastUpdate < 30) return; 
+  lastUpdate = millis();
+
+  switch (subMode) {
+    case 0:
+      drawWeather(10, 0xE0E0E0, 0.05, 0.15, 10, 200); 
+      break;
+    case 1:
+      drawWeather(18, 0xFFFFFF, 0.2, 0.5, 11, 150); 
+      break;
+    case 2:
+      drawWeather(10, 0x007DFF, 0.3, 0.6, 10, 100); 
+      break;
+    case 3:
+      drawWeather(20, 0x0014A8, 0.6, 1.0, 10, 80); 
+      break;
+  }
+  FastLED.show();
+}
+
+void initWeather() {
+  for (uint8_t i = 0; i < MAX_PARTICLES; i++) {
+    particles[i].x = random8(MATRIX_WIDTH);
+    particles[i].y = MATRIX_HEIGHT + random8(8); 
+    particles[i].speed = (float)random8(5, 15) / 10.0;
+  }
+  FastLED.clear();
+}
+
+void drawWeather(uint8_t count, uint32_t color, float minSpeed, float maxSpeed, uint8_t drift, uint8_t trail) {
+  fadeToBlackBy(leds, MATRIX_LEDS, trail);
+
+  for (uint8_t i = 0; i < count; i++) {
+
+    particles[i].y -= particles[i].speed;
+    
+    if (drift != 10) {
+      particles[i].x += (float)(drift - 10) / 20.0; 
+    }
+
+    if (particles[i].y < -1 || particles[i].x < -1 || particles[i].x > MATRIX_WIDTH) {
+      particles[i].y = MATRIX_HEIGHT; 
+      particles[i].x = random8(MATRIX_WIDTH);
+      particles[i].speed = (float)random(minSpeed * 100, maxSpeed * 100) / 100.0;
+    }
+
+    int16_t x = (int16_t)particles[i].x;
+    int16_t y = (int16_t)particles[i].y;
+
+    if (x >= 0 && x < MATRIX_WIDTH && y >= 0 && y < MATRIX_HEIGHT) {
+      int16_t index = XY(x, y);
+      if (index >= 0 && index < MATRIX_LEDS) {
+        leds[index] = CRGB(color);
+      }
+    }
+  }
 }

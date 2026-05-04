@@ -19,11 +19,11 @@ void drawWaterEffects(uint8_t subMode)
 {
   switch (subMode)
   {
-  case 1:
+  case 0:
     EVERY_N_MILLISECONDS(20) { drawLagoon(); }
     break;
 
-  case 2:
+  case 1:
     drawPool();
     break;
 

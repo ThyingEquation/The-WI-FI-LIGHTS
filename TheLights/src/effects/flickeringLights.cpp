@@ -9,29 +9,29 @@
 
 enum flickeringLightsSettings
 {
-  FLASH_LIGHT_1_DELAY = 75,
-  FLASH_LIGHT_2_DELAY = 20,
-  FLASH_LIGHT_3_DELAY = 1000 / 60
+  FLYING_LIGHTS_DELAY = 75,
+  CONFETTI_DELAY = 20,
+  FLASH_LIGHT_DELAY = 1000 / 60
 };
 
-static void drawFlickeringLights1();
-static void drawFlickeringLights2();
-static void drawFlickeringLights3();
+static void drawFlyingLights();
+static void drawConfetti();
+static void drawFlickeringLights();
 
 void drawFlickeringLights(uint8_t subMode)
 {
   switch (subMode)
   {
+  case 0:
+    drawFlyingLights();
+    break;
+
   case 1:
-    drawFlickeringLights1();
+    drawConfetti();
     break;
 
   case 2:
-    drawFlickeringLights2();
-    break;
-
-  case 3:
-    drawFlickeringLights3();
+    drawFlickeringLights();
     break;
 
   default:
@@ -39,9 +39,9 @@ void drawFlickeringLights(uint8_t subMode)
   }
 }
 
-static void drawFlickeringLights1()
+static void drawFlyingLights()
 {
-  EVERY_N_MILLIS(FLASH_LIGHT_1_DELAY)
+  EVERY_N_MILLIS(FLYING_LIGHTS_DELAY)
   {
     for (int8_t row = MATRIX_HEIGHT - 1; row >= 0; row--)
     {
@@ -92,7 +92,7 @@ static void drawFlickeringLights1()
   }
 }
 
-static void drawFlickeringLights2()
+static void drawConfetti()
 {
   static bool loadingFlag = true;
 
@@ -128,15 +128,15 @@ static void drawFlickeringLights2()
       leds[XY(x, y)] = CHSV(FF[x][y], 255, SF[x][y]);
     }
   }
-  delay(FLASH_LIGHT_2_DELAY);
+  delay(CONFETTI_DELAY);
   FastLED.show();
 }
 
-static void drawFlickeringLights3()
+static void drawFlickeringLights()
 {
   fadeToBlackBy(leds, MATRIX_LEDS, 20);
   uint16_t pos = random16(MATRIX_LEDS);
   leds[pos] += CHSV(HUE_PURPLE, 255, 255);
   FastLED.show();
-  FastLED.delay(FLASH_LIGHT_3_DELAY);
+  FastLED.delay(FLASH_LIGHT_DELAY);
 }

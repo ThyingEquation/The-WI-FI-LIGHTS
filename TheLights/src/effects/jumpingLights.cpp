@@ -9,17 +9,16 @@
 
 enum gamesSettings
 {
-  JUMPING_LIGHTS_2_DELAY = 20,
   JUMPING_SQUARE_DELAY = 85,
   JUMPING_POINTS_DELAY = 45
 };
 
-static void drawJumpingLights1();
-static void drawJumpingLights2();
-static void drawJumpingLights3();
-static void drawJumpingLights4();
+static void drawСhaos();
+static void drawDriftingLine();
+static void drawJumpingCircle();
 static void drawJumpingSquare();
 static void drawJumpingPoints();
+
 static void initPoints();
 
 static int8_t pos[2][8];
@@ -42,27 +41,23 @@ void drawJumpingLights(uint8_t subMode)
   static uint8_t firstStartPoints = 0;
   switch (subMode)
   {
-  case 1:
-    drawJumpingLights1();
+  case 0:
+    drawСhaos();
     break;
 
   case 2:
-    drawJumpingLights2();
+    drawDriftingLine();
     break;
 
   case 3:
-    drawJumpingLights3();
+    drawJumpingCircle();
     break;
 
   case 4:
-    drawJumpingLights4();
-    break;
-
-  case 5:
     drawJumpingSquare();
     break;
 
-  case 6:
+  case 5:
     if (firstStartPoints == 0)
     {
       initPoints();
@@ -74,6 +69,39 @@ void drawJumpingLights(uint8_t subMode)
   default:
     break;
   }
+}
+
+void drawPixelXYFB3(float x, float y, const CRGB &color)
+{
+  if (x < 0 || y < 0 || x > ((float)MATRIX_WIDTH - 1) || y > ((float)MATRIX_HEIGHT - 1))
+    return;
+
+  uint8_t xx = (x - (int16_t)x) * 255, yy = (y - (int16_t)y) * 255, ix = 255 - xx,
+          iy = 255 - yy;
+
+#define WU_WEIGHT(a, b) ((uint8_t)(((a) * (b) + (a) + (b)) >> 8))
+  uint8_t wu[4] = {WU_WEIGHT(ix, iy), WU_WEIGHT(xx, iy), WU_WEIGHT(ix, yy),
+                   WU_WEIGHT(xx, yy)};
+
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    int16_t xn = x + (i & 1), yn = y + ((i >> 1) & 1);
+    CRGB clr = leds[XY(xn, yn)];
+    if (xn < (int16_t)MATRIX_WIDTH - 1 && yn < (int16_t)MATRIX_HEIGHT - 1 && yn > 0 && xn > 0)
+    {
+      clr.r = qadd8(clr.r, (color.r * wu[i]) >> 8);
+      clr.g = qadd8(clr.g, (color.g * wu[i]) >> 8);
+      clr.b = qadd8(clr.b, (color.b * wu[i]) >> 8);
+    }
+    else
+    {
+      clr.r = qadd8(clr.r, (color.r * 85) >> 8);
+      clr.g = qadd8(clr.g, (color.g * 85) >> 8);
+      clr.b = qadd8(clr.b, (color.b * 85) >> 8);
+    }
+    leds[XY(xn, yn)] = clr;
+  }
+#undef WU_WEIGHT
 }
 
 static void move(byte id)
@@ -127,7 +155,7 @@ static void check3(byte id)
     pos[1][id] = MATRIX_WIDTH - 1;
 }
 
-static void drawJumpingLights1()
+static void drawСhaos()
 {
   static bool setUp = true;
   static bool fade = false;
@@ -158,198 +186,6 @@ static void drawJumpingLights1()
   FastLED.show();
 }
 
-static void drawPixelXYF(float x, float y, CRGB color)
-{
-  uint8_t xx = (x - (int16_t)x) * 255, yy = (y - (int16_t)y) * 255, ix = 255 - xx,
-          iy = 255 - yy;
-
-#define WU_WEIGHT(a, b) ((uint8_t)(((a) * (b) + (a) + (b)) >> 8))
-  uint8_t wu[4] = {WU_WEIGHT(ix, iy), WU_WEIGHT(xx, iy), WU_WEIGHT(ix, yy),
-                   WU_WEIGHT(xx, yy)};
-
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    int16_t xn = x + (i & 1), yn = y + ((i >> 1) & 1);
-    CRGB clr = leds[XY(xn, yn)];
-    clr.r = qadd8(clr.r, (color.r * wu[i]) >> 8);
-    clr.g = qadd8(clr.g, (color.g * wu[i]) >> 8);
-    clr.b = qadd8(clr.b, (color.b * wu[i]) >> 8);
-    leds[XY(xn, yn)] = clr;
-  }
-}
-
-static void drawJumpingLights2()
-{
-  static uint16_t lightersPosX6[32];
-  static uint16_t lightersPosY6[32];
-  static uint16_t lightersSpeedX6[32];
-  static uint16_t lightersSpeedY6[32];
-  static byte lightersSpeedZ[32];
-  static byte lcolor6[32];
-  static byte mass6[32];
-  static bool loadingFlag6 = true;
-
-  XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
-  if (loadingFlag6)
-  {
-    loadingFlag6 = false;
-    randomSeed(millis());
-    for (byte i = 0; i < 32; i++)
-    {
-      lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(0, 21);
-      lightersSpeedY6[i] = -10 + ESP8266TrueRandom.random(0, 21);
-      mass6[i] = 5 + ESP8266TrueRandom.random(0, 6);
-      lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(0, 23);
-      lightersPosX6[i] = ESP8266TrueRandom.random(0, MATRIX_WIDTH * 10);
-      lightersPosY6[i] = ESP8266TrueRandom.random(0, MATRIX_HEIGHT * 10);
-      lcolor6[i] = ESP8266TrueRandom.random(0, 9) * 28;
-    }
-  }
-
-  switch (2)
-  {
-  case 0:
-    FastLED.clear();
-    break;
-  case 1:
-    fadeToBlackBy(leds, MATRIX_LEDS, 50);
-    break;
-  case 2:
-    blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 30, xyMap);
-    fadeToBlackBy(leds, MATRIX_LEDS, 5);
-    break;
-  case 3:
-    fadeToBlackBy(leds, MATRIX_LEDS, 200);
-    break;
-  }
-
-  for (byte i = 0; i < 32; i++)
-  {
-    lcolor6[i]++;
-    switch (3)
-    {
-    case 0:
-      lightersPosX6[i] +=
-          beatsin88(lightersSpeedX6[0] * 255, 0,
-                    mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
-          mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
-      lightersPosY6[i] +=
-          beatsin88(lightersSpeedY6[0] * 255, 0,
-                    mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
-          mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
-      break;
-    case 1:
-      lightersPosX6[i] = beatsin16(
-          lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0, (MATRIX_WIDTH - 1) * 10);
-      lightersPosY6[i] =
-          beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
-                    (MATRIX_HEIGHT - 1) * 10);
-      break;
-    case 2:
-      lightersPosX6[i] += lightersSpeedX6[i] / map(255, 1, 255, 10, 1);
-      lightersPosY6[i] += lightersSpeedY6[i] / map(255, 1, 255, 10, 1);
-      break;
-    case 3:
-      lightersPosX6[i] += mass6[i] * cos(radians(lightersSpeedY6[i])) /
-                          map(255, 1, 255, 10, 1);
-      lightersPosY6[i] += mass6[i] * sin(radians(lightersSpeedY6[i])) /
-                          map(255, 1, 255, 10, 1);
-      lightersSpeedY6[i] += lightersSpeedX6[i] / map(255, 1, 255, 20, 2);
-      break;
-    }
-
-    if (lightersPosY6[i] < 0)
-    {
-      lightersPosY6[i] = 1;
-      lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
-    }
-    if (lightersPosX6[i] < 0)
-    {
-      lightersPosX6[i] = 1;
-      lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
-    }
-    if (lightersPosY6[i] >= (MATRIX_HEIGHT - 1) * 10)
-    {
-      lightersPosY6[i] = ((MATRIX_HEIGHT - 1) * 10) - 1;
-      lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
-    }
-    if (lightersPosX6[i] >= (MATRIX_WIDTH - 1) * 10)
-    {
-      lightersPosX6[i] = ((MATRIX_WIDTH - 1) * 10) - 1;
-      lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
-    }
-
-    CRGB color =
-        CHSV(lcolor6[i], 255,
-             beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1), 128, 255));
-    drawPixelXYF((float)lightersPosX6[i] / 10, (float)lightersPosY6[i] / 10,
-                 color);
-  }
-
-  EVERY_N_SECONDS(10)
-  {
-    randomSeed(millis());
-    for (byte i = 0; i < 32; i++)
-    {
-      lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(0, 21);
-      lightersSpeedY6[i] = ESP8266TrueRandom.random(0, 360);
-      mass6[i] = 5 + ESP8266TrueRandom.random(0, 6);
-      lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(0, 23);
-    }
-  }
-
-  FastLED.delay(JUMPING_LIGHTS_2_DELAY);
-  FastLED.show();
-}
-
-static void drawJumpingLights3()
-{
-  for (byte i = 8; i--;)
-  {
-    leds[XY(beatsin8(12 + i, 0, MATRIX_WIDTH - 1),
-            beatsin8(15 - i, 0, MATRIX_HEIGHT - 1))] =
-        CHSV(beatsin8(12, 0, 255), 255, 255);
-    XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
-    blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 16, xyMap);
-  }
-  FastLED.show();
-}
-
-static uint16_t XYB3(uint8_t x, uint8_t y) { return (y * MATRIX_WIDTH + x); }
-
-static void drawPixelXYFB3(float x, float y, const CRGB &color)
-{
-  if (x < 0 || y < 0 || x > ((float)MATRIX_WIDTH - 1) || y > ((float)MATRIX_HEIGHT - 1))
-    return;
-
-  uint8_t xx = (x - (int16_t)x) * 255, yy = (y - (int16_t)y) * 255, ix = 255 - xx,
-          iy = 255 - yy;
-
-#define WU_WEIGHT(a, b) ((uint8_t)(((a) * (b) + (a) + (b)) >> 8))
-  uint8_t wu[4] = {WU_WEIGHT(ix, iy), WU_WEIGHT(xx, iy), WU_WEIGHT(ix, yy),
-                   WU_WEIGHT(xx, yy)};
-
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    int16_t xn = x + (i & 1), yn = y + ((i >> 1) & 1);
-    CRGB clr = leds[XYB3(xn, yn)];
-    if (xn < (int16_t)MATRIX_WIDTH - 1 && yn < (int16_t)MATRIX_HEIGHT - 1 && yn > 0 && xn > 0)
-    {
-      clr.r = qadd8(clr.r, (color.r * wu[i]) >> 8);
-      clr.g = qadd8(clr.g, (color.g * wu[i]) >> 8);
-      clr.b = qadd8(clr.b, (color.b * wu[i]) >> 8);
-    }
-    else
-    {
-      clr.r = qadd8(clr.r, (color.r * 85) >> 8);
-      clr.g = qadd8(clr.g, (color.g * 85) >> 8);
-      clr.b = qadd8(clr.b, (color.b * 85) >> 8);
-    }
-    leds[XYB3(xn, yn)] = clr;
-  }
-#undef WU_WEIGHT
-}
-
 static void drawCurve(float x, float y, float x2, float y2, float x3, float y3, CRGB coll)
 {
   for (float u = 0.0; u <= 1.0; u += 0.02)
@@ -365,10 +201,11 @@ static void drawCurve(float x, float y, float x2, float y2, float x3, float y3, 
     drawPixelXYFB3(xu, yu, coll);
   }
 }
-byte hue;
 
-static void drawJumpingLights4()
+static void drawDriftingLine()
 {
+  static byte hue;
+
   fadeToBlackBy(leds, MATRIX_LEDS, 30);
   byte x1 = beatsin8(18, 0, MATRIX_WIDTH - 1);
   byte x2 = beatsin8(23, 0, MATRIX_WIDTH - 1);
@@ -380,6 +217,19 @@ static void drawJumpingLights4()
 
   drawCurve(x1, y1, x2, y2, x3, y3, CHSV(hue, 255, 255));
   hue++;
+  FastLED.show();
+}
+
+static void drawJumpingCircle()
+{
+  for (byte i = 8; i--;)
+  {
+    leds[XY(beatsin8(12 + i, 0, MATRIX_WIDTH - 1),
+            beatsin8(15 - i, 0, MATRIX_HEIGHT - 1))] =
+        CHSV(beatsin8(12, 0, 255), 255, 255);
+    XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+    blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 16, xyMap);
+  }
   FastLED.show();
 }
 
