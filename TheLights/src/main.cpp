@@ -10,12 +10,11 @@ CRGB leds[MATRIX_LEDS];
 
 // void (*modeFunctions[14])(uint8_t) = {
 //     drawCanvasEffects, drawRunningLine,
-//     drawSpaceEffects, ,
 //     drawColorfulWaves, drawAnimations,};
 
 void (*modeFunctions[14])(uint8_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
     drawColorfulEffects, drawRunningLights, drawJumpingLights, drawFlickeringLights,
-  drawWaterEffects, drawWeatherEffects, drawGamesEffects};
+  drawWaterEffects, drawWeatherEffects, drawGamesEffects, drawSpaceEffects};
 
 static uint32_t startingMillis = 0;
 
@@ -89,14 +88,6 @@ void loop()
     }
   }
 
-  if (deviceEffectsState.isScreenClearEnable)
-  {
-    deviceEffectsState.isScreenClearEnable = false;
-    FastLED.clear();
-    FastLED.show();
-    // Serial.println("очистка");
-  }
-
   if (deviceEffectsState.isAllModesEnable)
   {
     effectAllModes();
@@ -105,5 +96,12 @@ void loop()
   if (deviceEffectsState.effectsGroup < 14)
   {
     modeFunctions[deviceEffectsState.effectsGroup](deviceEffectsState.effectSubmode);
+  }
+
+  if (deviceEffectsState.isScreenClearEnable)
+  {
+    deviceEffectsState.isScreenClearEnable = false;
+    FastLED.clear();
+    FastLED.show();
   }
 }
