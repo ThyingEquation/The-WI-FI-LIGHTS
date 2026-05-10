@@ -20,7 +20,7 @@ enum rainbowsSettings
 
 static CRGBPalette16 currentPalette(CloudColors_p);
 
-static uint16_t speed = 10;
+static uint16_t speed = 1;
 static uint16_t scale = 25;
 static uint8_t colorLoop = 1;
 
@@ -262,10 +262,9 @@ static void drawColorfulSpots()
 {
   if (checkCommandReceived())
   {
-    speed = 10;
+    speed = 1;
     scale = 25;
     colorLoop = 1;
-
     changePaletteAndSettingsPeriodically(true);
     fillNoise8(true);
     mapNoiseToLedsUsingPalette(true);
@@ -318,7 +317,7 @@ static void drawLightNoise()
     break;
   case 2:
     blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 30, xyMap);
-    fadeToBlackBy(leds, MATRIX_LEDS, 5);
+    fadeToBlackBy(leds, MATRIX_LEDS, 25);
     break;
   case 3:
     fadeToBlackBy(leds, MATRIX_LEDS, 200);
