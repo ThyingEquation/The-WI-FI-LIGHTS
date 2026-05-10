@@ -8,13 +8,10 @@ deviceEffectsState_s deviceEffectsState;
 
 CRGB leds[MATRIX_LEDS];
 
-// void (*modeFunctions[14])(uint8_t) = {
-//     drawCanvasEffects, drawRunningLine,
-//     drawColorfulWaves, drawAnimations,};
-
-void (*modeFunctions[14])(uint8_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
+void (*modeFunctions[11])(uint8_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
     drawColorfulEffects, drawRunningLights, drawJumpingLights, drawFlickeringLights,
-  drawWaterEffects, drawWeatherEffects, drawGamesEffects, drawSpaceEffects};
+  drawWaterEffects, drawWeatherEffects, drawGamesEffects, drawSpaceEffects, drawCanvasEffects,
+  drawRunningLine, drawAnimations};
 
 static uint32_t startingMillis = 0;
 
@@ -74,10 +71,27 @@ void loop()
 
   checkLightServer();
 
+  if (deviceEffectsState.isScreenClearEnable)
+  {
+    deviceEffectsState.isScreenClearEnable = false;
+    FastLED.clear();
+    FastLED.show();
+    return;
+  }
+
+  if (deviceEffectsState.isAllModesEnable)
+  {
+    effectAllModes();
+  }
+
+  if (deviceEffectsState.effectsGroup < 11)
+  {
+    modeFunctions[deviceEffectsState.effectsGroup](deviceEffectsState.effectSubmode);
+  }
+
   if (deviceEffectsState.isWifiActive && currentMillis - lastMillis >= 1000)
   {
     lastMillis = currentMillis;
-
     if (settings.isWifiAutoOffEnable)
     {
       if (currentMillis - startingMillis >= 180000)
@@ -86,22 +100,5 @@ void loop()
         deviceEffectsState.isWifiActive = false;
       }
     }
-  }
-
-  if (deviceEffectsState.isAllModesEnable)
-  {
-    effectAllModes();
-  }
-
-  if (deviceEffectsState.effectsGroup < 14)
-  {
-    modeFunctions[deviceEffectsState.effectsGroup](deviceEffectsState.effectSubmode);
-  }
-
-  if (deviceEffectsState.isScreenClearEnable)
-  {
-    deviceEffectsState.isScreenClearEnable = false;
-    FastLED.clear();
-    FastLED.show();
   }
 }

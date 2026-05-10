@@ -666,47 +666,48 @@ static void drawBlackHole() {
   static uint8_t hueShift = 0;
 
   angleOffset++;
-  hueShift = (hueShift + 1) % 32;
+  hueShift = (hueShift + 2) % 255;
+
+  const float cx = MATRIX_WIDTH / 2.0 - 0.5;
+  const float cy = MATRIX_HEIGHT / 2.0 - 0.5;
+  const float maxDist = 7.5;
 
   for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
     for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
 
-      float cx = MATRIX_WIDTH / 2.0 - 0.5;
-      float cy = MATRIX_HEIGHT / 2.0 - 0.5;
-      
       float dx = x - cx;
       float dy = y - cy;
       float dist = sqrt(dx*dx + dy*dy);
       float angle = atan2(dy, dx) * 57.3;
 
-
-      uint8_t brightness = 0;
-      uint8_t hue = 20;
-
-      if (dist < 1.8) {
+      if (dist < 1.5) {
         leds[XY(x, y)] = CRGB::Black;
         continue;
       }
-      else if (dist < 3.5) {
-        brightness = 255 - (dist * 45);
-        hue = 15 + (angleOffset % 60);
-      }
-      else if (dist < 5.8) {
-        brightness = 255 - (dist * 28);
-        hue = 8 + (angleOffset / 2) % 40;
-      }
-      else {
-        brightness = map(dist, 5.8, 7.5, 120, 0);
-        hue = 25;
+
+      float normDist = (dist - 1.5) / (maxDist - 1.5);
+      normDist = constrain(normDist, 0.0, 1.0);
+
+      float baseBrightness = (1.0 - normDist) * (1.0 - normDist) * 255.0;
+      uint8_t hue = (uint8_t)(20.0 - normDist * 15.0);
+
+      float spiral = sin(radians(angle * 3.5 - dist * 12.0 + angleOffset * 4.0));
+      float spiralAmount = (1.0 - normDist) * 40.0;
+      baseBrightness += spiral * spiralAmount;
+
+      float side = sin(radians(angle + angleOffset * 1.8));
+      float sideAmount = (1.0 - normDist) * 30.0;
+      baseBrightness += side * sideAmount;
+
+      if (normDist > 0.75) {
+        float edgeFade = (normDist - 0.75) / 0.25;
+        baseBrightness *= (1.0 - edgeFade);
       }
 
-      float sideBoost = sin(radians(angle + angleOffset * 1.8)) * 35;
-      brightness = constrain(brightness + sideBoost, 0, 255);
+      uint8_t brightness = constrain((int)baseBrightness, 0, 255);
+      uint8_t sat = constrain((uint8_t)(255 - normDist * 80), 175, 255);
 
-      float spiral = sin(radians(angle * 3.5 - dist * 12 + angleOffset * 4)) * 25;
-      brightness = constrain(brightness + spiral, 40, 255);
-
-      leds[XY(x, y)] = CHSV(hue + hueShift/4, 255, brightness);
+      leds[XY(x, y)] = CHSV(hue + hueShift / 8, sat, brightness);
     }
   }
 
@@ -716,25 +717,34 @@ static void drawBlackHole() {
 
 static void drawAurora()
 {
-  uint32_t ms = millis();
+  static uint32_t ms = 0;
+  ms = millis();
 
-  for (uint8_t x = 0; x < 12; x++)
+  for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
   {
-    uint8_t curtain = inoise8(x * 50 + ms / 40, ms / 60);
+    uint8_t curtain1 = inoise8(x * 30 + ms / 50, ms / 80);
+    uint8_t curtain2 = inoise8(x * 40 + 500, ms / 60 + 300);
+    uint8_t curtain = lerp8by8(curtain1, curtain2, 128);
 
-    curtain = qsub8(curtain, 100);
-    curtain = qadd8(curtain, scale8(curtain, 100));
+    curtain = scale8(curtain, 220);
 
-    for (uint8_t y = 0; y < 12; y++)
+    uint8_t hue = 85 + scale8(inoise8(x * 20, ms / 120), 60) - 10;
+
+    for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
     {
-      uint8_t y_gradient = map(y, 0, 11, 240, 20);
-      uint8_t rays = inoise8(x * 100, y * 50 + ms / 20);
+      uint8_t y_gradient = map(y, 0, MATRIX_HEIGHT - 1, 255, 0);
+      y_gradient = scale8(y_gradient, y_gradient);
+
+      uint8_t rays = inoise8(x * 60 + ms / 70, y * 40 + ms / 50);
+      rays = lerp8by8(150, rays, 160);
+
       uint8_t brightness = scale8(curtain, y_gradient);
       brightness = scale8(brightness, rays);
-      uint8_t hue = 100 + scale8(curtain, 40);
+      brightness = qadd8(brightness, scale8(brightness, 80));
 
-      uint16_t idx = XY(x, y);
-      leds[idx] = CHSV(hue, 255, brightness);
+      uint8_t localHue = hue - scale8(255 - y_gradient, 25);
+
+      leds[XY(x, y)] = CHSV(localHue, 230, brightness);
     }
   }
 

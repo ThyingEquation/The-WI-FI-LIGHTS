@@ -235,7 +235,7 @@ void effectAllModes()
       deviceEffectsState.effectSubmode = mainModes[deviceEffectsState.currentIndex].subMode;
     }
 
-    FastLED.clear(true);
+    FastLED.clear();
   }
 }
 
@@ -427,11 +427,12 @@ static void handleMainCommand(std::string_view command)
 
   bool isFailed = false;
 
-  deviceEffectsState.isScreenClearEnable = true;
+  //deviceEffectsState.isScreenClearEnable = true;
   deviceEffectsState.isAllModesEnable = false;
 
   if (command.rfind("stop") == 0)
   {
+    deviceEffectsState.isScreenClearEnable = true;
     deviceEffectsState.effectsGroup = 255;
   }
   else if (command.rfind("allModes") == 0)
@@ -453,8 +454,9 @@ static void handleMainCommand(std::string_view command)
       {
         deviceEffectsState.effectsGroup = static_cast<uint8_t>(groupTemp);
         deviceEffectsState.effectSubmode = static_cast<uint8_t>(submodeTemp);
-
-        if (deviceEffectsState.effectsGroup == 11)
+        FastLED.clear();
+        
+        if (deviceEffectsState.effectsGroup == 10)
         {
           drawAnimations(255);
         }

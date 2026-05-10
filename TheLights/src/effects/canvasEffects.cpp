@@ -9,6 +9,8 @@
 
   Настраиваемые параметры (drawSettings):
     1) Скорости эффектов
+
+  Отдельно. Режим "Рисовалка" работает на матрицах размера 8x8, 12х12 и 16х16
 */
 
 enum drawSettings
@@ -21,33 +23,100 @@ enum drawSettings
   DRAW_IMAGES_DELAY = 5000
 };
 
+const uint32_t colorsCanvas[] PROGMEM = {0x000000,  // Чёрный
+                                    0xffffff,  // Белый
+                                    0x0000ff,  // Синий
+                                    0x00ff00,  // Лайм
+                                    0x00bfff,  // Морозное небо
+                                    0xff1493,  // Малиновый
+                                    0xffff00,  // Желтый
+                                    0x7fffd4,  // Аквамариновый
+                                    0x00ff7f,  // Весенне-зеленый
+                                    0xffa500,  // Оранжевый
+                                    0xff0000,  // Красный
+                                    0x9400d3,  // Фиолетово-баклажанный
+                                    0xffb6c1,  // Светлорозовый
+                                    0x4b0082,  // Индиго
+                                    0xffd700,  // Золотой
+                                    0x008000,  // Зеленый
+                                    0x22262c,  // Серый
+                                    0x964b00,  // Коричневый
+                                    0x6600ff,  // Персидский синий
+                                    0xd76e00,  // Темно-оранжевый
+                                    0x7cfc00}; // Зеленая лужайка
+
+const uint32_t *images[] = {pacman1, pacman2, pacman3, pacman4, pacman5,
+                            mushroom, amogus, cup, pineapple, alien,
+                            hummer, cat, teaCup, dino, hammerAndSickle,
+                            apple, bird, rabbit, question, goldenKey,
+                            star, sun, pepe, pokeball, microsoft, battery,
+                            redHeart, thundercloud};
+
 static void drawSnake(uint16_t delay);
 static void fillFull();
 static void drawChameleonSnake();
 static void drawLightBreath();
 static void drawImages(uint8_t subMode);
 
+void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum)
+{
+  if (mode == "A")
+  {
+    if (ledNum == 257)
+    {
+      uint32_t rawColor = pgm_read_dword_near(&colorsCanvas[color]);
+      fill_solid(leds, MATRIX_LEDS, CRGB(rawColor));
+      FastLED.show();
+    }
+    else
+    {
+      uint16_t index = --ledNum;
+      if (index < MATRIX_LEDS) {
+        uint32_t rawColor = pgm_read_dword_near(&colorsCanvas[color]);
+        leds[index] = CRGB(rawColor);
+        FastLED.show();
+      }
+    }
+  }
+  else if (mode == "B")
+  {
+    if (ledNum == 257)
+    {
+      FastLED.clear();
+      FastLED.show();
+    }
+    else
+    {
+      uint16_t index = --ledNum;
+      if (index < MATRIX_LEDS) {
+        leds[index] = CRGB::Black;
+        FastLED.show();
+      }
+    }
+  }
+}
+
 void drawCanvasEffects(uint8_t subMode)
 {
   switch (subMode)
   {
-  case 1:
+  case 0:
     fillFull();
     break;
 
-  case 2:
+  case 1:
     drawSnake(SNAKE_FAST_DELAY);
     break;
 
-  case 3:
+  case 2:
     drawSnake(SNAKE_SLOW_DELAY);
     break;
 
-  case 4:
+  case 3:
     drawChameleonSnake();
     break;
 
-  case 5:
+  case 4:
     drawLightBreath();
     break;
 
@@ -257,13 +326,6 @@ static void drawLightBreath()
 
 static void drawImages(uint8_t subMode)
 {
-  const uint32_t *images[] = {pacman1, pacman2, pacman3, pacman4, pacman5,
-                              mushroom, amogus, cup, pineapple, alien,
-                              hummer, cat, teaCup, dino, hammerAndSickle,
-                              apple, bird, rabbit, question, goldenKey,
-                              star, sun, pepe, pokeball, microsoft, battery,
-                              redHeart, thundercloud};
-
   static uint8_t imageNum = 0;
   static uint8_t locImgNum = 0;
   static uint32_t previousMillis = 0;
@@ -303,7 +365,6 @@ static void drawImages(uint8_t subMode)
   }
   else if (subMode == 255)
   {
-
     if (currentMillis - previousMillis >= DRAW_IMAGES_DELAY)
     {
       previousMillis = currentMillis;

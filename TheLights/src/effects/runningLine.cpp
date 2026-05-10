@@ -71,7 +71,7 @@ void drawRunningLine(uint8_t subMode)
   static uint8_t currentPoem = 0;
   static uint32_t poemLastTime = 0;
 
-  if (subMode == 0 || subMode > 9 || subMode != lastSubmode)
+  if (subMode > 8 || subMode != lastSubmode)
   {
     x = MATRIX_WIDTH;
     lastSubmode = subMode;
@@ -81,11 +81,11 @@ void drawRunningLine(uint8_t subMode)
 
     matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));
 
-    if (subMode == 0 || subMode > 9)
+    if (subMode > 8)
       return;
   }
 
-  if (subMode == 9)
+  if (subMode == 8)
   {
     if (millis() - poemLastTime < RUNNING_LINE_DELAY)
       return;
@@ -117,17 +117,15 @@ void drawRunningLine(uint8_t subMode)
 
   lastTime = millis();
 
-  uint8_t idx = subMode - 1;
-
   FastLED.clear();
   matrix.fillScreen(0);
 
   matrix.setCursor(x, TOP_MARGIN);
-  matrix.print(utf8rus(text[idx]));
+  matrix.print(utf8rus(text[subMode]));
 
   x--;
 
-  if (x < -textLength[idx] - 10)
+  if (x < -textLength[subMode] - 10)
   {
     x = MATRIX_WIDTH;
     matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));

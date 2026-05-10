@@ -6,14 +6,12 @@
 #include "main.h"
 
 void drawColorfulEffects(uint8_t subMode);
-
 void drawAnimations(uint8_t subMode);
 void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum);
 void drawCanvasEffects(uint8_t subMode);
 void drawFlickeringLights(uint8_t subMode);
 void drawGamesEffects(uint8_t subMode);
 void drawJumpingLights(uint8_t subMode);
-void drawMatrixMovieEffect(uint8_t subMode);
 void drawRunningLights(uint8_t subMode);
 void drawRunningLine(uint8_t subMode);
 void drawSpaceEffects(uint8_t subMode);
