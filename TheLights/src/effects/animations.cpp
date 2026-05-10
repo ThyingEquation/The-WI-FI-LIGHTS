@@ -20,47 +20,48 @@ enum animationsSettings
   EXPLOSION_IMAGE = 250
 };
 
-static void drawAnimation(const uint32_t *images[], uint32_t numImages, uint32_t interval, bool isNewAnim);
+struct LetterAnimState
+{
+  uint8_t phase = 0;
+  uint8_t step = 0;
+  uint8_t currentLetter = 0;
+  uint32_t prevMillis = 0;
+};
+
+static const uint32_t *const heartImage[] = {heart_1, heart_2, heart_3, heart_4};
+static const uint32_t *const smileImage[] = {smile_1, smile_2, smile_3, smile_4};
+static const uint32_t *const jumpingManImage[] = {jumpingMan_1, jumpingMan_2};
+static const uint32_t *const fireballImage[] = {fireball_1, fireball_2, fireball_3, fireball_4};
+static const uint32_t *const explosionImage[] = {explosion_1, explosion_2, explosion_3, explosion_4, explosion_5,
+                                                 explosion_6, explosion_7, explosion_8, explosion_9, explosion_10, explosion_11, explosion_12,
+                                                 explosion_13, explosion_14, explosion_15, explosion_16, explosion_17, explosion_18};
+static const uint32_t *const jpLetters[] = {jpLetter_1, jpLetter_2, jpLetter_3, jpLetter_4, jpLetter_5,
+                                            jpLetter_6, jpLetter_7, jpLetter_8, jpLetter_9, jpLetter_10};
+static const uint32_t *const krLetters[] = {krLetter_1, krLetter_2, krLetter_3, krLetter_4, krLetter_5};
+
+static const uint32_t *const signalsImage[] = {signal_1, signal_2, signal_3, signal_4, signal_5, signal_6, signal_7};
+
+const uint8_t mainMatrixScheme[] = {
+    132, 131, 108, 107, 84, 83, 60, 59, 36, 35, 12, 11,
+    133, 130, 109, 106, 85, 82, 61, 58, 37, 34, 13, 10,
+    134, 129, 110, 105, 86, 81, 62, 57, 38, 33, 14, 9,
+    135, 128, 111, 104, 87, 80, 63, 56, 39, 32, 15, 8,
+    136, 127, 112, 103, 88, 79, 64, 55, 40, 31, 16, 7,
+    137, 126, 113, 102, 89, 78, 65, 54, 41, 30, 17, 6,
+    138, 125, 114, 101, 90, 77, 66, 53, 42, 29, 18, 5,
+    139, 124, 115, 100, 91, 76, 67, 52, 43, 28, 19, 4,
+    140, 123, 116, 99, 92, 75, 68, 51, 44, 27, 20, 3,
+    141, 122, 117, 98, 93, 74, 69, 50, 45, 26, 21, 2,
+    142, 121, 118, 97, 94, 73, 70, 49, 46, 25, 22, 1,
+    143, 120, 119, 96, 95, 72, 71, 48, 47, 24, 23, 0};
+
+static LetterAnimState stateJp;
+static LetterAnimState stateKr;
+
+static void drawAnimation(const uint32_t *const *images, uint32_t numImages, uint32_t interval, bool isNewAnim);
 static void shiftLeft(uint8_t a);
-static void displayJapaneseLetters(void);
-static void displayKoreanLetters(void);
-static void resetLettersAnimation();
-
-static uint8_t currentStepJp = 0;
-static uint8_t currentPhaseJp = 0;
-static uint8_t currentLetterJp = 0;
-static uint8_t currentStepKr = 0;
-static uint8_t currentPhaseKr = 0;
-static uint8_t currentLetterKr = 0;
-
-static uint8_t downArray[144];
-static uint8_t upArray[144];
-
-static const uint32_t *heartImage[] = {heart_1, heart_2, heart_3, heart_4};
-static const uint32_t *smileImage[] = {smile_1, smile_2, smile_3, smile_4};
-static const uint32_t *jumpingManImage[] = {jumpingMan_1, jumpingMan_2};
-static const uint32_t *fireballImage[] = {fireball_1, fireball_2, fireball_3, fireball_4};
-static const uint32_t *explosionImage[] = {explosion_1, explosion_2, explosion_3, explosion_4, explosion_5,
-                                    explosion_6, explosion_7, explosion_8, explosion_9, explosion_10, explosion_11, explosion_12,
-                                    explosion_13, explosion_14, explosion_15, explosion_16, explosion_17, explosion_18};
-static const uint32_t *jpLetters[] = {jpLetter_1, jpLetter_2, jpLetter_3, jpLetter_4, jpLetter_5,
-                                jpLetter_6, jpLetter_7, jpLetter_8, jpLetter_9, jpLetter_10};
-static const uint32_t *krLetters[] = {krLetter_1, krLetter_2, krLetter_3, krLetter_4, krLetter_5};
-static const uint32_t *signalsImage[] = {signal_1, signal_2, signal_3, signal_4, signal_5, signal_6, signal_7};
-
-uint8_t mainMatrixScheme[] = {
-    133, 132, 109, 108, 85, 84, 61, 60, 37, 36, 13, 12,
-    134, 131, 110, 107, 86, 83, 62, 59, 38, 35, 14, 11,
-    135, 130, 111, 106, 87, 82, 63, 58, 39, 34, 15, 10,
-    136, 129, 112, 105, 88, 81, 64, 57, 40, 33, 16, 9,
-    137, 128, 113, 104, 89, 80, 65, 56, 41, 32, 17, 8,
-    138, 127, 114, 103, 90, 79, 66, 55, 42, 31, 18, 7,
-    139, 126, 115, 102, 91, 78, 67, 54, 43, 30, 19, 6, 
-    140, 125, 116, 101, 92, 77, 68, 53, 44, 29, 20, 5,
-    141, 124, 117, 100, 93, 76, 69, 52, 45, 28, 21, 4,
-    142, 123, 118, 99,  94, 75, 70, 51, 46, 27, 22, 3,
-    143, 122, 119, 98,  95, 74, 71, 50, 47, 26, 23, 2,
-    144, 121, 120, 97,  96, 73, 72, 49, 48, 25, 24, 1};
+static void drawShifted(const uint32_t *image, int8_t offsetY, bool append);
+static void processLetters(LetterAnimState &st, const uint32_t *const letters[], uint8_t totalLetters);
 
 void drawAnimations(uint8_t subMode)
 {
@@ -68,31 +69,31 @@ void drawAnimations(uint8_t subMode)
   switch (subMode)
   {
   case 0:
-    drawAnimation(heartImage, 4, HEART_IMAGE, currentSubMode==0?false:true);
+    drawAnimation(heartImage, 4, HEART_IMAGE, currentSubMode == 0 ? false : true);
     break;
 
   case 1:
-    drawAnimation(smileImage, 4, SMILE_IMAGE, currentSubMode==1?false:true);
+    drawAnimation(smileImage, 4, SMILE_IMAGE, currentSubMode == 1 ? false : true);
     break;
 
   case 2:
-    drawAnimation(jumpingManImage, 2, JUMPING_MAN_IMAGE, currentSubMode==2?false:true);
+    drawAnimation(jumpingManImage, 2, JUMPING_MAN_IMAGE, currentSubMode == 2 ? false : true);
     break;
 
   case 3:
-    drawAnimation(fireballImage, 4, FIREBALL_IMAGE, currentSubMode==3?false:true);
+    drawAnimation(fireballImage, 4, FIREBALL_IMAGE, currentSubMode == 3 ? false : true);
     break;
 
   case 4:
-    drawAnimation(explosionImage, 18, EXPLOSION_IMAGE, currentSubMode==4?false:true);
+    drawAnimation(explosionImage, 18, EXPLOSION_IMAGE, currentSubMode == 4 ? false : true);
     break;
 
   case 5:
-    displayJapaneseLetters();
+    processLetters(stateJp, jpLetters, 10);
     break;
 
   case 6:
-    displayKoreanLetters();
+    processLetters(stateKr, krLetters, 5);
     break;
 
   case 7:
@@ -124,7 +125,8 @@ void drawAnimations(uint8_t subMode)
     break;
 
   case 255:
-    resetLettersAnimation();
+    stateJp = {0, 0, 0, 0};
+    stateKr = {0, 0, 0, 0};
     break;
 
   default:
@@ -134,290 +136,20 @@ void drawAnimations(uint8_t subMode)
   currentSubMode = subMode;
 }
 
-void drawPicture(uint8_t p1[], const uint32_t p2[])
+void drawPicture(const uint8_t p1[], const uint32_t *p2)
 {
-  for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-  {
-    if ((p1[i] - 1) <= 143)
-    {
-      uint32_t rawColor = pgm_read_dword(&p2[i]);
-      leds[p1[i] - 1] = CRGB(rawColor);
-    }
-  }
-}
-
-static void shiftArrayUp(uint8_t upCount)
-{
-  for (uint16_t i = 0; i < MATRIX_LEDS - MATRIX_WIDTH; i++)
-  {
-    upArray[i] = upArray[i + MATRIX_WIDTH];
-  }
-  for (uint8_t j = 0; j < MATRIX_WIDTH; j++)
-  {
-    upArray[MATRIX_LEDS - MATRIX_WIDTH + j] = mainMatrixScheme[upCount * MATRIX_WIDTH + j];
-  }
-}
-
-static void shiftArrayDown()
-{
-  for (uint16_t i = 0; i < MATRIX_LEDS - MATRIX_WIDTH; i++)
-  {
-    downArray[i] = downArray[i + MATRIX_WIDTH];
-  }
-  for (uint8_t j = 0; j < MATRIX_WIDTH; j++)
-  {
-    downArray[MATRIX_LEDS - MATRIX_WIDTH + j] = 145;
-  }
-}
-
-static void initLettersArray()
-{
-  for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-  {
-    upArray[i] = 145;
-    downArray[i] = mainMatrixScheme[i];
-  }
-}
-
-static void displayJapaneseLetters()
-{
-  uint32_t currentMillis = millis();
-  static uint32_t previousMillis = 0;
-
-  if (currentMillis - previousMillis >= 210)
-  {
-    previousMillis = currentMillis;
-
-    switch (currentPhaseJp)
-    {
-    case 0:
-      if (currentStepJp < 12)
-      {
-        FastLED.clear();
-        shiftArrayUp(currentStepJp);
-        drawPicture(upArray, jpLetter_1);
-        FastLED.show();
-        currentStepJp++;
-      }
-      else
-      {
-        currentPhaseJp = 1;
-        currentStepJp = 0;
-        currentLetterJp = 0;
-        initLettersArray();
-      }
-      break;
-
-    case 1:
-      if (currentLetterJp < 9)
-      {
-        if (currentStepJp < 15)
-        {
-          FastLED.clear();
-          if (currentStepJp < 12)
-          {
-            shiftArrayDown();
-            drawPicture(downArray, jpLetters[currentLetterJp]);
-          }
-          if (currentStepJp >= 3)
-          {
-            shiftArrayUp(currentStepJp - 3);
-            drawPicture(upArray, jpLetters[currentLetterJp + 1]);
-          }
-          FastLED.show();
-
-          currentStepJp++;
-        }
-        else
-        {
-          currentStepJp = 0;
-          currentLetterJp++;
-          initLettersArray();
-        }
-      }
-      else
-      {
-        currentPhaseJp = 2;
-        currentStepJp = 0;
-        initLettersArray();
-      }
-      break;
-
-    case 2:
-      if (currentStepJp < 12)
-      {
-        FastLED.clear();
-        shiftArrayDown();
-        drawPicture(downArray, jpLetter_10);
-        FastLED.show();
-        currentStepJp++;
-      }
-      else
-      {
-        currentPhaseJp = 3;
-        currentStepJp = 0;
-      }
-      break;
-
-    case 3:
-      delay(2000);
-      currentPhaseJp = 0;
-      break;
-    }
-  }
-}
-
-void displayKoreanLetters()
-{
-  uint32_t currentMillis = millis();
-  static uint32_t previousMillis = 0;
-
-  if (currentMillis - previousMillis >= 210)
-  {
-    previousMillis = currentMillis;
-
-    switch (currentPhaseKr)
-    {
-    case 0:
-      if (currentStepKr < 12)
-      {
-        FastLED.clear();
-        shiftArrayUp(currentStepKr);
-        drawPicture(upArray, krLetter_1);
-        FastLED.show();
-        currentStepKr++;
-      }
-      else
-      {
-        currentPhaseKr = 1;
-        currentStepKr = 0;
-        currentLetterKr = 0;
-        initLettersArray();
-      }
-      break;
-
-    case 1:
-      if (currentLetterKr < 4)
-      {
-        if (currentStepKr < 15)
-        {
-          FastLED.clear();
-          if (currentStepKr < 12)
-          {
-            shiftArrayDown();
-            drawPicture(downArray, krLetters[currentLetterKr]);
-          }
-          if (currentStepKr >= 3)
-          {
-            shiftArrayUp(currentStepKr - 3);
-            drawPicture(upArray, krLetters[currentLetterKr + 1]);
-          }
-          FastLED.show();
-          currentStepKr++;
-        }
-        else
-        {
-          currentStepKr = 0;
-          currentLetterKr++;
-          initLettersArray();
-        }
-      }
-      else
-      {
-        currentPhaseKr = 2;
-        currentStepKr = 0;
-        initLettersArray();
-      }
-      break;
-
-    case 2:
-      if (currentStepKr < 12)
-      {
-        FastLED.clear();
-        shiftArrayDown();
-        drawPicture(downArray, krLetter_5);
-        FastLED.show();
-        currentStepKr++;
-      }
-      else
-      {
-        currentPhaseKr = 3;
-        currentStepKr = 0;
-      }
-      break;
-
-    case 3:
-      delay(2000);
-      currentPhaseKr = 0;
-      break;
-    }
-  }
-}
-
-void shiftLeft(uint8_t a)
-{
-  static uint16_t shift = 0;
-  static uint8_t lastA = 255;
-  static uint32_t lastTime = 0;
-
-  if (lastA != a) {
-    shift = 0;
-    lastA = a;
-  }
-
-  if (millis() - lastTime < 100) return;
-  lastTime = millis();
-
-  for (uint8_t row = 0; row < 12; row++)
-  {
-    for (uint8_t col = 0; col < 12; col++)
-    {
-      uint16_t index = (col + shift) % 12;
-      uint32_t color = pgm_read_dword(signalsImage[a] + (row * 12 + index));
-      leds[XY(col, row)] = CRGB(color);
-    }
-  }
-
-  FastLED.show();
-  
-  shift = (shift + 1) % 12;
-}
-
-static void drawAnimation(const uint32_t *images[], uint32_t numImages, uint32_t interval, bool isNewAnim)
-{
-  static uint32_t previousMillis = 0;
-  static uint8_t currentImageIndex = 0;
-  uint32_t currentMillis = millis();
-
-  if (isNewAnim) {
-    currentImageIndex = 0;
-    previousMillis = currentMillis;
-    drawPicture(mainMatrixScheme, images[0]);
-    FastLED.show();
-    currentImageIndex = 1;
+  if (p2 == NULL)
     return;
-  }
-
-  if (currentMillis - previousMillis >= interval)
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++)
   {
-    previousMillis = currentMillis;
-    if (currentImageIndex >= numImages) currentImageIndex = 0;
-    drawPicture(mainMatrixScheme, images[currentImageIndex]);
-    FastLED.show();
-    currentImageIndex = (currentImageIndex + 1) % numImages;
+    uint8_t targetLed = p1[i];
+    if (targetLed < MATRIX_LEDS)
+    {
+      uint32_t rawColor;
+      memcpy_P(&rawColor, &p2[i], sizeof(uint32_t));
+      leds[targetLed] = CRGB(rawColor);
+    }
   }
-}
-
-void resetLettersAnimation()
-{
-  initLettersArray();
-
-  currentStepJp = 0;
-  currentPhaseJp = 0;
-  currentLetterJp = 0;
-  currentStepKr = 0;
-  currentPhaseKr = 0;
-  currentLetterKr = 0;
 }
 
 uint16_t XY(uint16_t x, uint16_t y)
@@ -429,5 +161,174 @@ uint16_t XY(uint16_t x, uint16_t y)
   else
   {
     return x * MATRIX_HEIGHT + (MATRIX_HEIGHT - 1 - y);
+  }
+}
+
+static void drawShifted(const uint32_t *image, int8_t offsetY, bool append)
+{
+  if (image == NULL)
+    return;
+  if (!append)
+    FastLED.clear();
+
+  for (int8_t row = 0; row < 12; row++)
+  {
+    int8_t imgRow = row + offsetY;
+    if (imgRow < 0 || imgRow >= 12)
+      continue;
+    for (int8_t col = 0; col < 12; col++)
+    {
+      uint32_t color;
+      memcpy_P(&color, &image[imgRow * 12 + col], sizeof(uint32_t));
+      if (color > 0)
+      {
+        uint8_t ledIndex = pgm_read_byte(&mainMatrixScheme[row * 12 + col]);
+        if (ledIndex < 144)
+        {
+          leds[ledIndex] = CRGB(color);
+        }
+      }
+    }
+  }
+}
+
+static void processLetters(LetterAnimState &st, const uint32_t *const letters[], uint8_t totalLetters)
+{
+  uint32_t currentMillis = millis();
+  if (currentMillis - st.prevMillis < 120)
+    return;
+  st.prevMillis = currentMillis;
+
+  const int8_t H = 12;
+  const int8_t GAP = 3;
+
+  switch (st.phase)
+  {
+  case 0:
+    if (st.step <= H)
+    {
+      drawShifted(letters[0], H - st.step, false);
+      st.step++;
+    }
+    else
+    {
+      st.phase = 1;
+      st.step = 0;
+      st.currentLetter = 0;
+    }
+    break;
+
+  case 1:
+    if (st.currentLetter < totalLetters - 1)
+    {
+      if (st.step <= (H + GAP))
+      {
+        drawShifted(letters[st.currentLetter], -st.step, false);
+        int8_t nextOffset = (H + GAP) - st.step;
+        if (nextOffset <= H)
+        {
+          drawShifted(letters[st.currentLetter + 1], nextOffset, true);
+        }
+        st.step++;
+      }
+      else
+      {
+        st.step = 0;
+        st.currentLetter++;
+      }
+    }
+    else
+    {
+      st.phase = 2;
+      st.step = 0;
+    }
+    break;
+
+  case 2:
+    if (st.step < 12)
+    {
+      drawShifted(letters[totalLetters - 1], -(st.step), false);
+      st.step++;
+    }
+    else
+    {
+      st.phase = 3;
+    }
+    break;
+
+  case 3:
+    if (st.step <= H)
+    {
+      drawShifted(letters[totalLetters - 1], -st.step, false);
+      st.step++;
+    }
+    else
+    {
+      st.phase = 0;
+      st.step = 0;
+      st.currentLetter = 0;
+    }
+    break;
+  }
+
+  FastLED.show();
+}
+
+void shiftLeft(uint8_t a)
+{
+  static uint16_t shift = 0;
+  static uint8_t lastA = 255;
+  static uint32_t lastTime = 0;
+
+  if (lastA != a)
+  {
+    shift = 0;
+    lastA = a;
+  }
+
+  if (millis() - lastTime < 100)
+    return;
+  lastTime = millis();
+
+  for (uint8_t row = 0; row < 12; row++)
+  {
+    for (uint8_t col = 0; col < 12; col++)
+    {
+      uint16_t index = (col + shift) % 12;
+      uint32_t color;
+      memcpy_P(&color, signalsImage[a] + (row * 12 + index), sizeof(uint32_t));
+      leds[XY(col, row)] = CRGB(color);
+    }
+  }
+
+  FastLED.show();
+
+  shift = (shift + 1) % 12;
+}
+
+static void drawAnimation(const uint32_t *const *images, uint32_t numImages, uint32_t interval, bool isNewAnim)
+{
+  static uint32_t previousMillis = 0;
+  static uint8_t currentImageIndex = 0;
+  uint32_t currentMillis = millis();
+
+  if (isNewAnim)
+  {
+    currentImageIndex = 0;
+    previousMillis = currentMillis;
+    drawPicture(mainMatrixScheme, images[0]);
+    FastLED.show();
+    currentImageIndex = 1;
+    return;
+  }
+
+  if (currentMillis - previousMillis >= interval)
+  {
+    previousMillis = currentMillis;
+    if (currentImageIndex >= numImages)
+      currentImageIndex = 0;
+    drawPicture(mainMatrixScheme, images[currentImageIndex]);
+    FastLED.show();
+    currentImageIndex = (currentImageIndex + 1) % numImages;
   }
 }

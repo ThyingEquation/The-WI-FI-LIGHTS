@@ -45,7 +45,7 @@ const uint32_t colorsCanvas[] PROGMEM = {0x000000,  // Чёрный
                                     0xd76e00,  // Темно-оранжевый
                                     0x7cfc00}; // Зеленая лужайка
 
-const uint32_t *images[] = {pacman1, pacman2, pacman3, pacman4, pacman5,
+static const uint32_t* const images[] = {pacman1, pacman2, pacman3, pacman4, pacman5,
                             mushroom, amogus, cup, pineapple, alien,
                             hummer, cat, teaCup, dino, hammerAndSickle,
                             apple, bird, rabbit, question, goldenKey,

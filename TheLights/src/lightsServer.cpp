@@ -455,7 +455,6 @@ static void handleMainCommand(std::string_view command)
         deviceEffectsState.effectsGroup = static_cast<uint8_t>(groupTemp);
         deviceEffectsState.effectSubmode = static_cast<uint8_t>(submodeTemp);
         FastLED.clear();
-        
         if (deviceEffectsState.effectsGroup == 10)
         {
           drawAnimations(255);

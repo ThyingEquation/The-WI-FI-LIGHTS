@@ -10,8 +10,8 @@ CRGB leds[MATRIX_LEDS];
 
 void (*modeFunctions[11])(uint8_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
     drawColorfulEffects, drawRunningLights, drawJumpingLights, drawFlickeringLights,
-  drawWaterEffects, drawWeatherEffects, drawGamesEffects, drawSpaceEffects, drawCanvasEffects,
-  drawRunningLine, drawAnimations};
+    drawWaterEffects, drawWeatherEffects, drawGamesEffects, drawSpaceEffects, drawCanvasEffects,
+    drawRunningLine, drawAnimations};
 
 static uint32_t startingMillis = 0;
 
