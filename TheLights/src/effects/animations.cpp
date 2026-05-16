@@ -168,8 +168,7 @@ static void drawShifted(const uint32_t *image, int8_t offsetY, bool append)
 {
   if (image == NULL)
     return;
-  if (!append)
-    FastLED.clear();
+  if (!append) fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   for (int8_t row = 0; row < 12; row++)
   {
@@ -270,8 +269,7 @@ static void processLetters(LetterAnimState &st, const uint32_t *const letters[],
     }
     break;
   }
-
-  FastLED.show();
+  stripShow();
 }
 
 void shiftLeft(uint8_t a)
@@ -300,8 +298,7 @@ void shiftLeft(uint8_t a)
       leds[XY(col, row)] = CRGB(color);
     }
   }
-
-  FastLED.show();
+  stripShow();
 
   shift = (shift + 1) % 12;
 }
@@ -317,7 +314,7 @@ static void drawAnimation(const uint32_t *const *images, uint32_t numImages, uin
     currentImageIndex = 0;
     previousMillis = currentMillis;
     drawPicture(mainMatrixScheme, images[0]);
-    FastLED.show();
+    stripShow();
     currentImageIndex = 1;
     return;
   }
@@ -328,7 +325,7 @@ static void drawAnimation(const uint32_t *const *images, uint32_t numImages, uin
     if (currentImageIndex >= numImages)
       currentImageIndex = 0;
     drawPicture(mainMatrixScheme, images[currentImageIndex]);
-    FastLED.show();
+    stripShow();
     currentImageIndex = (currentImageIndex + 1) % numImages;
   }
 }

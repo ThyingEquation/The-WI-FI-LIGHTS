@@ -92,7 +92,7 @@ void drawRunningLine(uint8_t subMode)
 
     poemLastTime = millis();
 
-    FastLED.clear();
+    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
     matrix.fillScreen(0);
 
     matrix.setCursor(poemX, TOP_MARGIN);
@@ -106,7 +106,7 @@ void drawRunningLine(uint8_t subMode)
       currentPoem = (currentPoem + 1) % sizeof(poem) / sizeof(poem[0]);
     }
 
-    matrix.show();
+    stripShow();
     return;
   }
 
@@ -117,7 +117,7 @@ void drawRunningLine(uint8_t subMode)
 
   lastTime = millis();
 
-  FastLED.clear();
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
   matrix.fillScreen(0);
 
   matrix.setCursor(x, TOP_MARGIN);
@@ -130,8 +130,7 @@ void drawRunningLine(uint8_t subMode)
     x = MATRIX_WIDTH;
     matrix.setTextColor(pgm_read_dword(&(mainColors[ESP8266TrueRandom.random(0, 128)])));
   }
-
-  matrix.show();
+  stripShow();
 }
 
 String utf8rus(String source)

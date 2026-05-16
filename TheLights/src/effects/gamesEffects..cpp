@@ -127,6 +127,11 @@ static void updateSnake()
 
 static void drawSnakeGame()
 {
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < SNAKE_GAME_DELAY) return;
+  lastTime = millis();
+
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
   updateSnake();
 
@@ -145,8 +150,7 @@ static void drawSnakeGame()
     leds[ledIndex] = CRGB::White;
   }
 
-  FastLED.show();
-  FastLED.delay(SNAKE_GAME_DELAY);
+  stripShow();
 }
 
 static bool checkCollision(uint8_t figureIndex, int8_t x, int8_t y)
@@ -203,6 +207,11 @@ static void addNewFigure()
 
 static void drawTetrisGame()
 {
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < TETRIS_GAME_DELAY) return;
+  lastTime = millis();
+
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
     leds[i] = CRGB::Black;
 
@@ -240,18 +249,22 @@ static void drawTetrisGame()
     addNewFigure();
   }
 
-  FastLED.show();
-  delay(TETRIS_GAME_DELAY);
+  stripShow();
 }
 
 static void drawArkanoidGame()
 {
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < ARKANOID_GAME_DELAY) return;
+  lastTime = millis();
+
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   static CRGB tileColors[] = {CRGB::Blue, CRGB::Green, CRGB::Yellow, CRGB::Red};
   const uint8_t tileWidth = 3, tilesPerRow = 4, totalTiles = 20;
   const uint8_t platformWidth = 4;
-  const uint8_t ballMinY = 0, ballMaxY = 7;
+  const uint8_t ballMinY = 0, ballMaxY = 6;
 
   for (uint8_t i = 0; i < totalTiles; i++)
   {
@@ -261,7 +274,7 @@ static void drawArkanoidGame()
 
     for (uint8_t j = 0; j < tileWidth; j++)
     {
-      uint8_t ledIndex = mainMatrixScheme[startIndex + j] - 1;
+      uint8_t ledIndex = mainMatrixScheme[startIndex + j];
       if (ledIndex >= 0 && ledIndex < MATRIX_LEDS)
       {
         leds[ledIndex] = tileColors[col];
@@ -283,7 +296,7 @@ static void drawArkanoidGame()
   for (uint8_t i = 0; i < platformWidth; i++)
   {
     uint8_t ledIndex =
-        mainMatrixScheme[(platformRowOffset * 12) + platformPosition + i] - 1;
+        mainMatrixScheme[(platformRowOffset * 12) + platformPosition + i];
 
     if (ledIndex >= 0 && ledIndex < MATRIX_LEDS)
     {
@@ -310,8 +323,7 @@ static void drawArkanoidGame()
 
   leds[XY(ballX, ballY)] = CRGB::White;
 
-  FastLED.show();
-  delay(ARKANOID_GAME_DELAY);
+  stripShow();
 }
 
 void setPixelSafe(float y, float x, CRGB color) {
@@ -322,7 +334,10 @@ void setPixelSafe(float y, float x, CRGB color) {
 }
 
 static void drawSpaceshipGame() {
-  static float eSpeed = float(SPACESHIP_GAME_DELAY)/1000;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < 15) return;
+  lastTime = millis();
 
   for (uint16_t i = 0; i < MATRIX_LEDS; i++) leds[i].nscale8(140);
 
@@ -358,7 +373,7 @@ static void drawSpaceshipGame() {
   }
 
   for(int i = 0; i < 3; i++) {
-    enemyY[i] += eSpeed; 
+    enemyY[i] += 0.08; 
 
     if (!enemyAlive[i] || enemyY[i] > 12) {
       enemyAlive[i] = true;
@@ -380,8 +395,7 @@ static void drawSpaceshipGame() {
     setPixelSafe((int)bY, (int)bX, CRGB::LightBlue);
     setPixelSafe((int)bY + 1, (int)bX, CRGB(0, 50, 80));
   }
-
-  FastLED.show();
+  stripShow();
 }
 
 static void drawMatrixMovie()
@@ -389,6 +403,7 @@ static void drawMatrixMovie()
   static uint8_t currentCol[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 6};
   static uint8_t currentRow[11] = {7, 8, 5, 6, 13, 2, 5, 11, 8, 7, 11};
   static uint8_t lineLength[11] = {9, 6, 5, 7, 8, 9, 7, 5, 7, 8, 5};
+  static uint32_t lastTime = 0;
 
   auto drawLine = [](uint8_t col, uint8_t row, uint8_t length, bool clear)
   {
@@ -411,18 +426,20 @@ static void drawMatrixMovie()
     }
   };
 
+  if (millis() - lastTime < 120) return;
+  lastTime = millis();
+
   for (uint8_t i = 0; i < 11; i++)
   {
     drawLine(currentCol[i], currentRow[i], lineLength[i], false);
   }
-  FastLED.show();
-  delay(120);
+
+  stripShow();
 
   for (uint8_t i = 0; i < 11; i++)
   {
     drawLine(currentCol[i], currentRow[i], lineLength[i], true);
   }
-  FastLED.show();
 
   for (uint8_t i = 0; i < 11; i++)
   {

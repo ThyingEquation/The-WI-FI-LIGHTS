@@ -9,8 +9,8 @@
 
 enum gamesSettings
 {
-  JUMPING_SQUARE_DELAY = 85,
-  JUMPING_POINTS_DELAY = 45
+  JUMPING_SQUARE_DELAY = 90,
+  JUMPING_POINTS_DELAY = 60
 };
 
 static void drawСhaos();
@@ -159,11 +159,18 @@ static void drawСhaos()
 {
   static bool setUp = true;
   static bool fade = false;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < 100) return;
+  lastTime = millis();
 
   if (setUp)
   {
     setUp = false;
-    FastLED.clear();
+
+    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+    stripShow();
+
     for (byte i = 0; i < 8; i++)
     {
       pos[0][i] = ESP8266TrueRandom.random(0, MATRIX_HEIGHT);
@@ -182,8 +189,8 @@ static void drawСhaos()
   hue6++;
   if (fade)
     fadeToBlackBy(leds, MATRIX_LEDS, 6);
-  EVERY_N_SECONDS(1) { setUp = true; }
-  FastLED.show();
+  EVERY_N_SECONDS(8) { setUp = true; }
+  stripShow();
 }
 
 static void drawCurve(float x, float y, float x2, float y2, float x3, float y3, CRGB coll)
@@ -217,7 +224,7 @@ static void drawDriftingLine()
 
   drawCurve(x1, y1, x2, y2, x3, y3, CHSV(hue, 255, 255));
   hue++;
-  FastLED.show();
+  stripShow();
 }
 
 static void drawJumpingCircle()
@@ -230,7 +237,7 @@ static void drawJumpingCircle()
     XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
     blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 16, xyMap);
   }
-  FastLED.show();
+  stripShow();
 }
 
 static void drawJumpingSquare()
@@ -240,6 +247,10 @@ static void drawJumpingSquare()
   static float directionX = 1.0f;
   static float directionY = 0.95f;
   static CRGB squareColor = CRGB::Red;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < JUMPING_SQUARE_DELAY) return;
+  lastTime = millis();
 
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
@@ -254,7 +265,7 @@ static void drawJumpingSquare()
       }
     }
   }
-  FastLED.show();
+  stripShow();
 
   squareX += directionX;
   squareY += directionY;
@@ -276,7 +287,6 @@ static void drawJumpingSquare()
     squareColor = CHSV(random8(), 255, 255);
     frameCount = 0;
   }
-  FastLED.delay(JUMPING_SQUARE_DELAY);
 }
 
 static void initPoints()
@@ -293,6 +303,11 @@ static void initPoints()
 
 static void drawJumpingPoints()
 {
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < JUMPING_POINTS_DELAY) return;
+  lastTime = millis();
+
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   for (uint8_t i = 0; i < 6; i++)
@@ -303,7 +318,7 @@ static void drawJumpingPoints()
       leds[ledIndex] = points[i].color;
     }
   }
-  FastLED.show();
+  stripShow();
 
   for (uint8_t i = 0; i < 6; i++)
   {
@@ -333,5 +348,4 @@ static void drawJumpingPoints()
   {
     points[i].color = CHSV(random8(), 255, 255);
   }
-  FastLED.delay(JUMPING_POINTS_DELAY);
 }

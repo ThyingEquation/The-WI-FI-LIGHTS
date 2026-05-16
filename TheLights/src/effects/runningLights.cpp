@@ -63,136 +63,6 @@ void drawRunningLights(uint8_t subMode)
   }
 }
 
-void drawColorfulLight()
-{
-  static uint32_t previousMillis = 0;
-  static uint16_t currentLED = 0;
-  static bool firstPass = true;
-
-  if (checkCommandReceived())
-  {
-    previousMillis = 0;
-    currentLED = 0;
-    firstPass = true;
-  }
-
-  uint32_t currentMillis = millis();
-
-  if (currentMillis - previousMillis >= 20)
-  {
-    previousMillis = currentMillis;
-
-    if (firstPass)
-    {
-      leds[currentLED] = CHSV(currentLED, 255, 255);
-    }
-    else
-    {
-      leds[currentLED] = CHSV(ESP8266TrueRandom.random(0, 256), 255, 255);
-    }
-
-    FastLED.show();
-    delay(COLORFUL_LIGHT_DELAY);
-    leds[currentLED] = CRGB::Black;
-
-    currentLED++;
-    if (currentLED >= MATRIX_LEDS)
-    {
-      currentLED = 0;
-      if (firstPass)
-      {
-        firstPass = false;
-      }
-      else
-      {
-        firstPass = true;
-      }
-    }
-  }
-}
-
-static void drawLights(uint8_t lightsMode)
-{
-  static uint8_t color = 0;
-  static uint8_t stepJ = 0;
-  static uint8_t stepQ = 0;
-  static uint32_t lastTime = 0;
-  static bool isNewCycle = true;
-
-  const int delays[] = {
-      RUNNING_LIGHTS_1_DELAY,
-      RUNNING_LIGHTS_2_DELAY,
-      RUNNING_LIGHTS_3_DELAY};
-
-  uint32_t currentDelay = RUNNING_LIGHTS_1_DELAY;
-  if (lightsMode >= 1 && lightsMode <= 3)
-  {
-    currentDelay = delays[lightsMode - 1];
-  }
-
-  if (millis() - lastTime < currentDelay)
-  {
-    return;
-  }
-  lastTime = millis();
-
-  if (isNewCycle && lightsMode == 1)
-  {
-    color = ESP8266TrueRandom.random(0, 128);
-    isNewCycle = false;
-  }
-
-  uint8_t prevQ = (stepQ == 0) ? 2 : stepQ - 1;
-  for (uint16_t i = 0; i < MATRIX_LEDS; i = i + 3)
-  {
-    if (i + prevQ < MATRIX_LEDS)
-    {
-      leds[i + prevQ] = CRGB::Black;
-    }
-  }
-
-  for (uint16_t i = 0; i < MATRIX_LEDS; i = i + 3)
-  {
-    CRGB pixelColor;
-
-    switch (lightsMode)
-    {
-    case 1:
-      pixelColor = CRGB(pgm_read_dword_near(&mainColors[color]));
-      break;
-
-    case 2:
-      pixelColor = Wheel((i + stepJ) % 255);
-      break;
-
-    case 3:
-      pixelColor = CRGB(pgm_read_dword_near(&mainColors[ESP8266TrueRandom.random(0, 128)]));
-      break;
-    }
-
-    if (i + stepQ < MATRIX_LEDS)
-    {
-      leds[i + stepQ] = pixelColor;
-    }
-  }
-
-  FastLED.show();
-
-  stepQ++;
-
-  if (stepQ >= 3)
-  {
-    stepQ = 0;
-    stepJ++;
-
-    if (stepJ >= 2)
-    {
-      stepJ = 0;
-      isNewCycle = true;
-    }
-  }
-}
-
 void drawLight(uint16_t lightDelay)
 {
   static uint16_t ledsCount = 0;
@@ -217,12 +87,9 @@ void drawLight(uint16_t lightDelay)
     {
       leds[ledsCount - 1] = CRGB::Black;
     }
-
     uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
     leds[ledsCount] = CRGB(rawColor);
-
-    FastLED.show();
-
+    stripShow();
     ledsCount++;
   }
   else
@@ -232,9 +99,56 @@ void drawLight(uint16_t lightDelay)
     if (MATRIX_LEDS > 0)
     {
       leds[MATRIX_LEDS - 1] = CRGB::Black;
-      FastLED.show();
+      stripShow();
     }
     color = ESP8266TrueRandom.random(0, 128);
+  }
+}
+
+void drawColorfulLight()
+{
+  static uint32_t previousMillis = 0;
+  static uint16_t currentLED = 0;
+  static bool firstPass = true;
+
+  if (checkCommandReceived())
+  {
+    previousMillis = 0;
+    currentLED = 0;
+    firstPass = true;
+  }
+
+  uint32_t currentMillis = millis();
+
+  if (currentMillis - previousMillis >= COLORFUL_LIGHT_DELAY)
+  {
+    previousMillis = currentMillis;
+
+    if (firstPass)
+    {
+      leds[currentLED] = CHSV(currentLED, 255, 255);
+    }
+    else
+    {
+      leds[currentLED] = CHSV(ESP8266TrueRandom.random(0, 256), 255, 255);
+    }
+
+    stripShow();
+    leds[currentLED] = CRGB::Black;
+
+    currentLED++;
+    if (currentLED >= MATRIX_LEDS)
+    {
+      currentLED = 0;
+      if (firstPass)
+      {
+        firstPass = false;
+      }
+      else
+      {
+        firstPass = true;
+      }
+    }
   }
 }
 
@@ -285,7 +199,85 @@ static void drawColorfulSnake()
         leds[snake[i]] = snakeColor;
       }
     }
+    stripShow();
+  }
+}
 
-    FastLED.show();
+static void drawLights(uint8_t lightsMode)
+{
+  static uint8_t color = 0;
+  static uint8_t stepJ = 0;
+  static uint8_t stepQ = 0;
+  static uint32_t lastTime = 0;
+  static bool isNewCycle = true;
+
+  const int delays[] = {
+      RUNNING_LIGHTS_1_DELAY,
+      RUNNING_LIGHTS_2_DELAY,
+      RUNNING_LIGHTS_3_DELAY};
+
+  uint32_t currentDelay = RUNNING_LIGHTS_1_DELAY;
+  if (lightsMode >= 1 && lightsMode <= 3)
+  {
+    currentDelay = delays[lightsMode - 1];
+  }
+
+  if (millis() - lastTime < currentDelay) return;
+  lastTime = millis();
+
+  if (isNewCycle && lightsMode == 1)
+  {
+    color = ESP8266TrueRandom.random(0, 128);
+    isNewCycle = false;
+  }
+
+  uint8_t prevQ = (stepQ == 0) ? 2 : stepQ - 1;
+  for (uint16_t i = 0; i < MATRIX_LEDS; i = i + 3)
+  {
+    if (i + prevQ < MATRIX_LEDS)
+    {
+      leds[i + prevQ] = CRGB::Black;
+    }
+  }
+
+  for (uint16_t i = 0; i < MATRIX_LEDS; i = i + 3)
+  {
+    CRGB pixelColor;
+
+    switch (lightsMode)
+    {
+    case 1:
+      pixelColor = CRGB(pgm_read_dword_near(&mainColors[color]));
+      break;
+
+    case 2:
+      pixelColor = customWheel((i + stepJ) % 255);
+      break;
+
+    case 3:
+      pixelColor = CRGB(pgm_read_dword_near(&mainColors[ESP8266TrueRandom.random(0, 128)]));
+      break;
+    }
+
+    if (i + stepQ < MATRIX_LEDS)
+    {
+      leds[i + stepQ] = pixelColor;
+    }
+  }
+
+  stripShow();
+
+  stepQ++;
+
+  if (stepQ >= 3)
+  {
+    stepQ = 0;
+    stepJ++;
+
+    if (stepJ >= 2)
+    {
+      stepJ = 0;
+      isNewCycle = true;
+    }
   }
 }

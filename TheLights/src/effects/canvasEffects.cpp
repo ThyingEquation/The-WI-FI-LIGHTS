@@ -66,7 +66,7 @@ void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum)
     {
       uint32_t rawColor = pgm_read_dword_near(&colorsCanvas[color]);
       fill_solid(leds, MATRIX_LEDS, CRGB(rawColor));
-      FastLED.show();
+      stripShow();
     }
     else
     {
@@ -74,7 +74,7 @@ void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum)
       if (index < MATRIX_LEDS) {
         uint32_t rawColor = pgm_read_dword_near(&colorsCanvas[color]);
         leds[index] = CRGB(rawColor);
-        FastLED.show();
+        stripShow();
       }
     }
   }
@@ -82,15 +82,15 @@ void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum)
   {
     if (ledNum == 257)
     {
-      FastLED.clear();
-      FastLED.show();
+      fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+      stripShow();
     }
     else
     {
       uint16_t index = --ledNum;
       if (index < MATRIX_LEDS) {
         leds[index] = CRGB::Black;
-        FastLED.show();
+        stripShow();
       }
     }
   }
@@ -158,7 +158,7 @@ static void drawSnake(uint16_t delay)
   CRGB newColor = pgm_read_dword(&mainColors[color]);
   leds[ledsCount] = newColor;
 
-  FastLED.show();
+  stripShow();
   ledsCount++;
 }
 
@@ -195,7 +195,7 @@ static void fillFull()
     return;
   }
   lastUpdateTime = millis();
-  FastLED.clear();
+  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
   uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
   CRGB frameColor = CRGB(rawColor);
@@ -212,7 +212,7 @@ static void fillFull()
       }
     }
   }
-  FastLED.show();
+  stripShow();
 
   currentDistance++;
 
@@ -264,7 +264,7 @@ static void drawChameleonSnake()
   {
     uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
     leds[n] = CRGB(rawColor);
-    FastLED.show();
+    stripShow();
     n++;
   }
   else
@@ -301,17 +301,16 @@ static void drawLightBreath()
     lastTime = 0;
   }
 
-  if (millis() - lastTime < LIGHT_BREATH_DELAY)
-  {
-    return;
-  }
+  if (millis() - lastTime < LIGHT_BREATH_DELAY) return;
   lastTime = millis();
+
   brightness += direction;
   uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
   CRGB baseColor = CRGB(rawColor);
   baseColor.nscale8_video(brightness);
   fill_solid(leds, MATRIX_LEDS, baseColor);
-  FastLED.show();
+
+  stripShow();
 
   if (brightness >= 255)
   {
@@ -330,6 +329,7 @@ static void drawImages(uint8_t subMode)
   static uint8_t locImgNum = 0;
   static uint32_t previousMillis = 0;
   static uint32_t previousMillisImgNum = 0;
+  static bool enableNewImg = false;
 
   static uint8_t randomCounter = 0;
   std::deque<uint8_t> usedImg;
@@ -342,6 +342,7 @@ static void drawImages(uint8_t subMode)
     locImgNum = 0;
     previousMillis = 0;
     previousMillisImgNum = 0;
+    enableNewImg = true;
   }
 
   if (subMode == 254)
@@ -354,7 +355,7 @@ static void drawImages(uint8_t subMode)
       if (imageNum >= 0 && imageNum < 28)
       {
         drawPicture(mainMatrixScheme, images[imageNum]);
-        FastLED.show();
+        stripShow();
         ++imageNum;
       }
       else
@@ -372,7 +373,7 @@ static void drawImages(uint8_t subMode)
       if (imageNum >= 0 && imageNum < 28)
       {
         drawPicture(mainMatrixScheme, images[imageNum]);
-        FastLED.show();
+        stripShow();
       do
       {
         imageNum = ESP8266TrueRandom.random(0, 29);
@@ -393,11 +394,12 @@ static void drawImages(uint8_t subMode)
       }
     }
   }
-  else if ((subMode > 100 && subMode < 129) && (locImgNum != subMode))
+  else if ((subMode > 100 && subMode < 129) && (locImgNum != subMode) && enableNewImg)
   {
+    enableNewImg = false;
     locImgNum = subMode;
     drawPicture(mainMatrixScheme, images[subMode - 101]);
-    FastLED.show();
+    stripShow();
   }
 
   if (currentMillis - previousMillisImgNum >= 5000)

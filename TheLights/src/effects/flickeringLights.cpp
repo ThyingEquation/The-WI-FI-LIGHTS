@@ -47,9 +47,9 @@ static void drawFlyingLights()
     {
       for (int8_t col = 0; col < MATRIX_WIDTH; col++)
       {
-        if (leds[getIndex(col, row)] == CRGB(175, 255, 175))
+        if (leds[XY(col, row)] == CRGB(175, 255, 175))
         {
-          leds[getIndex(col, row)] = CRGB(27, 130, 39);
+          leds[XY(col, row)] = CRGB(27, 130, 39);
           if (row < MATRIX_HEIGHT - 1)
           {
             int8_t drift = random8(3) - 1;
@@ -60,7 +60,7 @@ static void drawFlyingLights()
             if (nextCol >= MATRIX_WIDTH)
               nextCol = MATRIX_WIDTH - 1;
 
-            leds[getIndex(nextCol, row + 1)] = CRGB(175, 255, 175);
+            leds[XY(nextCol, row + 1)] = CRGB(175, 255, 175);
           }
         }
       }
@@ -85,10 +85,9 @@ static void drawFlyingLights()
     if (random8(5) == 0 || emptyScreen)
     {
       int8_t spawnX = random8(MATRIX_WIDTH);
-      leds[getIndex(spawnX, 0)] = CRGB(175, 255, 175);
+      leds[XY(spawnX, 0)] = CRGB(175, 255, 175);
     }
-
-    FastLED.show();
+    stripShow();
   }
 }
 
@@ -98,6 +97,11 @@ static void drawConfetti()
 
   static byte FF[MATRIX_WIDTH][MATRIX_HEIGHT];
   static byte SF[MATRIX_WIDTH][MATRIX_HEIGHT];
+
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < CONFETTI_DELAY) return;
+  lastTime = millis();
 
   if (loadingFlag)
   {
@@ -128,15 +132,18 @@ static void drawConfetti()
       leds[XY(x, y)] = CHSV(FF[x][y], 255, SF[x][y]);
     }
   }
-  delay(CONFETTI_DELAY);
-  FastLED.show();
+  stripShow();
 }
 
 static void drawFlickeringLights()
 {
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < FLASH_LIGHT_DELAY) return;
+  lastTime = millis();
+
   fadeToBlackBy(leds, MATRIX_LEDS, 20);
   uint16_t pos = random16(MATRIX_LEDS);
   leds[pos] += CHSV(HUE_PURPLE, 255, 255);
-  FastLED.show();
-  FastLED.delay(FLASH_LIGHT_DELAY);
+  stripShow();
 }

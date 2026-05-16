@@ -427,7 +427,7 @@ static void handleMainCommand(std::string_view command)
 
   bool isFailed = false;
 
-  //deviceEffectsState.isScreenClearEnable = true;
+  deviceEffectsState.isScreenClearEnable = true;
   deviceEffectsState.isAllModesEnable = false;
 
   if (command.rfind("stop") == 0)

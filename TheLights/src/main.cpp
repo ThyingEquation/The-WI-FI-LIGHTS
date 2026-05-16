@@ -8,6 +8,8 @@ deviceEffectsState_s deviceEffectsState;
 
 CRGB leds[MATRIX_LEDS];
 
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(MATRIX_LEDS);
+
 void (*modeFunctions[11])(uint8_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
     drawColorfulEffects, drawRunningLights, drawJumpingLights, drawFlickeringLights,
     drawWaterEffects, drawWeatherEffects, drawGamesEffects, drawSpaceEffects, drawCanvasEffects,
@@ -58,8 +60,9 @@ void setup()
   Serial.println(deviceEffectsState.effectsGroup);
   Serial.println(deviceEffectsState.effectSubmode);
 
+  strip.Begin();
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-  FastLED.show();
+  strip.Show();
 
   startingMillis = millis();
 }
@@ -74,8 +77,9 @@ void loop()
   if (deviceEffectsState.isScreenClearEnable)
   {
     deviceEffectsState.isScreenClearEnable = false;
-    FastLED.clear();
-    FastLED.show();
+    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+    stripShow();
+
     return;
   }
 
@@ -101,4 +105,16 @@ void loop()
       }
     }
   }
+}
+
+void stripShow() {
+    uint8_t globalBr = settings.globalBrightness;
+    for (uint16_t i = 0; i < 144; i++) {
+        CRGB c = leds[i];
+        if (globalBr < 255) {
+            c.nscale8_video(globalBr);
+        }
+        strip.SetPixelColor(i, RgbColor(c.r, c.g, c.b));
+    }
+    strip.Show(); 
 }

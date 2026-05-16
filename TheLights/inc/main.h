@@ -10,9 +10,8 @@
 
 #pragma once
 
-#define FASTLED_INTERRUPT_RETRY_COUNT 10
-#define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>
+#include <NeoPixelBus.h>
 
 enum globalSettings
 {
@@ -24,4 +23,5 @@ enum globalSettings
   ALL_MODES_EFFECT_COUNT = 61
 };
 
-extern CRGB leds[MATRIX_LEDS]; 
+extern CRGB leds[MATRIX_LEDS];
+extern NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip;

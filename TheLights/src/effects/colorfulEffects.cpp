@@ -15,7 +15,7 @@ enum rainbowsSettings
 {
   LIGHT_NOISE_DELAY = 20,
   RAINBOW_WAVE_DELAY = 10,
-  RAINBOW_SNAKE_DELAY = 15
+  RAINBOW_SNAKE_DELAY = 30
 };
 
 static CRGBPalette16 currentPalette(CloudColors_p);
@@ -27,7 +27,6 @@ static uint8_t colorLoop = 1;
 static uint8_t noise[16][16];
 
 static void changePaletteAndSettingsPeriodically(bool resetVal);
-
 static void drawColorfulSpots();
 static void drawLightNoise();
 static void drawDiagonalWaves();
@@ -71,6 +70,22 @@ void drawColorfulEffects(uint8_t subMode)
   default:
     break;
   }
+}
+
+CRGB customWheel(byte WheelPos)
+{
+  WheelPos = 255 - WheelPos;
+  if (WheelPos < 85)
+  {
+    return CRGB(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if (WheelPos < 170)
+  {
+    WheelPos -= 85;
+    return CRGB(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return CRGB(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
 static void fillNoise8(bool resetVal)
@@ -275,8 +290,7 @@ static void drawColorfulSpots()
     fillNoise8(false);
     mapNoiseToLedsUsingPalette(false);
   }
-
-  FastLED.show();
+  stripShow();
 }
 
 static void drawLightNoise()
@@ -289,6 +303,10 @@ static void drawLightNoise()
   static byte lcolor6[32];
   static byte mass6[32];
   static bool loadingFlag6 = true;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < LIGHT_NOISE_DELAY) return;
+  lastTime = millis();
 
   XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
   if (loadingFlag6)
@@ -310,7 +328,8 @@ static void drawLightNoise()
   switch (2)
   {
   case 0:
-    FastLED.clear();
+    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+    stripShow();
     break;
   case 1:
     fadeToBlackBy(leds, MATRIX_LEDS, 50);
@@ -384,7 +403,7 @@ static void drawLightNoise()
         CHSV(lcolor6[i], 255,
              beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1), 128, 255));
     drawPixelXYFB3((float)lightersPosX6[i] / 10, (float)lightersPosY6[i] / 10,
-                 color);
+                   color);
   }
 
   EVERY_N_SECONDS(10)
@@ -398,14 +417,16 @@ static void drawLightNoise()
       lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(0, 23);
     }
   }
-
-  FastLED.delay(LIGHT_NOISE_DELAY);
-  FastLED.show();
+  stripShow();
 }
 
 static void drawDiagonalWaves()
 {
   static uint8_t hue = 0;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < 25) return;
+  lastTime = millis();
 
   for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
   {
@@ -417,41 +438,41 @@ static void drawDiagonalWaves()
     }
   }
   hue++;
-  FastLED.show();
-  FastLED.delay(10);
-}
-
-static void DrawOneFrame(byte startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
-{
-  byte lineStartHue = startHue8;
-  for (byte Y = 0; Y < MATRIX_HEIGHT; Y++)
-  {
-    lineStartHue += yHueDelta8;
-    byte pixelHue = lineStartHue;
-    for (byte X = 0; X < MATRIX_WIDTH; X++)
-    {
-      pixelHue += xHueDelta8;
-      leds[XY(X, Y)] = CHSV(pixelHue, 255, 255);
-    }
-  }
+  stripShow();
 }
 
 void drawRainbowWheel()
 {
+  static uint16_t rotation = 0;
+  static uint32_t lastMillis = 0;
+
   uint32_t ms = millis();
-  int32_t yHueDelta32 = ((int32_t)cos16(ms * (27 / 1)) * (350 / MATRIX_WIDTH));
-  int32_t xHueDelta32 = ((int32_t)cos16(ms * (39 / 1)) * (310 / MATRIX_HEIGHT));
-  DrawOneFrame(ms / 65536, yHueDelta32 / 32768, xHueDelta32 / 32768);
-  if (ms < 5000)
+  uint32_t delta = ms - lastMillis;
+  lastMillis = ms;
+  rotation += delta * 10;
+
+  uint8_t centerX = MATRIX_WIDTH / 2;
+  uint8_t centerY = MATRIX_HEIGHT / 2;
+
+  for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
   {
-    FastLED.setBrightness(scale8(50, (ms * 256) / 5000));
+    for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
+    {
+      float dx = (float)x - centerX + 0.5f;
+      float dy = (float)y - centerY + 0.5f;
+      uint8_t angle = (uint8_t)(atan2(dy, dx) * 128.0f / PI + 128);
+
+      float dist = sqrt(dx * dx + dy * dy);
+      uint8_t bri = (uint8_t)constrain(dist * 30, 30, 255);
+
+      uint8_t hue = angle + (rotation >> 8);
+
+      leds[XY(x, y)] = CHSV(hue, 255, bri);
+    }
   }
-  else
-  {
-    FastLED.setBrightness(50);
-  }
-  FastLED.show();
+  stripShow();
 }
+
 
 void drawRainbowRipples()
 {
@@ -492,7 +513,7 @@ void drawRainbowRipples()
 
     nblend(leds[pixelnumber], newColor, 64);
   }
-  FastLED.show();
+  stripShow();
 }
 
 void drawRainbowWave()
@@ -500,19 +521,16 @@ void drawRainbowWave()
   static uint16_t waveRainbow = 0;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < RAINBOW_WAVE_DELAY)
-  {
-    return;
-  }
+  if (millis() - lastTime < RAINBOW_WAVE_DELAY) return;
   lastTime = millis();
 
   if (waveRainbow < 256)
   {
     for (uint16_t i = 0; i < MATRIX_LEDS; i++)
     {
-      leds[i] = Wheel((i + waveRainbow) & 255);
+      leds[i] = customWheel((i + waveRainbow) & 255);
     }
-    FastLED.show();
+    stripShow();
     ++waveRainbow;
   }
   else
@@ -531,64 +549,36 @@ static void fadeall()
 
 void drawRainbowSnake()
 {
-  static uint16_t waveSnake1 = 0;
-  static uint16_t waveSnake2 = 0;
+  static int16_t position = 0; 
+  static int8_t direction = 1;
   static uint8_t hue = 0;
   static uint32_t lastTime = 0;
 
   if (checkCommandReceived())
   {
-    waveSnake1 = 0;
-    waveSnake2 = 0;
+    position = 0;
+    direction = 1;
     hue = 0;
     lastTime = 0;
   }
 
-  if (millis() - lastTime < RAINBOW_SNAKE_DELAY)
-  {
-    return;
-  }
+  if (millis() - lastTime < RAINBOW_SNAKE_DELAY) return;
   lastTime = millis();
+  leds[position] = CHSV(hue++, 255, 255);
 
-  if (waveSnake1 < MATRIX_LEDS)
-  {
-    leds[waveSnake1] = CHSV(hue++, 255, 255);
+  fadeall();
+  stripShow();
 
-    fadeall();
+  position += direction;
 
-    FastLED.show();
-    ++waveSnake1;
-    waveSnake2 = MATRIX_LEDS - 1;
-  }
-  else if (waveSnake2 > 0)
+  if (position >= MATRIX_LEDS)
   {
-    leds[waveSnake2] = CHSV(hue++, 255, 255);
-    fadeall();
-    FastLED.show();
-    --waveSnake2;
+    position = MATRIX_LEDS - 2;
+    direction = -1;
   }
-  else
+  else if (position < 0)
   {
-    FastLED.clear();
-    FastLED.show();
-
-    waveSnake1 = 0;
-    waveSnake2 = MATRIX_LEDS - 1;
+    position = 1; 
+    direction = 1;
   }
-}
-
-CRGB Wheel(byte WheelPos)
-{
-  WheelPos = 255 - WheelPos;
-  if (WheelPos < 85)
-  {
-    return CRGB(255 - WheelPos * 3, 0, WheelPos * 3);
-  }
-  if (WheelPos < 170)
-  {
-    WheelPos -= 85;
-    return CRGB(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return CRGB(WheelPos * 3, 255 - WheelPos * 3, 0);
 }

@@ -21,8 +21,11 @@ void drawWeatherEffects(uint8_t subMode);
 void initRunningLine();
 bool checkCommandReceived();
 
+void stripShow();
+void fastLedShow();
+
 uint16_t XY(uint16_t x, uint16_t y);
-CRGB Wheel(byte WheelPos);
+CRGB customWheel(byte WheelPos);
 void drawPicture(const uint8_t p1[], const uint32_t* p2);
 int16_t getIndex(uint16_t x, uint16_t y);
 void drawPixelXYFB3(float x, float y, const CRGB &color);

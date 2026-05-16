@@ -124,7 +124,7 @@ void drawLagoon()
   drawLagoonAddWhitecaps();
 
   drawLagoonDeepenColors();
-  FastLED.show();
+  stripShow();
 }
 
 void drawPool()
@@ -132,6 +132,10 @@ void drawPool()
   static bool loadingFlag9 = true;
   static CRGBPalette16 currentPalette9(PartyColors_p);
   static uint8_t hue9;
+  static uint32_t lastTime = 0;
+
+  if (millis() - lastTime < drawPool_DELAY) return;
+  lastTime = millis();
 
   if (loadingFlag9)
   {
@@ -168,6 +172,5 @@ void drawPool()
   }
   blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 32, xyMap);
 
-  FastLED.show();
-  FastLED.delay(drawPool_DELAY);
+  stripShow();
 }
