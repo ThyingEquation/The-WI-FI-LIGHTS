@@ -507,7 +507,7 @@ static void drawImages(uint8_t subMode)
   {
     imageNum = 0;
     locImgNum = 0;
-    previousMillis = 0;
+    previousMillis = currentMillis - DRAW_IMAGES_DELAY;
     previousMillisImgNum = 0;
     enableNewImg = true;
     randomCounter = 0;
