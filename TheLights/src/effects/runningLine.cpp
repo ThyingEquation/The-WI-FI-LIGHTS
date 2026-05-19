@@ -29,8 +29,8 @@ enum runningLineSettings
 
 static String utf8rus(String source);
 
-const char *text[] = {"С наступающим Новым годом !!!", "С Новым годом !!!", "Happy New Year !!!", "С Рождеством !!!", "Merry Christmas !!!", "Здесь могла быть ваша реклама", "Привет, я умная гирлянда", "ВВЕДИТЕ ТЕКСТ"};
-const char *poem[] = {
+static const char *text[] = {"С наступающим Новым годом !!!", "С Новым годом !!!", "Happy New Year !!!", "С Рождеством !!!", "Merry Christmas !!!", "Здесь могла быть ваша реклама", "Привет, я умная гирлянда", "ВВЕДИТЕ ТЕКСТ"};
+static const char *poem[] = {
     "На берегу пустынных волн Стоял он, дум великих полн, И вдаль глядел. Пред ним широко Река неслася; бедный чёлн По ней стремился одиноко. По мшистым, топким берегам Чернели избы здесь и там, Приют убогого чухонца; И лес, неведомый лучам В тумане спрятанного солнца, Кругом шумел.\n\n",
 
     "И думал он: Отсель грозить мы будем шведу, Здесь будет город заложен На зло надменному соседу. Природой здесь нам суждено В Европу прорубить окно, Ногою твердой стать при море. Сюда по новым им волнам Все флаги в гости будут к нам, И запируем на просторе.\n\n",
@@ -70,6 +70,8 @@ void drawRunningLine(uint8_t subMode)
   static int32_t poemX = MATRIX_WIDTH;
   static uint8_t currentPoem = 0;
   static uint32_t poemLastTime = 0;
+  static String cachedPoem = "";
+  static uint8_t cachedPoemIndex = 255;
 
   if (subMode > 8 || subMode != lastSubmode)
   {
@@ -96,14 +98,20 @@ void drawRunningLine(uint8_t subMode)
     matrix.fillScreen(0);
 
     matrix.setCursor(poemX, TOP_MARGIN);
-    matrix.print(utf8rus(poem[currentPoem]));
+
+    if (cachedPoemIndex != currentPoem)
+    {
+      cachedPoem = utf8rus(poem[currentPoem]);
+      cachedPoemIndex = currentPoem;
+    }
+    matrix.print(cachedPoem);
 
     poemX--;
 
     if (poemX < -poemLength[currentPoem] - 30)
     {
       poemX = MATRIX_WIDTH;
-      currentPoem = (currentPoem + 1) % sizeof(poem) / sizeof(poem[0]);
+      currentPoem = (currentPoem + 1) % (sizeof(poem) / sizeof(poem[0]));
     }
 
     stripShow();
@@ -117,7 +125,6 @@ void drawRunningLine(uint8_t subMode)
 
   lastTime = millis();
 
-  fill_solid(leds, MATRIX_LEDS, CRGB::Black);
   matrix.fillScreen(0);
 
   matrix.setCursor(x, TOP_MARGIN);

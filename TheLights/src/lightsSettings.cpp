@@ -1,5 +1,5 @@
 #include "lightsSettings.h"
-#include "main.h"
+#include "effects.h"
 
 static void successSave();
 
@@ -7,7 +7,6 @@ const char *SETTINGS_FILE = "/appSettings.bin";
 
 bool loadSettings()
 {
-
     if (!LittleFS.begin())
     {
         return false;
@@ -24,6 +23,7 @@ bool loadSettings()
     if (sz != sizeof(appSettings_s))
     {
         settingsFile.close();
+        settings = appSettings_s{};
         saveSettings();
         return true;
     }
@@ -45,39 +45,28 @@ void saveSettings()
     File settingsFile = LittleFS.open(SETTINGS_FILE, "w");
     if (!settingsFile)
     {
-        Serial.println("Ошибка. Файл настроек невозможно открыть. Возможно не загружена файловая система в ESP");
         return;
     }
 
-    settingsFile.write((const uint8_t *)&settings, sizeof(appSettings_s));
+    size_t written = settingsFile.write((const uint8_t *)&settings, sizeof(appSettings_s));
     settingsFile.close();
-
-    successSave();
+    
+    if (written == sizeof(appSettings_s))
+    {
+        successSave();
+    }
 }
 
 void resetSettings()
 {
-
-    File settingsFile = LittleFS.open(SETTINGS_FILE, "r");
-    if (settingsFile)
-    {
-        settingsFile.close();
-    }
-
     LittleFS.remove(SETTINGS_FILE);
 }
 
 static void successSave()
 {
-    FastLED.clear(true);
-
-    CRGB saveColor = CHSV(96, 255, 80);
-
-    fill_solid(leds, MATRIX_LEDS, saveColor);
-    FastLED.show();
-
-    delay(500);
-
+    fill_solid(leds, MATRIX_LEDS, CHSV(96, 255, 80));
+    stripShow();
+    delay(2000);
     fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-    FastLED.show();
+    stripShow();
 }

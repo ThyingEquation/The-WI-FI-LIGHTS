@@ -11,10 +11,10 @@
 
 enum gamesSettings
 {
-  SNAKE_GAME_DELAY = 8000 / 60,
-  TETRIS_GAME_DELAY = 350,
+  SNAKE_GAME_DELAY = 130,
+  TETRIS_GAME_DELAY = 200,
   ARKANOID_GAME_DELAY = 100,
-  SPACESHIP_GAME_DELAY = 50
+  SPACESHIP_GAME_DELAY = 20
 };
 
 static int8_t snakeX[5];
@@ -36,12 +36,12 @@ static FallingFigure fallingFigures[5];
 const uint8_t figures[14][4][2] = {
     {{0, 0}, {1, 0}, {2, 0}, {3, 0}}, {{0, 0}, {1, 0}, {0, 1}, {1, 1}}, {{0, 0}, {1, 0}, {2, 0}, {1, 1}}, {{0, 0}, {1, 0}, {1, 1}, {2, 1}}, {{0, 0}, {0, 1}, {1, 1}, {2, 1}}, {{0, 0}, {1, 0}, {2, 0}, {2, 1}}, {{0, 0}, {1, 0}, {2, 0}, {0, 1}}, {{0, 0}, {0, 1}, {0, 2}, {0, 3}}, {{0, 0}, {0, 1}, {1, 0}, {1, 1}}, {{0, 0}, {0, 1}, {0, 2}, {1, 1}}, {{0, 0}, {0, 1}, {1, 1}, {1, 2}}, {{0, 0}, {1, 0}, {0, 1}, {1, 1}}, {{0, 0}, {0, 1}, {0, 2}, {1, 2}}, {{0, 0}, {0, 1}, {0, 2}, {1, 0}}};
 
-float shipX = 5.5; 
-float enemyX[3] = {2, 6, 10};
-float enemyY[3] = {-1, -3, -5};
-bool enemyAlive[3] = {true, true, true};
-float bX = -1, bY = -1;
-bool bActive = false;
+static float shipX = 5.5;
+static float enemyX[3] = {2, 6, 10};
+static float enemyY[3] = {-1, -3, -5};
+static bool enemyAlive[3] = {true, true, true};
+static float bX = -1, bY = -1;
+static bool bActive = false;
 
 static void drawSnakeGame();
 static void drawTetrisGame();
@@ -129,7 +129,8 @@ static void drawSnakeGame()
 {
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < SNAKE_GAME_DELAY) return;
+  if (millis() - lastTime < SNAKE_GAME_DELAY)
+    return;
   lastTime = millis();
 
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
@@ -185,7 +186,7 @@ static bool checkCollision(uint8_t figureIndex, int8_t x, int8_t y)
 
 static void addNewFigure()
 {
-  if (numFallingFigures < 6)
+  if (numFallingFigures < 5)
   {
     int8_t figureIndex = ESP8266TrueRandom.random(0, 14);
     int8_t x, y;
@@ -209,7 +210,8 @@ static void drawTetrisGame()
 {
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < TETRIS_GAME_DELAY) return;
+  if (millis() - lastTime < TETRIS_GAME_DELAY)
+    return;
   lastTime = millis();
 
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
@@ -256,7 +258,8 @@ static void drawArkanoidGame()
 {
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < ARKANOID_GAME_DELAY) return;
+  if (millis() - lastTime < ARKANOID_GAME_DELAY)
+    return;
   lastTime = millis();
 
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
@@ -275,7 +278,7 @@ static void drawArkanoidGame()
     for (uint8_t j = 0; j < tileWidth; j++)
     {
       uint8_t ledIndex = mainMatrixScheme[startIndex + j];
-      if (ledIndex >= 0 && ledIndex < MATRIX_LEDS)
+      if (ledIndex < MATRIX_LEDS)
       {
         leds[ledIndex] = tileColors[col];
       }
@@ -298,7 +301,7 @@ static void drawArkanoidGame()
     uint8_t ledIndex =
         mainMatrixScheme[(platformRowOffset * 12) + platformPosition + i];
 
-    if (ledIndex >= 0 && ledIndex < MATRIX_LEDS)
+    if (ledIndex < MATRIX_LEDS)
     {
       leds[ledIndex] =
           (i == 0 || i == platformWidth - 1) ? CRGB::Red : CRGB::White;
@@ -326,56 +329,75 @@ static void drawArkanoidGame()
   stripShow();
 }
 
-void setPixelSafe(float y, float x, CRGB color) {
+void setPixelSafe(float y, float x, CRGB color)
+{
   int8_t iy = (int8_t)round(y);
   int8_t ix = (int8_t)round(x);
-  if (iy < 0 || iy >= 12 || ix < 0 || ix >= 12) return;
-  leds[getIndex(iy, ix)] = color;
+  if (iy < 0 || iy >= MATRIX_HEIGHT || ix < 0 || ix >= MATRIX_WIDTH)
+    return;
+  leds[XY(ix, iy)] = color;
 }
 
-static void drawSpaceshipGame() {
+static void drawSpaceshipGame()
+{
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < 15) return;
+  if (millis() - lastTime < SPACESHIP_GAME_DELAY)
+    return;
   lastTime = millis();
 
-  for (uint16_t i = 0; i < MATRIX_LEDS; i++) leds[i].nscale8(140);
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++)
+    leds[i].nscale8(140);
 
   int8_t target = -1;
   float minY = -10;
-  for(int i = 0; i < 3; i++) {
-    if (enemyAlive[i] && enemyY[i] > minY) {
+  for (int i = 0; i < 3; i++)
+  {
+    if (enemyAlive[i] && enemyY[i] > minY)
+    {
       minY = enemyY[i];
       target = i;
     }
   }
 
-  if (target != -1) {
-    if (shipX < enemyX[target]) shipX += 0.12;
-    if (shipX > enemyX[target]) shipX -= 0.12;
+  if (target != -1)
+  {
+    if (shipX < enemyX[target])
+      shipX += 0.12;
+    if (shipX > enemyX[target])
+      shipX -= 0.12;
   }
   shipX = constrain(shipX, 0, 11);
 
-  if (!bActive && target != -1 && enemyY[target] > 0) { 
-    bX = shipX; bY = 10; bActive = true;
+  if (!bActive && target != -1 && enemyY[target] > 0)
+  {
+    bX = shipX;
+    bY = 10;
+    bActive = true;
   }
-  
-  if (bActive) {
-    bY -= 0.4; 
-    if (bY < 0) bActive = false;
-    
-    for(int i = 0; i < 3; i++) {
-      if (enemyAlive[i] && abs(bX - enemyX[i]) < 1.0 && abs(bY - enemyY[i]) < 1.0) {
-        enemyAlive[i] = false; 
+
+  if (bActive)
+  {
+    bY -= 0.4;
+    if (bY < 0)
+      bActive = false;
+
+    for (int i = 0; i < 3; i++)
+    {
+      if (enemyAlive[i] && abs(bX - enemyX[i]) < 1.0 && abs(bY - enemyY[i]) < 1.0)
+      {
+        enemyAlive[i] = false;
         bActive = false;
       }
     }
   }
 
-  for(int i = 0; i < 3; i++) {
-    enemyY[i] += 0.08; 
+  for (int i = 0; i < 3; i++)
+  {
+    enemyY[i] += 0.08;
 
-    if (!enemyAlive[i] || enemyY[i] > 12) {
+    if (!enemyAlive[i] || enemyY[i] > 12)
+    {
       enemyAlive[i] = true;
       enemyY[i] = -random8(1, 5);
       enemyX[i] = random8(0, 12);
@@ -383,15 +405,18 @@ static void drawSpaceshipGame() {
   }
 
   setPixelSafe(11, (int)shipX, CRGB::Green);
-  
-  for(int i = 0; i < 3; i++) {
-    if (enemyAlive[i]) {
+
+  for (int i = 0; i < 3; i++)
+  {
+    if (enemyAlive[i])
+    {
       setPixelSafe((int)enemyY[i], (int)enemyX[i], CRGB::Red);
       setPixelSafe((int)enemyY[i] - 1, (int)enemyX[i], CRGB(50, 0, 0));
     }
   }
-  
-  if (bActive) {
+
+  if (bActive)
+  {
     setPixelSafe((int)bY, (int)bX, CRGB::LightBlue);
     setPixelSafe((int)bY + 1, (int)bX, CRGB(0, 50, 80));
   }
@@ -426,15 +451,9 @@ static void drawMatrixMovie()
     }
   };
 
-  if (millis() - lastTime < 120) return;
+  if (millis() - lastTime < 120)
+    return;
   lastTime = millis();
-
-  for (uint8_t i = 0; i < 11; i++)
-  {
-    drawLine(currentCol[i], currentRow[i], lineLength[i], false);
-  }
-
-  stripShow();
 
   for (uint8_t i = 0; i < 11; i++)
   {
@@ -454,4 +473,11 @@ static void drawMatrixMovie()
       lineLength[i] = 5 + ESP8266TrueRandom.random(0, 5);
     }
   }
+
+  for (uint8_t i = 0; i < 11; i++)
+  {
+    drawLine(currentCol[i], currentRow[i], lineLength[i], false);
+  }
+
+  stripShow();
 }

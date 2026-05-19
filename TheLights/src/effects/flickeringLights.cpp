@@ -11,12 +11,12 @@ enum flickeringLightsSettings
 {
   FLYING_LIGHTS_DELAY = 75,
   CONFETTI_DELAY = 20,
-  FLASH_LIGHT_DELAY = 1000 / 60
+  FLASH_LIGHT_DELAY = 17
 };
 
 static void drawFlyingLights();
 static void drawConfetti();
-static void drawFlickeringLights();
+static void drawLocalFlickeringLights();
 
 void drawFlickeringLights(uint8_t subMode)
 {
@@ -31,7 +31,7 @@ void drawFlickeringLights(uint8_t subMode)
     break;
 
   case 2:
-    drawFlickeringLights();
+    drawLocalFlickeringLights();
     break;
 
   default:
@@ -41,15 +41,20 @@ void drawFlickeringLights(uint8_t subMode)
 
 static void drawFlyingLights()
 {
+  static const CRGB HEAD_COLOR = CRGB(175, 255, 175);
+  static const CRGB TAIL_COLOR = CRGB(27, 130, 39);
+
+  bool emptyScreen = true;
+
   EVERY_N_MILLIS(FLYING_LIGHTS_DELAY)
   {
     for (int8_t row = MATRIX_HEIGHT - 1; row >= 0; row--)
     {
       for (int8_t col = 0; col < MATRIX_WIDTH; col++)
       {
-        if (leds[XY(col, row)] == CRGB(175, 255, 175))
+        if (leds[XY(col, row)] == HEAD_COLOR)
         {
-          leds[XY(col, row)] = CRGB(27, 130, 39);
+          leds[XY(col, row)] = TAIL_COLOR;
           if (row < MATRIX_HEIGHT - 1)
           {
             int8_t drift = random8(3) - 1;
@@ -60,7 +65,7 @@ static void drawFlyingLights()
             if (nextCol >= MATRIX_WIDTH)
               nextCol = MATRIX_WIDTH - 1;
 
-            leds[XY(nextCol, row + 1)] = CRGB(175, 255, 175);
+            leds[XY(nextCol, row + 1)] = HEAD_COLOR;
           }
         }
       }
@@ -70,16 +75,8 @@ static void drawFlyingLights()
     {
       if (leds[i].g != 255)
         leds[i].nscale8(180);
-    }
-
-    bool emptyScreen = true;
-    for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-    {
       if (leds[i])
-      {
         emptyScreen = false;
-        break;
-      }
     }
 
     if (random8(5) == 0 || emptyScreen)
@@ -100,16 +97,18 @@ static void drawConfetti()
 
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < CONFETTI_DELAY) return;
+  if (millis() - lastTime < CONFETTI_DELAY)
+    return;
   lastTime = millis();
 
   if (loadingFlag)
   {
-    memset8(SF, 0, MATRIX_LEDS);
-    memset8(FF, 0, MATRIX_LEDS);
-    loadingFlag = 0;
+    memset8(SF, 0, sizeof(SF));
+    memset8(FF, 0, sizeof(FF));
+    loadingFlag = false;
   }
-  for (byte i = 0; i < map(128, 1, 255, 2, 16); i++)
+
+  for (byte i = 0; i < 8; i++)
   {
     uint8_t x = ESP8266TrueRandom.random(0, MATRIX_WIDTH);
     uint8_t y = ESP8266TrueRandom.random(0, MATRIX_HEIGHT);
@@ -119,27 +118,33 @@ static void drawConfetti()
       FF[x][y] = ESP8266TrueRandom.random(0, 255);
     }
   }
+
   for (byte x = 0; x < MATRIX_WIDTH; x++)
   {
     for (byte y = 0; y < MATRIX_HEIGHT; y++)
     {
       if (SF[x][y] <= 30)
+      {
         SF[x][y] = 0;
+      }
       else
-        SF[x][y] = ((SF[x][y] - map(128, 1, 255, 1, 16)) <= 0)
+      {
+        SF[x][y] = ((SF[x][y] - 8) <= 0)
                        ? 0
-                       : (SF[x][y] - map(128, 1, 255, 1, 16));
-      leds[XY(x, y)] = CHSV(FF[x][y], 255, SF[x][y]);
+                       : (SF[x][y] - 8);
+        leds[XY(x, y)] = CHSV(FF[x][y], 255, SF[x][y]);
+      }
     }
   }
   stripShow();
 }
 
-static void drawFlickeringLights()
+static void drawLocalFlickeringLights()
 {
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < FLASH_LIGHT_DELAY) return;
+  if (millis() - lastTime < FLASH_LIGHT_DELAY)
+    return;
   lastTime = millis();
 
   fadeToBlackBy(leds, MATRIX_LEDS, 20);

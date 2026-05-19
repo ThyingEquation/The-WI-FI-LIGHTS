@@ -18,9 +18,6 @@ enum globalSettings
   MATRIX_WIDTH = 12,
   MATRIX_HEIGHT = 12,
   MATRIX_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT,
-  PIN = 4,
-  ///
-  ALL_MODES_EFFECT_COUNT = 61
 };
 
 extern CRGB leds[MATRIX_LEDS];

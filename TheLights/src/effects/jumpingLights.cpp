@@ -22,7 +22,7 @@ static void drawJumpingPoints();
 static void initPoints();
 
 static int8_t pos[2][8];
-static byte dir[8];
+static int8_t dir[8];
 static byte hue6;
 
 struct Point
@@ -45,19 +45,19 @@ void drawJumpingLights(uint8_t subMode)
     drawСhaos();
     break;
 
-  case 2:
+  case 1:
     drawDriftingLine();
     break;
 
-  case 3:
+  case 2:
     drawJumpingCircle();
     break;
 
-  case 4:
+  case 3:
     drawJumpingSquare();
     break;
 
-  case 5:
+  case 4:
     if (firstStartPoints == 0)
     {
       initPoints();
@@ -134,34 +134,51 @@ static void check1(byte id)
 static void check2(byte id)
 {
   if (leds[pos[1][id] * MATRIX_WIDTH + pos[0][id]] == CRGB(0, 0, 0))
+  {
     dir[id]++;
+  }
   else
+  {
     dir[id]--;
+  }
+
   if (dir[id] > 3)
+  {
     dir[id] = 0;
+  }
   else if (dir[id] < 0)
+  {
     dir[id] = 3;
+  }
 }
 
 static void check3(byte id)
 {
-  if (pos[0][id] > MATRIX_HEIGHT - 1)
+  if (pos[0][id] > MATRIX_WIDTH - 1)
+  {
     pos[0][id] = 0;
-  if (pos[1][id] > MATRIX_WIDTH - 1)
+  }
+  if (pos[1][id] > MATRIX_HEIGHT - 1)
+  {
     pos[1][id] = 0;
+  }
   if (pos[0][id] < 0)
-    pos[0][id] = MATRIX_HEIGHT - 1;
+  {
+    pos[0][id] = MATRIX_WIDTH - 1;
+  }
   if (pos[1][id] < 0)
-    pos[1][id] = MATRIX_WIDTH - 1;
+  {
+    pos[1][id] = MATRIX_HEIGHT - 1;
+  }
 }
 
 static void drawСhaos()
 {
   static bool setUp = true;
-  static bool fade = false;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < 100) return;
+  if (millis() - lastTime < 100)
+    return;
   lastTime = millis();
 
   if (setUp)
@@ -186,9 +203,9 @@ static void drawСhaos()
     check3(i);
     check2(i);
   }
+
   hue6++;
-  if (fade)
-    fadeToBlackBy(leds, MATRIX_LEDS, 6);
+
   EVERY_N_SECONDS(8) { setUp = true; }
   stripShow();
 }
@@ -229,12 +246,13 @@ static void drawDriftingLine()
 
 static void drawJumpingCircle()
 {
+  static XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+
   for (byte i = 8; i--;)
   {
     leds[XY(beatsin8(12 + i, 0, MATRIX_WIDTH - 1),
             beatsin8(15 - i, 0, MATRIX_HEIGHT - 1))] =
         CHSV(beatsin8(12, 0, 255), 255, 255);
-    XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
     blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 16, xyMap);
   }
   stripShow();
@@ -249,7 +267,8 @@ static void drawJumpingSquare()
   static CRGB squareColor = CRGB::Red;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < JUMPING_SQUARE_DELAY) return;
+  if (millis() - lastTime < JUMPING_SQUARE_DELAY)
+    return;
   lastTime = millis();
 
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
@@ -259,7 +278,7 @@ static void drawJumpingSquare()
     for (uint8_t j = 0; j < 3; j++)
     {
       uint16_t ledIndex = XY(squareX + i, squareY + j);
-      if (ledIndex >= 0 && ledIndex < MATRIX_LEDS)
+      if (ledIndex < MATRIX_LEDS)
       {
         leds[ledIndex] = squareColor;
       }
@@ -305,7 +324,8 @@ static void drawJumpingPoints()
 {
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < JUMPING_POINTS_DELAY) return;
+  if (millis() - lastTime < JUMPING_POINTS_DELAY)
+    return;
   lastTime = millis();
 
   fill_solid(leds, MATRIX_LEDS, CRGB::Black);
@@ -346,6 +366,9 @@ static void drawJumpingPoints()
 
   for (uint8_t i = 0; i < 6; i++)
   {
-    points[i].color = CHSV(random8(), 255, 255);
+    if (random8(20) == 0)
+    {
+      points[i].color = CHSV(random8(), 255, 255);
+    }
   }
 }

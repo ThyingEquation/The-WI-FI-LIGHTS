@@ -69,23 +69,23 @@ void drawAnimations(uint8_t subMode)
   switch (subMode)
   {
   case 0:
-    drawAnimation(heartImage, 4, HEART_IMAGE, currentSubMode == 0 ? false : true);
+    drawAnimation(heartImage, 4, HEART_IMAGE, currentSubMode != 0);
     break;
 
   case 1:
-    drawAnimation(smileImage, 4, SMILE_IMAGE, currentSubMode == 1 ? false : true);
+    drawAnimation(smileImage, 4, SMILE_IMAGE, currentSubMode != 1);
     break;
 
   case 2:
-    drawAnimation(jumpingManImage, 2, JUMPING_MAN_IMAGE, currentSubMode == 2 ? false : true);
+    drawAnimation(jumpingManImage, 2, JUMPING_MAN_IMAGE, currentSubMode != 2);
     break;
 
   case 3:
-    drawAnimation(fireballImage, 4, FIREBALL_IMAGE, currentSubMode == 3 ? false : true);
+    drawAnimation(fireballImage, 4, FIREBALL_IMAGE, currentSubMode != 3);
     break;
 
   case 4:
-    drawAnimation(explosionImage, 18, EXPLOSION_IMAGE, currentSubMode == 4 ? false : true);
+    drawAnimation(explosionImage, 18, EXPLOSION_IMAGE, currentSubMode != 4);
     break;
 
   case 5:
@@ -136,13 +136,13 @@ void drawAnimations(uint8_t subMode)
   currentSubMode = subMode;
 }
 
-void drawPicture(const uint8_t p1[], const uint32_t *p2)
+void drawPicture(const uint32_t *p2)
 {
   if (p2 == NULL)
     return;
   for (uint16_t i = 0; i < MATRIX_LEDS; i++)
   {
-    uint8_t targetLed = p1[i];
+    uint8_t targetLed = mainMatrixScheme[i];
     if (targetLed < MATRIX_LEDS)
     {
       uint32_t rawColor;
@@ -170,19 +170,19 @@ static void drawShifted(const uint32_t *image, int8_t offsetY, bool append)
     return;
   if (!append) fill_solid(leds, MATRIX_LEDS, CRGB::Black);
 
-  for (int8_t row = 0; row < 12; row++)
+  for (int8_t row = 0; row < MATRIX_HEIGHT; row++)
   {
     int8_t imgRow = row + offsetY;
-    if (imgRow < 0 || imgRow >= 12)
+    if (imgRow < 0 || imgRow >= MATRIX_HEIGHT)
       continue;
-    for (int8_t col = 0; col < 12; col++)
+    for (int8_t col = 0; col < MATRIX_WIDTH; col++)
     {
       uint32_t color;
-      memcpy_P(&color, &image[imgRow * 12 + col], sizeof(uint32_t));
+      memcpy_P(&color, &image[imgRow * MATRIX_HEIGHT + col], sizeof(uint32_t));
       if (color > 0)
       {
-        uint8_t ledIndex = pgm_read_byte(&mainMatrixScheme[row * 12 + col]);
-        if (ledIndex < 144)
+        uint8_t ledIndex = pgm_read_byte(&mainMatrixScheme[row * MATRIX_HEIGHT + col]);
+        if (ledIndex < MATRIX_LEDS)
         {
           leds[ledIndex] = CRGB(color);
         }
@@ -198,15 +198,12 @@ static void processLetters(LetterAnimState &st, const uint32_t *const letters[],
     return;
   st.prevMillis = currentMillis;
 
-  const int8_t H = 12;
-  const int8_t GAP = 3;
-
   switch (st.phase)
   {
   case 0:
-    if (st.step <= H)
+    if (st.step <= MATRIX_HEIGHT)
     {
-      drawShifted(letters[0], H - st.step, false);
+      drawShifted(letters[0], MATRIX_HEIGHT - st.step, false);
       st.step++;
     }
     else
@@ -220,11 +217,11 @@ static void processLetters(LetterAnimState &st, const uint32_t *const letters[],
   case 1:
     if (st.currentLetter < totalLetters - 1)
     {
-      if (st.step <= (H + GAP))
+      if (st.step <= (MATRIX_HEIGHT + 3))
       {
         drawShifted(letters[st.currentLetter], -st.step, false);
-        int8_t nextOffset = (H + GAP) - st.step;
-        if (nextOffset <= H)
+        int8_t nextOffset = (MATRIX_HEIGHT + 3) - st.step;
+        if (nextOffset <= MATRIX_HEIGHT)
         {
           drawShifted(letters[st.currentLetter + 1], nextOffset, true);
         }
@@ -256,7 +253,7 @@ static void processLetters(LetterAnimState &st, const uint32_t *const letters[],
     break;
 
   case 3:
-    if (st.step <= H)
+    if (st.step <= MATRIX_HEIGHT)
     {
       drawShifted(letters[totalLetters - 1], -st.step, false);
       st.step++;
@@ -288,9 +285,9 @@ void shiftLeft(uint8_t a)
     return;
   lastTime = millis();
 
-  for (uint8_t row = 0; row < 12; row++)
+  for (uint8_t row = 0; row < MATRIX_HEIGHT; row++)
   {
-    for (uint8_t col = 0; col < 12; col++)
+    for (uint8_t col = 0; col < MATRIX_WIDTH; col++)
     {
       uint16_t index = (col + shift) % 12;
       uint32_t color;
@@ -313,7 +310,7 @@ static void drawAnimation(const uint32_t *const *images, uint32_t numImages, uin
   {
     currentImageIndex = 0;
     previousMillis = currentMillis;
-    drawPicture(mainMatrixScheme, images[0]);
+    drawPicture(images[0]);
     stripShow();
     currentImageIndex = 1;
     return;
@@ -324,7 +321,7 @@ static void drawAnimation(const uint32_t *const *images, uint32_t numImages, uin
     previousMillis = currentMillis;
     if (currentImageIndex >= numImages)
       currentImageIndex = 0;
-    drawPicture(mainMatrixScheme, images[currentImageIndex]);
+    drawPicture(images[currentImageIndex]);
     stripShow();
     currentImageIndex = (currentImageIndex + 1) % numImages;
   }

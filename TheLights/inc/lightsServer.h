@@ -4,7 +4,7 @@
 
 void initLightServer();
 void checkLightServer();
-void effectAllModes();
+void sendVirtualCommand();
 
 typedef struct
 {

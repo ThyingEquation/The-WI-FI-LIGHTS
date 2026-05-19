@@ -13,7 +13,8 @@
 
 enum rainbowsSettings
 {
-  LIGHT_NOISE_DELAY = 20,
+  LIGHT_NOISE_DELAY = 50,
+  RAINBOW_WHEEL_DELAY = 20,
   RAINBOW_WAVE_DELAY = 10,
   RAINBOW_SNAKE_DELAY = 30
 };
@@ -107,7 +108,7 @@ static void fillNoise8(bool resetVal)
     dataSmoothing = 400 - (speed * 4);
   }
 
-  for (uint8_t i = 0; i < MATRIX_HEIGHT; i++)
+  for (uint8_t i = 0; i < MATRIX_WIDTH; i++)
   {
     uint16_t ioffset = scale * i;
     for (uint8_t j = 0; j < MATRIX_HEIGHT; j++)
@@ -193,82 +194,12 @@ static void changePaletteAndSettingsPeriodically(bool resetVal)
   if (lastSecond != secondHand)
   {
     lastSecond = secondHand;
-    if (secondHand == 0)
+    if (secondHand % 5 == 0)
     {
       SetupRandomPalette();
       speed = 1;
       scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 5)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 10)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 15)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 20)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 25)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 0;
-    }
-    if (secondHand == 30)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 35)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 40)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 45)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
-    }
-    if (secondHand == 50)
-    {
-      SetupRandomPalette();
-      speed = 1;
-      scale = 30;
-      colorLoop = 1;
+      colorLoop = (secondHand == 25) ? 0 : 1;
     }
   }
 }
@@ -305,10 +236,11 @@ static void drawLightNoise()
   static bool loadingFlag6 = true;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < LIGHT_NOISE_DELAY) return;
+  if (millis() - lastTime < LIGHT_NOISE_DELAY)
+    return;
   lastTime = millis();
 
-  XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+  static XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
   if (loadingFlag6)
   {
     loadingFlag6 = false;
@@ -325,58 +257,18 @@ static void drawLightNoise()
     }
   }
 
-  switch (2)
-  {
-  case 0:
-    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-    stripShow();
-    break;
-  case 1:
-    fadeToBlackBy(leds, MATRIX_LEDS, 50);
-    break;
-  case 2:
-    blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 30, xyMap);
-    fadeToBlackBy(leds, MATRIX_LEDS, 25);
-    break;
-  case 3:
-    fadeToBlackBy(leds, MATRIX_LEDS, 200);
-    break;
-  }
+  blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 30, xyMap);
+  fadeToBlackBy(leds, MATRIX_LEDS, 25);
 
   for (byte i = 0; i < 32; i++)
   {
     lcolor6[i]++;
-    switch (3)
-    {
-    case 0:
-      lightersPosX6[i] +=
-          beatsin88(lightersSpeedX6[0] * 255, 0,
-                    mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
-          mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
-      lightersPosY6[i] +=
-          beatsin88(lightersSpeedY6[0] * 255, 0,
-                    mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 8)) -
-          mass6[i] / 10 * ((MATRIX_HEIGHT + MATRIX_WIDTH) / 16);
-      break;
-    case 1:
-      lightersPosX6[i] = beatsin16(
-          lightersSpeedX6[i] / map(255, 1, 255, 10, 1), 0, (MATRIX_WIDTH - 1) * 10);
-      lightersPosY6[i] =
-          beatsin16(lightersSpeedY6[i] / map(255, 1, 255, 10, 1), 0,
-                    (MATRIX_HEIGHT - 1) * 10);
-      break;
-    case 2:
-      lightersPosX6[i] += lightersSpeedX6[i] / map(255, 1, 255, 10, 1);
-      lightersPosY6[i] += lightersSpeedY6[i] / map(255, 1, 255, 10, 1);
-      break;
-    case 3:
-      lightersPosX6[i] += mass6[i] * cos(radians(lightersSpeedY6[i])) /
-                          map(255, 1, 255, 10, 1);
-      lightersPosY6[i] += mass6[i] * sin(radians(lightersSpeedY6[i])) /
-                          map(255, 1, 255, 10, 1);
-      lightersSpeedY6[i] += lightersSpeedX6[i] / map(255, 1, 255, 20, 2);
-      break;
-    }
+
+    lightersPosX6[i] += mass6[i] * cos(radians(lightersSpeedY6[i])) /
+                        map(255, 1, 255, 10, 1);
+    lightersPosY6[i] += mass6[i] * sin(radians(lightersSpeedY6[i])) /
+                        map(255, 1, 255, 10, 1);
+    lightersSpeedY6[i] += lightersSpeedX6[i] / map(255, 1, 255, 20, 2);
 
     if (lightersPosY6[i] < 0)
     {
@@ -406,7 +298,7 @@ static void drawLightNoise()
                    color);
   }
 
-  EVERY_N_SECONDS(10)
+  EVERY_N_SECONDS(15)
   {
     randomSeed(millis());
     for (byte i = 0; i < 32; i++)
@@ -425,7 +317,8 @@ static void drawDiagonalWaves()
   static uint8_t hue = 0;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < 25) return;
+  if (millis() - lastTime < 25)
+    return;
   lastTime = millis();
 
   for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
@@ -443,36 +336,39 @@ static void drawDiagonalWaves()
 
 void drawRainbowWheel()
 {
+  static uint8_t angleTable[MATRIX_HEIGHT][MATRIX_WIDTH];
+  static uint8_t distTable[MATRIX_HEIGHT][MATRIX_WIDTH];
+  static bool tablesReady = false;
   static uint16_t rotation = 0;
-  static uint32_t lastMillis = 0;
+  static uint32_t lastTime = 0;
 
-  uint32_t ms = millis();
-  uint32_t delta = ms - lastMillis;
-  lastMillis = ms;
-  rotation += delta * 10;
+  if (millis() - lastTime < RAINBOW_WHEEL_DELAY)
+    return;
 
-  uint8_t centerX = MATRIX_WIDTH / 2;
-  uint8_t centerY = MATRIX_HEIGHT / 2;
+  rotation += (millis() - lastTime) * 10;
+  lastTime = millis();
 
   for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
   {
     for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
     {
-      float dx = (float)x - centerX + 0.5f;
-      float dy = (float)y - centerY + 0.5f;
-      uint8_t angle = (uint8_t)(atan2(dy, dx) * 128.0f / PI + 128);
-
-      float dist = sqrt(dx * dx + dy * dy);
-      uint8_t bri = (uint8_t)constrain(dist * 30, 30, 255);
-
-      uint8_t hue = angle + (rotation >> 8);
-
-      leds[XY(x, y)] = CHSV(hue, 255, bri);
+      if (!tablesReady)
+      {
+        tablesReady = true;
+        float cx = MATRIX_WIDTH / 2.0 - 0.5, cy = MATRIX_HEIGHT / 2.0 - 0.5;
+        for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
+          for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
+          {
+            float dx = x - cx, dy = y - cy;
+            angleTable[y][x] = (uint8_t)(atan2(dy, dx) * 128.0f / PI + 128);
+            distTable[y][x] = (uint8_t)constrain(sqrt(dx * dx + dy * dy) * 30, 30, 255);
+          }
+      }
+      leds[XY(x, y)] = CHSV(angleTable[y][x] + (rotation >> 8), 255, distTable[y][x]);
     }
   }
   stripShow();
 }
-
 
 void drawRainbowRipples()
 {
@@ -521,22 +417,17 @@ void drawRainbowWave()
   static uint16_t waveRainbow = 0;
   static uint32_t lastTime = 0;
 
-  if (millis() - lastTime < RAINBOW_WAVE_DELAY) return;
+  if (millis() - lastTime < RAINBOW_WAVE_DELAY)
+    return;
   lastTime = millis();
 
-  if (waveRainbow < 256)
-  {
-    for (uint16_t i = 0; i < MATRIX_LEDS; i++)
-    {
-      leds[i] = customWheel((i + waveRainbow) & 255);
-    }
-    stripShow();
-    ++waveRainbow;
-  }
-  else
-  {
+  if (++waveRainbow >= 256)
     waveRainbow = 0;
+  for (uint16_t i = 0; i < MATRIX_LEDS; i++)
+  {
+    leds[i] = customWheel((i + waveRainbow) & 255);
   }
+  stripShow();
 }
 
 static void fadeall()
@@ -549,10 +440,10 @@ static void fadeall()
 
 void drawRainbowSnake()
 {
-  static int16_t position = 0; 
+  static int16_t position = 0;
   static int8_t direction = 1;
   static uint8_t hue = 0;
-  static uint32_t lastTime = 0;
+  static uint32_t lastTime = millis();
 
   if (checkCommandReceived())
   {
@@ -562,7 +453,8 @@ void drawRainbowSnake()
     lastTime = 0;
   }
 
-  if (millis() - lastTime < RAINBOW_SNAKE_DELAY) return;
+  if (millis() - lastTime < RAINBOW_SNAKE_DELAY)
+    return;
   lastTime = millis();
   leds[position] = CHSV(hue++, 255, 255);
 
@@ -578,7 +470,7 @@ void drawRainbowSnake()
   }
   else if (position < 0)
   {
-    position = 1; 
+    position = 1;
     direction = 1;
   }
 }

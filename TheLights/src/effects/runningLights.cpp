@@ -24,8 +24,6 @@ static void drawLights(uint8_t lightsMode);
 static void drawLight(uint16_t lightDelay);
 static void drawColorfulSnake();
 
-static uint8_t color;
-
 void drawRunningLights(uint8_t subMode)
 {
   switch (subMode)
@@ -65,6 +63,7 @@ void drawRunningLights(uint8_t subMode)
 
 void drawLight(uint16_t lightDelay)
 {
+  static uint8_t color = 0;
   static uint16_t ledsCount = 0;
   static uint32_t lastTime = 0;
 
@@ -72,6 +71,8 @@ void drawLight(uint16_t lightDelay)
   {
     ledsCount = 0;
     lastTime = 0;
+    color = 0;
+    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
   }
 
   if (millis() - lastTime < lightDelay)
@@ -81,7 +82,7 @@ void drawLight(uint16_t lightDelay)
 
   lastTime = millis();
 
-  if (ledsCount <= MATRIX_LEDS)
+  if (ledsCount < MATRIX_LEDS)
   {
     if (ledsCount > 0)
     {
@@ -140,20 +141,14 @@ void drawColorfulLight()
     if (currentLED >= MATRIX_LEDS)
     {
       currentLED = 0;
-      if (firstPass)
-      {
-        firstPass = false;
-      }
-      else
-      {
-        firstPass = true;
-      }
+      firstPass = !firstPass;
     }
   }
 }
 
 static void drawColorfulSnake()
 {
+  static uint8_t color = 0;
   static uint16_t head = 0;
   static uint16_t tail = 0;
   static uint16_t pixelCounter = 0;
@@ -167,8 +162,7 @@ static void drawColorfulSnake()
     tail = 0;
     pixelCounter = 0;
     previousMillis = 0;
-
-    memset(snake, 0, sizeof(snake));
+    memset(snake, 0xFF, sizeof(snake));
   }
 
   if (millis() - previousMillis >= COLORFUL_SNAKE_DELAY)
@@ -216,13 +210,14 @@ static void drawLights(uint8_t lightsMode)
       RUNNING_LIGHTS_2_DELAY,
       RUNNING_LIGHTS_3_DELAY};
 
-  uint32_t currentDelay = RUNNING_LIGHTS_1_DELAY;
+  uint32_t currentDelay = delays[constrain(lightsMode, 1, 3) - 1];
   if (lightsMode >= 1 && lightsMode <= 3)
   {
     currentDelay = delays[lightsMode - 1];
   }
 
-  if (millis() - lastTime < currentDelay) return;
+  if (millis() - lastTime < currentDelay)
+    return;
   lastTime = millis();
 
   if (isNewCycle && lightsMode == 1)

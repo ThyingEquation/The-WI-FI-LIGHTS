@@ -24,36 +24,38 @@ enum drawSettings
 };
 
 const uint32_t colorsCanvas[] PROGMEM = {0x000000,  // Чёрный
-                                    0xffffff,  // Белый
-                                    0x0000ff,  // Синий
-                                    0x00ff00,  // Лайм
-                                    0x00bfff,  // Морозное небо
-                                    0xff1493,  // Малиновый
-                                    0xffff00,  // Желтый
-                                    0x7fffd4,  // Аквамариновый
-                                    0x00ff7f,  // Весенне-зеленый
-                                    0xffa500,  // Оранжевый
-                                    0xff0000,  // Красный
-                                    0x9400d3,  // Фиолетово-баклажанный
-                                    0xffb6c1,  // Светлорозовый
-                                    0x4b0082,  // Индиго
-                                    0xffd700,  // Золотой
-                                    0x008000,  // Зеленый
-                                    0x22262c,  // Серый
-                                    0x964b00,  // Коричневый
-                                    0x6600ff,  // Персидский синий
-                                    0xd76e00,  // Темно-оранжевый
-                                    0x7cfc00}; // Зеленая лужайка
+                                         0xffffff,  // Белый
+                                         0x0000ff,  // Синий
+                                         0x00ff00,  // Лайм
+                                         0x00bfff,  // Морозное небо
+                                         0xff1493,  // Малиновый
+                                         0xffff00,  // Желтый
+                                         0x7fffd4,  // Аквамариновый
+                                         0x00ff7f,  // Весенне-зеленый
+                                         0xffa500,  // Оранжевый
+                                         0xff0000,  // Красный
+                                         0x9400d3,  // Фиолетово-баклажанный
+                                         0xffb6c1,  // Светлорозовый
+                                         0x4b0082,  // Индиго
+                                         0xffd700,  // Золотой
+                                         0x008000,  // Зеленый
+                                         0x22262c,  // Серый
+                                         0x964b00,  // Коричневый
+                                         0x6600ff,  // Персидский синий
+                                         0xd76e00,  // Темно-оранжевый
+                                         0x7cfc00}; // Зеленая лужайка
 
-static const uint32_t* const images[] = {pacman1, pacman2, pacman3, pacman4, pacman5,
-                            mushroom, amogus, cup, pineapple, alien,
-                            hummer, cat, teaCup, dino, hammerAndSickle,
-                            apple, bird, rabbit, question, goldenKey,
-                            star, sun, pepe, pokeball, microsoft, battery,
-                            redHeart, thundercloud};
+static const uint32_t *const images[] = {pacman1, pacman2, pacman3, pacman4, pacman5,
+                                         mushroom, amogus, cup, pineapple, alien,
+                                         hummer, cat, teaCup, dino, hammerAndSickle,
+                                         apple, bird, rabbit, question, goldenKey,
+                                         star, sun, pepe, pokeball, microsoft, battery,
+                                         redHeart, thundercloud};
 
 static void drawSnake(uint16_t delay);
-static void fillFull();
+static void drawFullFill();
+static void drawMirrorFill();
+static void drawSlicesFill();
 static void drawChameleonSnake();
 static void drawLightBreath();
 static void drawImages(uint8_t subMode);
@@ -71,7 +73,8 @@ void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum)
     else
     {
       uint16_t index = --ledNum;
-      if (index < MATRIX_LEDS) {
+      if (index < MATRIX_LEDS)
+      {
         uint32_t rawColor = pgm_read_dword_near(&colorsCanvas[color]);
         leds[index] = CRGB(rawColor);
         stripShow();
@@ -88,7 +91,8 @@ void drawOnCanvas(std::string_view mode, uint8_t color, uint16_t ledNum)
     else
     {
       uint16_t index = --ledNum;
-      if (index < MATRIX_LEDS) {
+      if (index < MATRIX_LEDS)
+      {
         leds[index] = CRGB::Black;
         stripShow();
       }
@@ -101,22 +105,30 @@ void drawCanvasEffects(uint8_t subMode)
   switch (subMode)
   {
   case 0:
-    fillFull();
+    drawFullFill();
     break;
 
   case 1:
-    drawSnake(SNAKE_FAST_DELAY);
+    drawMirrorFill();
     break;
 
   case 2:
-    drawSnake(SNAKE_SLOW_DELAY);
+    drawSlicesFill();
     break;
 
   case 3:
-    drawChameleonSnake();
+    drawSnake(SNAKE_FAST_DELAY);
     break;
 
   case 4:
+    drawSnake(SNAKE_SLOW_DELAY);
+    break;
+
+  case 5:
+    drawChameleonSnake();
+    break;
+
+  case 6:
     drawLightBreath();
     break;
 
@@ -162,7 +174,7 @@ static void drawSnake(uint16_t delay)
   ledsCount++;
 }
 
-static void fillFull()
+static void drawFullFill()
 {
   static uint8_t color = 0;
   static bool isPaused = true;
@@ -204,8 +216,8 @@ static void fillFull()
   {
     for (uint8_t y = 0; y < MATRIX_HEIGHT; y++)
     {
-      uint16_t dx = abs(x - 6);
-      uint16_t dy = abs(y - 6);
+      uint16_t dx = abs(x - 5);
+      uint16_t dy = abs(y - 5);
       if (dx <= currentDistance && dy <= currentDistance)
       {
         leds[XY(x, y)] = frameColor;
@@ -220,6 +232,160 @@ static void fillFull()
   {
     isPaused = true;
     pauseStartTime = millis();
+  }
+}
+
+static void drawMirrorFill()
+{
+  static uint8_t color = 0;
+  static uint8_t step = 0;
+  static bool isPaused = false;
+  static bool isClearing = false;
+  static uint32_t lastTime = 0;
+  static uint32_t pauseStart = 0;
+
+  if (checkCommandReceived())
+  {
+    color = ESP8266TrueRandom.random(0, 128);
+    step = 0;
+    isPaused = false;
+    isClearing = false;
+    lastTime = 0;
+  }
+
+  if (isPaused)
+  {
+    if (millis() - pauseStart >= FULL_FILL_DELAY)
+    {
+      isPaused = false;
+      isClearing = true;
+      step = MATRIX_HEIGHT / 2 - 1;
+    }
+    return;
+  }
+
+  if (millis() - lastTime < 80)
+    return;
+  lastTime = millis();
+
+  uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
+  CRGB fillColor = isClearing ? CRGB::Black : CRGB(rawColor);
+
+  uint8_t topRow = isClearing ? (MATRIX_HEIGHT / 2 - 1 - step) : step;
+  uint8_t bottomRow = isClearing ? (MATRIX_HEIGHT / 2 + step) : (MATRIX_HEIGHT - 1 - step);
+
+  for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
+  {
+    leds[XY(x, topRow)] = fillColor;
+    leds[XY(x, bottomRow)] = fillColor;
+  }
+  stripShow();
+
+  if (!isClearing)
+  {
+    step++;
+    if (step >= MATRIX_HEIGHT / 2)
+    {
+      isPaused = true;
+      pauseStart = millis();
+    }
+  }
+  else
+  {
+    if (step == 0)
+    {
+      isClearing = false;
+      step = 0;
+      color = ESP8266TrueRandom.random(0, 128);
+    }
+    else
+    {
+      step--;
+    }
+  }
+}
+
+static void drawSlicesFill()
+{
+  static uint8_t color = 0;
+  static uint8_t order[MATRIX_HEIGHT];
+  static uint8_t filled = 0;
+  static bool isPaused = false;
+  static bool isClearing = false;
+  static uint32_t lastTime = 0;
+  static uint32_t pauseStart = 0;
+
+  if (checkCommandReceived())
+  {
+    color = ESP8266TrueRandom.random(0, 128);
+    filled = 0;
+    isPaused = false;
+    isClearing = false;
+    lastTime = 0;
+
+    for (uint8_t i = 0; i < MATRIX_HEIGHT; i++)
+      order[i] = i;
+    for (uint8_t i = MATRIX_HEIGHT - 1; i > 0; i--)
+    {
+      uint8_t j = random8(i + 1);
+      uint8_t tmp = order[i];
+      order[i] = order[j];
+      order[j] = tmp;
+    }
+  }
+
+  if (isPaused)
+  {
+    if (millis() - pauseStart >= FULL_FILL_DELAY)
+    {
+      isPaused = false;
+      isClearing = true;
+      filled = 0;
+
+      for (uint8_t i = MATRIX_HEIGHT - 1; i > 0; i--)
+      {
+        uint8_t j = random8(i + 1);
+        uint8_t tmp = order[i];
+        order[i] = order[j];
+        order[j] = tmp;
+      }
+    }
+    return;
+  }
+
+  if (millis() - lastTime < 100)
+    return;
+  lastTime = millis();
+
+  uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
+  CRGB fillColor = isClearing ? CRGB::Black : CRGB(rawColor);
+
+  for (uint8_t x = 0; x < MATRIX_WIDTH; x++)
+    leds[XY(x, order[filled])] = fillColor;
+  stripShow();
+
+  filled++;
+
+  if (filled >= MATRIX_HEIGHT)
+  {
+    if (!isClearing)
+    {
+      isPaused = true;
+      pauseStart = millis();
+    }
+    else
+    {
+      isClearing = false;
+      filled = 0;
+      color = ESP8266TrueRandom.random(0, 128);
+      for (uint8_t i = MATRIX_HEIGHT - 1; i > 0; i--)
+      {
+        uint8_t j = random8(i + 1);
+        uint8_t tmp = order[i];
+        order[i] = order[j];
+        order[j] = tmp;
+      }
+    }
   }
 }
 
@@ -276,7 +442,7 @@ static void drawChameleonSnake()
     arrVolume++;
   }
 
-  if (arrVolume > 23)
+  if (arrVolume > 21)
   {
     arrVolume = 0;
     arrPos = 0;
@@ -301,7 +467,8 @@ static void drawLightBreath()
     lastTime = 0;
   }
 
-  if (millis() - lastTime < LIGHT_BREATH_DELAY) return;
+  if (millis() - lastTime < LIGHT_BREATH_DELAY)
+    return;
   lastTime = millis();
 
   brightness += direction;
@@ -330,9 +497,9 @@ static void drawImages(uint8_t subMode)
   static uint32_t previousMillis = 0;
   static uint32_t previousMillisImgNum = 0;
   static bool enableNewImg = false;
-
+  static const uint8_t IMAGES_COUNT = sizeof(images) / sizeof(images[0]);
   static uint8_t randomCounter = 0;
-  std::deque<uint8_t> usedImg;
+  static std::deque<uint8_t> usedImg;
 
   uint32_t currentMillis = millis();
 
@@ -343,18 +510,18 @@ static void drawImages(uint8_t subMode)
     previousMillis = 0;
     previousMillisImgNum = 0;
     enableNewImg = true;
+    randomCounter = 0;
   }
 
   if (subMode == 254)
   {
-
     if (currentMillis - previousMillis >= DRAW_IMAGES_DELAY)
     {
       previousMillis = currentMillis;
 
-      if (imageNum >= 0 && imageNum < 28)
+      if (imageNum < IMAGES_COUNT)
       {
-        drawPicture(mainMatrixScheme, images[imageNum]);
+        drawPicture(images[imageNum]);
         stripShow();
         ++imageNum;
       }
@@ -370,23 +537,23 @@ static void drawImages(uint8_t subMode)
     {
       previousMillis = currentMillis;
 
-      if (imageNum >= 0 && imageNum < 28)
+      if (imageNum < IMAGES_COUNT)
       {
-        drawPicture(mainMatrixScheme, images[imageNum]);
+        drawPicture(images[imageNum]);
         stripShow();
-      do
-      {
-        imageNum = ESP8266TrueRandom.random(0, 29);
-        randomCounter++;
-        if (randomCounter > 15)
-          break;
-      } while (std::find(usedImg.begin(), usedImg.end(), imageNum) != usedImg.end());
+        do
+        {
+          imageNum = ESP8266TrueRandom.random(0, IMAGES_COUNT);
+          randomCounter++;
+          if (randomCounter > 15)
+            break;
+        } while (std::find(usedImg.begin(), usedImg.end(), imageNum) != usedImg.end());
 
-      usedImg.push_back(imageNum);
-      if (usedImg.size() > 14)
-      {
-        usedImg.pop_front();
-      }
+        usedImg.push_back(imageNum);
+        if (usedImg.size() > 14)
+        {
+          usedImg.pop_front();
+        }
       }
       else
       {
@@ -398,7 +565,7 @@ static void drawImages(uint8_t subMode)
   {
     enableNewImg = false;
     locImgNum = subMode;
-    drawPicture(mainMatrixScheme, images[subMode - 101]);
+    drawPicture(images[subMode - 101]);
     stripShow();
   }
 
