@@ -13,11 +13,10 @@
 #include <FastLED.h>
 #include <NeoPixelBus.h>
 
-enum globalSettings
-{
-  MATRIX_WIDTH = 12,
-  MATRIX_HEIGHT = 12,
-  MATRIX_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT,
+enum GlobalSettings {
+    MATRIX_WIDTH = 12,
+    MATRIX_HEIGHT = 12,
+    MATRIX_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT,
 };
 
 extern CRGB leds[MATRIX_LEDS];

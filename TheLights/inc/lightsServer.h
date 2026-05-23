@@ -6,14 +6,14 @@ void initLightServer();
 void checkLightServer();
 void sendVirtualCommand();
 
-typedef struct
-{
+struct DeviceEffectsState {
     bool isScreenClearEnable = true;
     bool isAllModesEnable = false;
-    bool isWifiActive = 0;
+    bool isWifiActive = false;
+
     uint8_t effectsGroup = 255;
     uint8_t effectSubmode = 255;
     uint8_t currentIndex = 255;
-} deviceEffectsState_s;
+};
 
-extern deviceEffectsState_s deviceEffectsState;
+extern DeviceEffectsState deviceEffectsState;
