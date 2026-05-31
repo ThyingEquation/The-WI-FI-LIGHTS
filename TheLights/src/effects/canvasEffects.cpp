@@ -18,8 +18,9 @@ namespace {
         SNAKE_FAST_DELAY = 15U,
         SNAKE_SLOW_DELAY = 50U,
         FULL_FILL_DELAY = 5000U,
+        PIXEL_FILL_DELAY = 7000U,
         CHAMELEON_SNAKE_DELAY = 70U,
-        LIGHT_BREATH_DELAY = 20U,
+        LIGHT_BREATH_DELAY = 14U,
         DRAW_IMAGES_DELAY = 5000U
     };
 
@@ -57,10 +58,11 @@ namespace {
     void drawFullFill();
     void drawMirrorFill();
     void drawSlicesFill();
+    void drawPixelFill();
     void drawChameleonSnake();
     void drawLightBreath();
     void drawImages(uint32_t subMode);
-}
+} // namespace
 
 namespace Effects {
     void drawOnCanvas(const std::string_view mode, const uint32_t color, const uint32_t ledNum) {
@@ -89,6 +91,7 @@ namespace Effects {
         }
     }
 
+
     void drawCanvasEffects(const uint32_t subMode) {
         switch (subMode) {
             case 0U:
@@ -104,18 +107,22 @@ namespace Effects {
                 break;
 
             case 3U:
-                drawSnake(static_cast<uint16_t>(DrawDelays::SNAKE_FAST_DELAY));
+                drawPixelFill();
                 break;
 
             case 4U:
-                drawSnake(static_cast<uint16_t>(DrawDelays::SNAKE_SLOW_DELAY));
+                drawSnake(static_cast<uint16_t>(DrawDelays::SNAKE_FAST_DELAY));
                 break;
 
             case 5U:
-                drawChameleonSnake();
+                drawSnake(static_cast<uint16_t>(DrawDelays::SNAKE_SLOW_DELAY));
                 break;
 
             case 6U:
+                drawChameleonSnake();
+                break;
+
+            case 7U:
                 drawLightBreath();
                 break;
 
@@ -127,7 +134,7 @@ namespace Effects {
                 break;
         }
     }
-}
+} // namespace Effects
 
 namespace {
     void drawSnake(const uint16_t delay) {
@@ -346,6 +353,60 @@ namespace {
         }
     }
 
+    void drawPixelFill() {
+        static uint32_t color = 0U;
+        static bool isPaused = true;
+        static uint32_t filledCount = 0U;
+        static uint32_t lastUpdateTime = 0U;
+        static uint32_t pauseStartTime = 0U;
+        static uint32_t order[StripControl::MATRIX_LEDS] = {};
+
+        if (Effects::checkCommandReceived()) {
+            color = 0U;
+            isPaused = true;
+            filledCount = 0U;
+            lastUpdateTime = 0U;
+            pauseStartTime = 0U;
+        }
+
+        if (isPaused) {
+            if (millis() - pauseStartTime >= static_cast<uint16_t>(DrawDelays::PIXEL_FILL_DELAY)) {
+                isPaused = false;
+                filledCount = 0U;
+                color = static_cast<uint32_t>(ESP8266TrueRandom.random(0, 128));
+                for (uint32_t i = 0U; i < StripControl::MATRIX_LEDS; i++) {
+                    order[i] = i;
+                }
+                for (uint32_t i = StripControl::MATRIX_LEDS - 1U; i > 0U; i--) {
+                    const auto j = static_cast<uint32_t>(ESP8266TrueRandom.random(0, static_cast<int32_t>(i) + 1));
+                    const uint32_t tmp = order[i];
+                    order[i] = order[j];
+                    order[j] = tmp;
+                }
+            }
+            return;
+        }
+
+        if (millis() - lastUpdateTime < 120U) {
+            return;
+        }
+        lastUpdateTime = millis();
+
+        const uint32_t rawColor = pgm_read_dword_near(&Colors::mainColors[color]);
+
+        constexpr uint8_t batch = 3U;
+        for (uint32_t k = 0U; k < batch && filledCount < StripControl::MATRIX_LEDS; k++) {
+            StripControl::leds[order[filledCount]] = CRGB(rawColor);
+            filledCount++;
+        }
+        StripControl::show();
+
+        if (filledCount >= StripControl::MATRIX_LEDS) {
+            isPaused = true;
+            pauseStartTime = millis();
+        }
+    }
+
     void drawChameleonSnake() {
         static uint32_t arrPos = 0U;
         static uint32_t arrVolume = 0U;
@@ -402,38 +463,54 @@ namespace {
     }
 
     void drawLightBreath() {
-        static uint32_t color = 0U;
-        static uint8_t brightness = 0U;
-        static int8_t direction = 1;
+        static uint32_t colorFrom = 0U;
+        static uint32_t colorTo = 0U;
+        static float phase = 0.0F;
+        static uint16_t colorBlend = 0U;
         static uint32_t lastTime = 0U;
 
-        if (Effects::checkCommandReceived()) {
-            color = 0U;
-            brightness = 0U;
-            direction = 1;
-            lastTime = 0U;
+        if (Effects::checkCommandReceived() || colorTo == 0U) {
+            colorFrom = (colorTo == 0U) ? 0U : colorTo;
+            colorTo = static_cast<uint32_t>(ESP8266TrueRandom.random(0, 128));
+            phase = 0.0F;
+            colorBlend = 0U;
+            lastTime = millis();
         }
 
-        if (millis() - lastTime < static_cast<uint16_t>(DrawDelays::LIGHT_BREATH_DELAY)) {
+        const uint32_t now = millis();
+        if (now - lastTime < static_cast<uint16_t>(DrawDelays::LIGHT_BREATH_DELAY)) {
             return;
         }
-        lastTime = millis();
+        lastTime = now;
 
-        const uint32_t rawColor = pgm_read_dword_near(&Colors::mainColors[color]);
-        auto baseColor = CRGB(rawColor);
-        (void) baseColor.nscale8_video(brightness);
-        fill_solid(&StripControl::leds[0], static_cast<int32_t>(StripControl::MATRIX_LEDS), baseColor);
-
-        StripControl::show();
-
-        if (brightness >= 255U) {
-            direction = -1;
-        } else if (brightness == 0U) {
-            direction = 1;
-            color = static_cast<uint32_t>(ESP8266TrueRandom.random(0, 128));
+        phase += 0.025F;
+        if (phase >= TWO_PI) {
+            phase -= TWO_PI;
         }
 
-        brightness += static_cast<uint32_t>(direction);
+        const float sinVal = sinf(phase - HALF_PI) * 0.5F + 0.5F;
+        const float brightnessFloat = powf(sinVal, 1.2F);
+
+        constexpr uint8_t minBrtns = 15U;
+        const uint8_t brightness =
+                minBrtns + static_cast<uint8_t>(brightnessFloat * static_cast<float>((255U - minBrtns)));
+
+        colorBlend += 1;
+        if (colorBlend >= 256U) {
+            colorBlend = 0U;
+            colorFrom = colorTo;
+            colorTo = static_cast<uint32_t>(ESP8266TrueRandom.random(0, 128));
+        }
+
+        const CRGB cFrom(pgm_read_dword_near(&Colors::mainColors[colorFrom]));
+        const CRGB cTo(pgm_read_dword_near(&Colors::mainColors[colorTo]));
+
+        CRGB blended = blend(cFrom, cTo, static_cast<uint8_t>(colorBlend));
+
+        (void) blended.nscale8_video(brightness);
+
+        fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), blended);
+        StripControl::show();
     }
 
     void drawImages(const uint32_t subMode) {
@@ -504,4 +581,4 @@ namespace {
             locImgNum = 0U;
         }
     }
-}
+} // namespace

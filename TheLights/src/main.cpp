@@ -103,10 +103,11 @@ namespace {
         {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 0U}, // "Полная заливка"
         {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 1U}, // "Зеркальная заливка"
         {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 2U}, // "Заливка линиями"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 3U}, // "Быстрая заливка змейкой"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 4U}, // "Медленная заливка змейкой"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 5U}, // "Цветная заливка змейкой"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 6U}, // "Цветное дыхание"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 3U}, // "Попиксельная линиями"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 4U}, // "Быстрая заливка змейкой"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 5U}, // "Медленная заливка змейкой"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 6U}, // "Цветная заливка змейкой"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 7U}, // "Цветное дыхание"
 
         {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 254U}, // "Все картинки подряд"
         {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 255U}, // "Все картинки беспорядочно"
@@ -215,7 +216,7 @@ namespace {
         static std::deque<uint8_t> usedEffects;
         static uint32_t prevTime = 0U;
         static uint8_t randomCounter = 0U;
-        static uint32_t allModeDelayLocal = 2000U;
+        static uint32_t allModeDelayLocal = Settings::settings.allModeDelay;
         static uint8_t allModesWorkTypeLocal = Settings::settings.allModesWorkType;
 
         if (const uint32_t currentTime = millis();
