@@ -7,407 +7,416 @@
     1) Скорость, переменная speed
     2) Масштаб, переменная scale
 
-    Настраиваемые параметры радуги (RainbowsSettings):
+    Настраиваемые параметры цветных эффектов (ColorfulDelays):
     1) Скорости эффектов
 */
 
-enum RainbowsSettings {
-    LIGHT_NOISE_DELAY = 50,
-    RAINBOW_WHEEL_DELAY = 20,
-    RAINBOW_WAVE_DELAY = 10,
-    RAINBOW_SNAKE_DELAY = 30
-};
+namespace {
+    enum class ColorfulDelays : uint16_t {
+        LIGHT_NOISE_DELAY = 50U,
+        RAINBOW_WHEEL_DELAY = 20U,
+        RAINBOW_WAVE_DELAY = 10U,
+        RAINBOW_SNAKE_DELAY = 30U
+    };
 
-static CRGBPalette16 currentPalette(CloudColors_p);
+    CRGBPalette16 currentPalette(CloudColors_p);
 
-static uint16_t speed = 1;
-static uint16_t scale = 25;
-static uint8_t colorLoop = 1;
+    uint32_t speed = 1U;
+    uint32_t scale = 25U;
+    uint32_t colorLoop = 1U;
 
-static uint8_t noise[16][16];
+    uint8_t noise[16][16];
 
-static void changePaletteAndSettingsPeriodically(bool resetVal);
-static void drawColorfulSpots();
-static void drawLightNoise();
-static void drawDiagonalWaves();
-static void drawRainbowWheel();
-static void drawRainbowRipples();
-static void drawRainbowWave();
-static void drawRainbowSnake();
+    void changePaletteAndSettingsPeriodically(bool resetVal);
+    void drawColorfulSpots();
+    void drawLightNoise();
+    void drawDiagonalWaves();
+    void drawRainbowWheel();
+    void drawRainbowRipples();
+    void drawRainbowWave();
+    void drawRainbowSnake();
+}
 
-void drawColorfulEffects(const uint8_t subMode) {
-    switch (subMode) {
-        case 0:
-            drawColorfulSpots();
-            break;
+namespace Effects {
+    void drawColorfulEffects(const uint32_t subMode) {
+        switch (subMode) {
+            case 0U:
+                drawColorfulSpots();
+                break;
 
-        case 1:
-            drawLightNoise();
-            break;
+            case 1U:
+                drawLightNoise();
+                break;
 
-        case 2:
-            drawDiagonalWaves();
-            break;
+            case 2U:
+                drawDiagonalWaves();
+                break;
 
-        case 3:
-            drawRainbowWheel();
-            break;
+            case 3U:
+                drawRainbowWheel();
+                break;
 
-        case 4:
-            drawRainbowRipples();
-            break;
+            case 4U:
+                drawRainbowRipples();
+                break;
 
-        case 5:
-            drawRainbowWave();
-            break;
+            case 5U:
+                drawRainbowWave();
+                break;
 
-        case 6:
-            drawRainbowSnake();
-            break;
+            case 6U:
+                drawRainbowSnake();
+                break;
 
-        default:
-            break;
+            default:
+                break;
+        }
+    }
+
+    CRGB wheel(uint32_t WheelPos) {
+        WheelPos = 255U - WheelPos;
+        if (WheelPos < 85U) {
+            return {static_cast<fl::u8>(255U - WheelPos * 3U), 0U, static_cast<fl::u8>(WheelPos * 3U)};
+        }
+        if (WheelPos < 170U) {
+            WheelPos -= 85U;
+            return {0U, static_cast<fl::u8>(WheelPos * 3U), static_cast<fl::u8>(255U - WheelPos * 3U)};
+        }
+        WheelPos -= 170U;
+        return {static_cast<fl::u8>(WheelPos * 3U), static_cast<fl::u8>(255U - WheelPos * 3U), 0U};
     }
 }
 
-CRGB customWheel(byte WheelPos) {
-    WheelPos = 255 - WheelPos;
-    if (WheelPos < 85) {
-        return CRGB(255 - WheelPos * 3, 0, WheelPos * 3);
+namespace {
+    void fillNoise8(const bool resetVal) {
+        static uint32_t X = random16();
+        static auto Y = static_cast<int32_t>(random16());
+        static uint32_t Z = random16();
+
+        if (resetVal) {
+            X = random16();
+            Y = static_cast<int32_t>(random16());
+            Z = random16();
+        }
+
+        uint32_t dataSmoothing = 0U;
+        if (speed < 50U) {
+            dataSmoothing = 400U - speed * 4U;
+        }
+
+        for (uint32_t i = 0U; i < StripControl::MATRIX_WIDTH; i++) {
+            const uint32_t iOffset = scale * i;
+            for (uint32_t j = 0U; j < StripControl::MATRIX_HEIGHT; j++) {
+                const uint32_t jOffset = scale * j;
+
+                uint32_t data = inoise8(static_cast<uint16_t>(X + iOffset), static_cast<uint16_t>(Y + static_cast<int32_t>(jOffset)), static_cast<uint16_t>(Z));
+                data = qsub8(static_cast<uint8_t>(data), 16U);
+                data = qadd8(static_cast<uint8_t>(data), scale8(static_cast<uint8_t>(data), 39U));
+
+                if (dataSmoothing > 0U) {
+                    const uint32_t oldData = noise[i][j];
+                    const uint32_t newData = static_cast<uint32_t>(scale8(static_cast<uint8_t>(oldData), static_cast<uint8_t>(dataSmoothing))) +
+                         static_cast<uint32_t>(scale8(static_cast<uint8_t>(data),static_cast<uint8_t>(256U - dataSmoothing)));
+                    data = newData;
+                }
+
+                noise[i][j] = static_cast<uint8_t>(data);
+            }
+        }
+
+        Z += speed;
+        X += speed / 8U;
+        Y -= static_cast<int32_t>(speed / 16U);
     }
-    if (WheelPos < 170) {
-        WheelPos -= 85;
-        return CRGB(0, WheelPos * 3, 255 - WheelPos * 3);
+
+    void mapNoiseToLedsUsingPalette(const bool resetVal) {
+        static uint32_t iHue = 0U;
+
+        if (resetVal) {
+            iHue = 0U;
+        }
+
+        for (uint32_t i = 0U; i < StripControl::MATRIX_WIDTH; i++) {
+            for (uint32_t j = 0U; j < StripControl::MATRIX_HEIGHT; j++) {
+                uint32_t index = noise[j][i];
+                uint32_t bri = noise[i][j];
+
+                if (colorLoop > 0U) {
+                    index += iHue;
+                }
+
+                if (bri > 127U) {
+                    bri = 255U;
+                } else {
+                    bri = dim8_raw(static_cast<uint8_t>(bri * 2U));
+                }
+
+                const CRGB color = ColorFromPalette(currentPalette, static_cast<uint8_t>(index), static_cast<uint8_t>(bri));
+                StripControl::leds[Effects::getIndex(i, j)] = color;
+            }
+        }
+
+        iHue += 1U;
     }
-    WheelPos -= 170;
-    return CRGB(WheelPos * 3, 255 - WheelPos * 3, 0);
-}
 
-static void fillNoise8(const bool resetVal) {
-    static uint16_t X = random16();
-    static uint16_t Y = random16();
-    static uint16_t Z = random16();
-
-    if (resetVal) {
-        X = random16();
-        Y = random16();
-        Z = random16();
+    void SetupRandomPalette() {
+        currentPalette = CRGBPalette16(CHSV(random8(), 255U, 32U), CHSV(random8(), 255U, 255U), CHSV(random8(), 128U, 255U),
+                                       CHSV(random8(), 255U, 255U));
     }
 
-    uint8_t dataSmoothing = 0;
-    if (speed < 50) {
-        dataSmoothing = 400 - speed * 4;
+    void changePaletteAndSettingsPeriodically(const bool resetVal) {
+        const uint32_t secondHand = millis() / 1000U / 10U % 60U;
+        static uint32_t lastSecond = 99U;
+
+        if (resetVal) {
+            lastSecond = 99U;
+        }
+
+        if (lastSecond != secondHand) {
+            lastSecond = secondHand;
+            if (secondHand % 5U == 0U) {
+                SetupRandomPalette();
+                speed = 1U;
+                scale = 30U;
+                colorLoop = secondHand == 25U ? 0U : 1U;
+            }
+        }
     }
 
-    for (uint8_t i = 0; i < MATRIX_WIDTH; i++) {
-        const uint16_t iOffset = scale * i;
-        for (uint8_t j = 0; j < MATRIX_HEIGHT; j++) {
-            const uint16_t jOffset = scale * j;
+    void drawColorfulSpots() {
+        if (Effects::checkCommandReceived()) {
+            speed = 1U;
+            scale = 25U;
+            colorLoop = 1U;
+            changePaletteAndSettingsPeriodically(true);
+            fillNoise8(true);
+            mapNoiseToLedsUsingPalette(true);
+        } else {
+            changePaletteAndSettingsPeriodically(false);
+            fillNoise8(false);
+            mapNoiseToLedsUsingPalette(false);
+        }
+        StripControl::show();
+    }
 
-            uint8_t data = inoise8(X + iOffset, Y + jOffset, Z);
-            data = qsub8(data, 16);
-            data = qadd8(data, scale8(data, 39));
+    void drawLightNoise() {
+        static uint32_t lightersPosX6[32] = {};
+        static uint32_t lightersPosY6[32] = {};
+        static uint32_t lightersSpeedX6[32] = {};
+        static uint32_t lightersSpeedY6[32] = {};
+        static uint8_t lightersSpeedZ[32] = {};
+        static uint8_t lColor6[32] = {};
+        static uint8_t mass6[32] = {};
+        static bool loadingFlag6 = true;
+        static uint32_t lastTime = 0U;
 
-            if (dataSmoothing) {
-                const uint8_t oldData = noise[i][j];
-                const uint8_t newData = scale8(oldData, dataSmoothing) + scale8(data, 256 - dataSmoothing);
-                data = newData;
+        if (millis() - lastTime < static_cast<uint32_t>(ColorfulDelays::LIGHT_NOISE_DELAY)) {
+            return;
+        }
+        lastTime = millis();
+
+        static XYMap xyMap(static_cast<uint16_t>(StripControl::MATRIX_WIDTH), static_cast<uint16_t>(StripControl::MATRIX_HEIGHT));
+        if (loadingFlag6) {
+            loadingFlag6 = false;
+            randomSeed(millis());
+            for (byte i = 0U; i < 32U; i++) {
+                lightersSpeedX6[i] = static_cast<uint32_t>(-10 + ESP8266TrueRandom.random(0, 21));
+                lightersSpeedY6[i] = static_cast<uint32_t>(-10 + ESP8266TrueRandom.random(0, 21));
+                mass6[i] = static_cast<uint8_t>(ESP8266TrueRandom.random(0, 6) + 5);
+                lightersSpeedZ[i] = static_cast<uint8_t>(3 + ESP8266TrueRandom.random(0, 23));
+                lightersPosX6[i] = static_cast<uint32_t>(ESP8266TrueRandom.random(0, static_cast<int32_t>(StripControl::MATRIX_WIDTH * 10U)));
+                lightersPosY6[i] = static_cast<uint32_t>(ESP8266TrueRandom.random(0, static_cast<int32_t>(StripControl::MATRIX_HEIGHT * 10U)));
+                lColor6[i] = static_cast<uint8_t>(ESP8266TrueRandom.random(0, 9) * 28);
+            }
+        }
+
+        blur2d(&StripControl::leds[0], static_cast<uint8_t>(StripControl::MATRIX_WIDTH), static_cast<uint8_t>(StripControl::MATRIX_HEIGHT), 30U, xyMap);
+        fadeToBlackBy(&StripControl::leds[0], static_cast<uint16_t>(StripControl::MATRIX_LEDS), 25U);
+
+        for (byte i = 0U; i < 32U; i++) {
+            lColor6[i]++;
+
+            lightersPosX6[i] += static_cast<uint32_t>(static_cast<double>(mass6[i]) * cos(radians(static_cast<double>(lightersSpeedY6[i]))) / static_cast<double>(map(255, 1, 255, 10, 1)));
+            lightersPosY6[i] += static_cast<uint32_t>(static_cast<double>(mass6[i]) * sin(radians(static_cast<double>(lightersSpeedY6[i]))) / static_cast<double>(map(255, 1, 255, 10, 1)));
+            lightersSpeedY6[i] += static_cast<uint32_t>(static_cast<double>(lightersSpeedX6[i]) / static_cast<double>(map(255, 1, 255, 20, 2)));
+
+            if (lightersPosY6[i] >= (StripControl::MATRIX_HEIGHT - 1U) * 10U) {
+                lightersPosY6[i] = (StripControl::MATRIX_HEIGHT - 1U) * 10U - 1U;
+                lightersSpeedY6[i] = static_cast<uint32_t>(360U - lightersSpeedY6[i]);
+            }
+            if (lightersPosX6[i] >= (StripControl::MATRIX_WIDTH - 1U) * 10U) {
+                lightersPosX6[i] = (StripControl::MATRIX_WIDTH - 1U) * 10U - 1U;
+                lightersSpeedY6[i] = static_cast<uint32_t>(180U - lightersSpeedY6[i]);
             }
 
-            noise[i][j] = data;
+            CRGB color = CHSV(lColor6[i], 255U, beatsin8(static_cast<uint8_t>(static_cast<double>(lightersSpeedZ[i]) / static_cast<double>(map(255, 1, 255, 10, 1))), 128U, 255U));
+            Effects::drawPixel(static_cast<float>(lightersPosX6[i]) / 10.0F, static_cast<float>(lightersPosY6[i]) / 10.0F, color);
         }
-    }
 
-    Z += speed;
-    X += speed / 8;
-    Y -= speed / 16;
-}
-
-static void mapNoiseToLedsUsingPalette(const bool resetVal) {
-    static uint8_t iHue = 0;
-
-    if (resetVal) {
-        iHue = 0;
-    }
-
-    for (uint8_t i = 0; i < MATRIX_WIDTH; i++) {
-        for (uint8_t j = 0; j < MATRIX_HEIGHT; j++) {
-            uint8_t index = noise[j][i];
-            uint8_t bri = noise[i][j];
-
-            if (colorLoop) {
-                index += iHue;
+        EVERY_N_SECONDS(15U) {
+            randomSeed(millis());
+            for (byte i = 0U; i < 32U; i++) {
+                lightersSpeedX6[i] = static_cast<uint32_t>(-10 + ESP8266TrueRandom.random(0, 21));
+                lightersSpeedY6[i] = static_cast<uint32_t>(ESP8266TrueRandom.random(0, 360));
+                mass6[i] = static_cast<uint8_t>(5 + ESP8266TrueRandom.random(0, 6));
+                lightersSpeedZ[i] = static_cast<uint8_t>(3 + ESP8266TrueRandom.random(0, 23));
             }
+        }
+        StripControl::show();
+    }
 
-            if (bri > 127) {
-                bri = 255;
-            } else {
-                bri = dim8_raw(bri * 2);
+    void drawDiagonalWaves() {
+        static uint8_t hue = 0U;
+        static uint32_t lastTime = 0U;
+
+        if (millis() - lastTime < 25U) {
+            return;
+        }
+        lastTime = millis();
+
+        for (uint32_t x = 0U; x < StripControl::MATRIX_WIDTH; x++) {
+            for (uint32_t y = 0U; y < StripControl::MATRIX_HEIGHT; y++) {
+                const uint32_t index = Effects::getIndex(x, y);
+                const uint8_t brightness = sin8(static_cast<uint8_t>(x * 8U + y * 8U + hue));
+                StripControl::leds[index] = CHSV(hue, 255U, brightness);
             }
-
-            const CRGB color = ColorFromPalette(currentPalette, index, bri);
-            leds[xyToIndex(i, j)] = color;
         }
+        hue++;
+        StripControl::show();
     }
 
-    iHue += 1;
-}
+    void drawRainbowWheel() {
+        static uint8_t angleTable[StripControl::MATRIX_HEIGHT][StripControl::MATRIX_WIDTH] = {};
+        static uint8_t distTable[StripControl::MATRIX_HEIGHT][StripControl::MATRIX_WIDTH] = {};
+        static bool tablesReady = false;
+        static uint32_t rotation = 0U;
+        static uint32_t lastTime = 0U;
 
-static void SetupRandomPalette() {
-    currentPalette = CRGBPalette16(CHSV(random8(), 255, 32), CHSV(random8(), 255, 255), CHSV(random8(), 128, 255),
-                                   CHSV(random8(), 255, 255));
-}
-
-static void changePaletteAndSettingsPeriodically(const bool resetVal) {
-    const uint8_t secondHand = millis() / 1000 / 10 % 60;
-    static uint8_t lastSecond = 99;
-
-    if (resetVal) {
-        lastSecond = 99;
-    }
-
-    if (lastSecond != secondHand) {
-        lastSecond = secondHand;
-        if (secondHand % 5 == 0) {
-            SetupRandomPalette();
-            speed = 1;
-            scale = 30;
-            colorLoop = secondHand == 25 ? 0 : 1;
-        }
-    }
-}
-
-static void drawColorfulSpots() {
-    if (checkCommandReceived()) {
-        speed = 1;
-        scale = 25;
-        colorLoop = 1;
-        changePaletteAndSettingsPeriodically(true);
-        fillNoise8(true);
-        mapNoiseToLedsUsingPalette(true);
-    } else {
-        changePaletteAndSettingsPeriodically(false);
-        fillNoise8(false);
-        mapNoiseToLedsUsingPalette(false);
-    }
-    stripShow();
-}
-
-static void drawLightNoise() {
-    static uint16_t lightersPosX6[32];
-    static uint16_t lightersPosY6[32];
-    static uint16_t lightersSpeedX6[32];
-    static uint16_t lightersSpeedY6[32];
-    static byte lightersSpeedZ[32];
-    static byte lColor6[32];
-    static byte mass6[32];
-    static bool loadingFlag6 = true;
-    static uint32_t lastTime = 0;
-
-    if (millis() - lastTime < LIGHT_NOISE_DELAY)
-        return;
-    lastTime = millis();
-
-    static XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
-    if (loadingFlag6) {
-        loadingFlag6 = false;
-        randomSeed(millis());
-        for (byte i = 0; i < 32; i++) {
-            lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(0, 21);
-            lightersSpeedY6[i] = -10 + ESP8266TrueRandom.random(0, 21);
-            mass6[i] = 5 + ESP8266TrueRandom.random(0, 6);
-            lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(0, 23);
-            lightersPosX6[i] = ESP8266TrueRandom.random(0, MATRIX_WIDTH * 10);
-            lightersPosY6[i] = ESP8266TrueRandom.random(0, MATRIX_HEIGHT * 10);
-            lColor6[i] = ESP8266TrueRandom.random(0, 9) * 28;
-        }
-    }
-
-    blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 30, xyMap);
-    fadeToBlackBy(leds, MATRIX_LEDS, 25);
-
-    for (byte i = 0; i < 32; i++) {
-        lColor6[i]++;
-
-        lightersPosX6[i] += mass6[i] * cos(radians(lightersSpeedY6[i])) / map(255, 1, 255, 10, 1);
-        lightersPosY6[i] += mass6[i] * sin(radians(lightersSpeedY6[i])) / map(255, 1, 255, 10, 1);
-        lightersSpeedY6[i] += lightersSpeedX6[i] / map(255, 1, 255, 20, 2);
-
-        if (lightersPosY6[i] < 0) {
-            lightersPosY6[i] = 1;
-            lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
-        }
-        if (lightersPosX6[i] < 0) {
-            lightersPosX6[i] = 1;
-            lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
-        }
-        if (lightersPosY6[i] >= (MATRIX_HEIGHT - 1) * 10) {
-            lightersPosY6[i] = (MATRIX_HEIGHT - 1) * 10 - 1;
-            lightersSpeedY6[i] = 360 - lightersSpeedY6[i];
-        }
-        if (lightersPosX6[i] >= (MATRIX_WIDTH - 1) * 10) {
-            lightersPosX6[i] = (MATRIX_WIDTH - 1) * 10 - 1;
-            lightersSpeedY6[i] = 180 - lightersSpeedY6[i];
+        if (millis() - lastTime < static_cast<uint32_t>(ColorfulDelays::RAINBOW_WHEEL_DELAY)) {
+            return;
         }
 
-        CRGB color = CHSV(lColor6[i], 255, beatsin8(lightersSpeedZ[i] / map(255, 1, 255, 10, 1), 128, 255));
-        drawPixel(static_cast<float>(lightersPosX6[i]) / 10, static_cast<float>(lightersPosY6[i]) / 10, color);
-    }
+        rotation += (millis() - lastTime) * 10U;
+        lastTime = millis();
 
-    EVERY_N_SECONDS(15) {
-        randomSeed(millis());
-        for (byte i = 0; i < 32; i++) {
-            lightersSpeedX6[i] = -10 + ESP8266TrueRandom.random(0, 21);
-            lightersSpeedY6[i] = ESP8266TrueRandom.random(0, 360);
-            mass6[i] = 5 + ESP8266TrueRandom.random(0, 6);
-            lightersSpeedZ[i] = 3 + ESP8266TrueRandom.random(0, 23);
-        }
-    }
-    stripShow();
-}
-
-static void drawDiagonalWaves() {
-    static uint8_t hue = 0;
-    static uint32_t lastTime = 0;
-
-    if (millis() - lastTime < 25)
-        return;
-    lastTime = millis();
-
-    for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
-        for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
-            const uint16_t index = xyToIndex(x, y);
-            const uint8_t brightness = sin8(x * 8 + y * 8 + hue);
-            leds[index] = CHSV(hue, 255, brightness);
-        }
-    }
-    hue++;
-    stripShow();
-}
-
-void drawRainbowWheel() {
-    static uint8_t angleTable[MATRIX_HEIGHT][MATRIX_WIDTH];
-    static uint8_t distTable[MATRIX_HEIGHT][MATRIX_WIDTH];
-    static bool tablesReady = false;
-    static uint16_t rotation = 0;
-    static uint32_t lastTime = 0;
-
-    if (millis() - lastTime < RAINBOW_WHEEL_DELAY)
-        return;
-
-    rotation += (millis() - lastTime) * 10;
-    lastTime = millis();
-
-    for (uint8_t y = 0; y < MATRIX_HEIGHT; y++) {
-        for (uint8_t x = 0; x < MATRIX_WIDTH; x++) {
-            if (!tablesReady) {
-                tablesReady = true;
-                constexpr float cx = MATRIX_WIDTH / 2.0 - 0.5;
-                constexpr float cy = MATRIX_HEIGHT / 2.0 - 0.5;
-                for (uint8_t yi = 0; yi < MATRIX_HEIGHT; yi++)
-                    for (uint8_t xi = 0; xi < MATRIX_WIDTH; xi++) {
-                        const float dx = static_cast<float>(xi) - cx;
-                        const float dy = static_cast<float>(yi) - cy;
-                        angleTable[yi][xi] = static_cast<uint8_t>(atan2(dy, dx) * 128.0f / PI + 128);
-                        distTable[yi][xi] = static_cast<uint8_t>(constrain(sqrt(dx * dx + dy * dy) * 30, 30, 255));
+        for (uint32_t y = 0U; y < StripControl::MATRIX_HEIGHT; y++) {
+            for (uint32_t x = 0U; x < StripControl::MATRIX_WIDTH; x++) {
+                if (!tablesReady) {
+                    tablesReady = true;
+                    constexpr float cx = static_cast<float>(StripControl::MATRIX_WIDTH) / 2.0F - 0.5F;
+                    constexpr float cy = static_cast<float>(StripControl::MATRIX_HEIGHT) / 2.0F - 0.5F;
+                    for (uint32_t yi = 0U; yi < StripControl::MATRIX_HEIGHT; yi++) {
+                        for (uint32_t xi = 0U; xi < StripControl::MATRIX_WIDTH; xi++) {
+                            const float dx = static_cast<float>(xi) - cx;
+                            const float dy = static_cast<float>(yi) - cy;
+                            angleTable[yi][xi] = static_cast<uint8_t>(atan2(dy, dx) * 128.0F / PI + 128.0F);
+                            distTable[yi][xi] = static_cast<uint8_t>(constrain(sqrt(dx * dx + dy * dy) * 30, 30, 255));
+                        }
                     }
+                }
+                StripControl::leds[Effects::getIndex(x, y)] = CHSV(static_cast<uint8_t>(static_cast<uint32_t>(angleTable[y][x]) + (rotation >> 8)), 255U, distTable[y][x]);
             }
-            leds[xyToIndex(x, y)] = CHSV(angleTable[y][x] + (rotation >> 8), 255, distTable[y][x]);
+        }
+        StripControl::show();
+    }
+
+    void drawRainbowRipples() {
+        static uint32_t sPseudotime = 0U;
+        static uint32_t sLastMillis = 0U;
+        static uint32_t sHue = 0U;
+
+        const uint32_t brightnessThetaInc16 = beatsin88(203U, 25U * 256U, 40U * 256U);
+        const uint32_t msMultiplier = beatsin88(147U, 23U, 60U);
+
+        uint32_t hue16 = sHue;
+        const uint16_t hueInc16 = beatsin88(113U, 1U, 3000U);
+
+        const uint32_t ms = millis();
+        const uint32_t deltaMs = ms - sLastMillis;
+        sLastMillis = ms;
+        sPseudotime += deltaMs * msMultiplier;
+        sHue += deltaMs * beatsin88(400U, 5U, 9U);
+        uint32_t brightnessTheta16 = sPseudotime;
+
+        for (uint16_t i = 0U; i < StripControl::MATRIX_LEDS; i++) {
+            hue16 += hueInc16;
+            const uint32_t hue8 = hue16 / 256U;
+
+            brightnessTheta16 += brightnessThetaInc16;
+            const uint32_t b16 = static_cast<uint32_t>(sin16(static_cast<uint16_t>(brightnessTheta16))) + 32768U;
+
+            const uint32_t bri16 = static_cast<uint32_t>(b16) * static_cast<uint32_t>(b16) / 65536U;
+            uint32_t bri8 = static_cast<uint32_t>(bri16) * 128U / 65536U;
+            bri8 += 255U - 128U;
+
+            CRGB newColor = CHSV(static_cast<uint8_t>(hue8), 255U, static_cast<uint8_t>(bri8));
+
+            uint32_t pixelNumber = i;
+
+            pixelNumber = StripControl::MATRIX_LEDS - 1U - pixelNumber;
+
+            (void)nblend(StripControl::leds[pixelNumber], newColor, 64U);
+        }
+        StripControl::show();
+    }
+
+    void drawRainbowWave() {
+        static uint32_t waveRainbow = 0U;
+        static uint32_t lastTime = 0U;
+
+        if (millis() - lastTime < static_cast<uint32_t>(ColorfulDelays::RAINBOW_WAVE_DELAY)) {
+            return;
+        }
+        lastTime = millis();
+
+        if (++waveRainbow >= 256U) {
+            waveRainbow = 0U;
+        }
+        for (uint16_t i = 0U; i < StripControl::MATRIX_LEDS; i++) {
+            StripControl::leds[i] = Effects::wheel((i + waveRainbow) & 255U);
+        }
+        StripControl::show();
+    }
+
+    void fadeAll() {
+        for (auto &led: StripControl::leds) {
+            (void)led.nscale8(250U);
         }
     }
-    stripShow();
-}
 
-void drawRainbowRipples() {
-    static uint16_t sPseudotime = 0;
-    static uint16_t sLastMillis = 0;
-    static uint16_t sHue16 = 0;
+    void drawRainbowSnake() {
+        static int16_t position = 0;
+        static int16_t direction = 1;
+        static uint8_t hue = 0U;
+        static uint32_t lastTime = 0U;
 
-    const uint16_t brightnessThetaInc16 = beatsin88(203, 25 * 256, 40 * 256);
-    const uint8_t msMultiplier = beatsin88(147, 23, 60);
+        if (Effects::checkCommandReceived()) {
+            position = 0;
+            direction = 1;
+            hue = 0U;
+            lastTime = 0U;
+        }
 
-    uint16_t hue16 = sHue16;
-    const uint16_t hueInc16 = beatsin88(113, 1, 3000);
+        if (millis() - lastTime < static_cast<uint32_t>(ColorfulDelays::RAINBOW_SNAKE_DELAY)) {
+            return;
+        }
+        lastTime = millis();
 
-    const uint16_t ms = millis();
-    const uint16_t deltaMs = ms - sLastMillis;
-    sLastMillis = ms;
-    sPseudotime += deltaMs * msMultiplier;
-    sHue16 += deltaMs * beatsin88(400, 5, 9);
-    uint16_t brightnessTheta16 = sPseudotime;
+        if (position >= 0 && static_cast<uint32_t>(position) < StripControl::MATRIX_LEDS) {
+            StripControl::leds[position] = CHSV(hue++, 255U, 255U);
+        }
 
-    for (uint16_t i = 0; i < MATRIX_LEDS; i++) {
-        hue16 += hueInc16;
-        const uint8_t hue8 = hue16 / 256;
+        fadeAll();
+        StripControl::show();
 
-        brightnessTheta16 += brightnessThetaInc16;
-        const uint16_t b16 = sin16(brightnessTheta16) + 32768;
+            position = static_cast<int16_t>((position + direction));
 
-        const uint16_t bri16 = static_cast<uint32_t>(b16) * static_cast<uint32_t>(b16) / 65536;
-        uint8_t bri8 = static_cast<uint32_t>(bri16) * 128 / 65536;
-        bri8 += 255 - 128;
-
-        CRGB newColor = CHSV(hue8, 255, bri8);
-
-        uint16_t pixelNumber = i;
-
-        pixelNumber = MATRIX_LEDS - 1 - pixelNumber;
-
-        nblend(leds[pixelNumber], newColor, 64);
-    }
-    stripShow();
-}
-
-void drawRainbowWave() {
-    static uint16_t waveRainbow = 0;
-    static uint32_t lastTime = 0;
-
-    if (millis() - lastTime < RAINBOW_WAVE_DELAY)
-        return;
-    lastTime = millis();
-
-    if (++waveRainbow >= 256)
-        waveRainbow = 0;
-    for (uint16_t i = 0; i < MATRIX_LEDS; i++) {
-        leds[i] = customWheel(i + waveRainbow & 255);
-    }
-    stripShow();
-}
-
-static void fadeAll() {
-    for (auto &led: leds) {
-        led.nscale8(250);
-    }
-}
-
-void drawRainbowSnake() {
-    static int16_t position = 0;
-    static int8_t direction = 1;
-    static uint8_t hue = 0;
-    static uint32_t lastTime = millis();
-
-    if (checkCommandReceived()) {
-        position = 0;
-        direction = 1;
-        hue = 0;
-        lastTime = 0;
-    }
-
-    if (millis() - lastTime < RAINBOW_SNAKE_DELAY)
-        return;
-    lastTime = millis();
-    leds[position] = CHSV(hue++, 255, 255);
-
-    fadeAll();
-    stripShow();
-
-    position += direction;
-
-    if (position >= MATRIX_LEDS) {
-        position = MATRIX_LEDS - 2;
-        direction = -1;
-    } else if (position < 0) {
-        position = 1;
-        direction = 1;
+        if (position >= static_cast<int16_t>(StripControl::MATRIX_LEDS)) {
+            position = static_cast<int16_t>(StripControl::MATRIX_LEDS - 2U);
+            direction = -1;
+        } else if (position < 0) {
+            position = 1;
+            direction = 1;
+        }
     }
 }

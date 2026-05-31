@@ -4,237 +4,243 @@
 /*
   Эта группа эффектов для любого размера матриц
 
-  Настраиваемые параметры (RunningLightsSettings):
+  Настраиваемые параметры (RunningLightsDelays):
     1) Скорости эффектов
 */
 
-enum RunningLightsSettings {
-    SLOW_LIGHT_DELAY = 100,
-    FAST_LIGHT_DELAY = 20,
-    COLORFUL_LIGHT_DELAY = 35,
-    COLORFUL_SNAKE_DELAY = 50,
-    RUNNING_LIGHTS_1_DELAY = 200,
-    RUNNING_LIGHTS_2_DELAY = 200,
-    RUNNING_LIGHTS_3_DELAY = 200
-};
+namespace {
+    enum class RunningLightsDelays : uint16_t {
+        SLOW_LIGHT_DELAY = 100U,
+        FAST_LIGHT_DELAY = 20U,
+        COLORFUL_LIGHT_DELAY = 35U,
+        COLORFUL_SNAKE_DELAY = 50U,
+        RUNNING_LIGHTS_1_DELAY = 200U,
+        RUNNING_LIGHTS_2_DELAY = 200U,
+        RUNNING_LIGHTS_3_DELAY = 200U
+    };
 
-static void drawColorfulLight();
-static void drawLights(uint8_t lightsMode);
-static void drawLight(uint16_t lightDelay);
-static void drawColorfulSnake();
+    void drawColorfulLight();
+    void drawLights(uint32_t lightsMode);
+    void drawLight(uint32_t lightDelay);
+    void drawColorfulSnake();
+} // namespace
 
-void drawRunningLights(const uint8_t subMode) {
-    switch (subMode) {
-        case 0:
-            drawLight(SLOW_LIGHT_DELAY);
-            break;
+namespace Effects {
+    void drawRunningLights(const uint32_t subMode) {
+        switch (subMode) {
+            case 0U:
+                drawLight(static_cast<uint32_t>(RunningLightsDelays::SLOW_LIGHT_DELAY));
+                break;
 
-        case 1:
-            drawLight(FAST_LIGHT_DELAY);
-            break;
+            case 1U:
+                drawLight(static_cast<uint32_t>(RunningLightsDelays::FAST_LIGHT_DELAY));
+                break;
 
-        case 2:
-            drawColorfulLight();
-            break;
+            case 2U:
+                drawColorfulLight();
+                break;
 
-        case 3:
-            drawColorfulSnake();
-            break;
+            case 3U:
+                drawColorfulSnake();
+                break;
 
-        case 4:
-            drawLights(1);
-            break;
+            case 4U:
+                drawLights(1U);
+                break;
 
-        case 5:
-            drawLights(2);
-            break;
+            case 5U:
+                drawLights(2U);
+                break;
 
-        case 6:
-            drawLights(3);
-            break;
+            case 6U:
+                drawLights(3U);
+                break;
 
-        default:
-            break;
-    }
-}
-
-void drawLight(const uint16_t lightDelay) {
-    static uint8_t color = 0;
-    static uint16_t ledsCount = 0;
-    static uint32_t lastTime = 0;
-
-    if (checkCommandReceived()) {
-        ledsCount = 0;
-        lastTime = 0;
-        color = 0;
-        fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-    }
-
-    if (millis() - lastTime < lightDelay) {
-        return;
-    }
-
-    lastTime = millis();
-
-    if (ledsCount < MATRIX_LEDS) {
-        if (ledsCount > 0) {
-            leds[ledsCount - 1] = CRGB::Black;
+            default:
+                break;
         }
-        const uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
-        leds[ledsCount] = CRGB(rawColor);
-        stripShow();
-        ledsCount++;
-    } else {
-        ledsCount = 0;
+    }
+} // namespace Effects
 
-        if constexpr (MATRIX_LEDS > 0) {
-            leds[MATRIX_LEDS - 1] = CRGB::Black;
-            stripShow();
+namespace {
+    void drawLight(const uint32_t lightDelay) {
+        static uint8_t color = 0U;
+        static uint16_t ledsCount = 0U;
+        static uint32_t lastTime = 0U;
+
+        if (Effects::checkCommandReceived()) {
+            ledsCount = 0U;
+            lastTime = 0U;
+            color = 0U;
+            fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
         }
-        color = ESP8266TrueRandom.random(0, 128);
-    }
-}
 
-void drawColorfulLight() {
-    static uint32_t previousMillis = 0;
-    static uint16_t currentLED = 0;
-    static bool firstPass = true;
+        if (millis() - lastTime < lightDelay) {
+            return;
+        }
 
-    if (checkCommandReceived()) {
-        previousMillis = 0;
-        currentLED = 0;
-        firstPass = true;
-    }
+        lastTime = millis();
 
-    if (const uint32_t currentMillis = millis(); currentMillis - previousMillis >= COLORFUL_LIGHT_DELAY) {
-        previousMillis = currentMillis;
-
-        if (firstPass) {
-            leds[currentLED] = CHSV(currentLED, 255, 255);
+        if (ledsCount < StripControl::MATRIX_LEDS) {
+            if (ledsCount > 0U) {
+                StripControl::leds[ledsCount - 1U] = CRGB::Black;
+            }
+            const uint32_t rawColor = pgm_read_dword_near(&Colors::mainColors[color]);
+            StripControl::leds[ledsCount] = CRGB(rawColor);
+            StripControl::show();
+            ledsCount++;
         } else {
-            leds[currentLED] = CHSV(ESP8266TrueRandom.random(0, 256), 255, 255);
-        }
+            ledsCount = 0U;
 
-        stripShow();
-        leds[currentLED] = CRGB::Black;
-
-        currentLED++;
-        if (currentLED >= MATRIX_LEDS) {
-            currentLED = 0;
-            firstPass = !firstPass;
+            if constexpr (StripControl::MATRIX_LEDS > 0U) {
+                StripControl::leds[StripControl::MATRIX_LEDS - 1U] = CRGB::Black;
+                StripControl::show();
+            }
+            color = static_cast<uint8_t>(ESP8266TrueRandom.random(0, 128));
         }
     }
-}
 
-static void drawColorfulSnake() {
-    static uint8_t color = 0;
-    static uint16_t head = 0;
-    static uint16_t tail = 0;
-    static uint16_t pixelCounter = 0;
-    static uint32_t previousMillis = 0;
+    void drawColorfulLight() {
+        static uint32_t previousMillis = 0U;
+        static uint16_t currentLED = 0U;
+        static bool firstPass = true;
 
-    static uint16_t snake[10];
-
-    if (checkCommandReceived()) {
-        head = 0;
-        tail = 0;
-        pixelCounter = 0;
-        previousMillis = 0;
-        memset(snake, 0xFF, sizeof(snake));
-    }
-
-    if (millis() - previousMillis >= COLORFUL_SNAKE_DELAY) {
-        previousMillis = millis();
-
-        head = (head + 1) % MATRIX_LEDS;
-
-        tail = (tail + 1) % 10;
-        snake[tail] = head;
-
-        pixelCounter++;
-        if (pixelCounter >= MATRIX_LEDS) {
-            pixelCounter = 0;
-            color = ESP8266TrueRandom.random(0, 128);
+        if (Effects::checkCommandReceived()) {
+            previousMillis = 0U;
+            currentLED = 0U;
+            firstPass = true;
         }
 
-        fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+        if (const uint32_t currentMillis = millis();
+            currentMillis - previousMillis >= static_cast<uint32_t>(RunningLightsDelays::COLORFUL_LIGHT_DELAY)) {
+            previousMillis = currentMillis;
 
-        const uint32_t rawColor = pgm_read_dword_near(&mainColors[color]);
-        const CRGB snakeColor = CRGB(rawColor);
+            if (firstPass) {
+                StripControl::leds[currentLED] = CHSV(static_cast<uint8_t>(currentLED), 255U, 255U);
+            } else {
+                StripControl::leds[currentLED] =
+                        CHSV(static_cast<uint8_t>(ESP8266TrueRandom.random(0, 256)), 255U, 255U);
+            }
 
-        for (uint16_t i = 0; i < 10; i++) {
-            if (snake[i] < MATRIX_LEDS) {
-                leds[snake[i]] = snakeColor;
+            StripControl::show();
+            StripControl::leds[currentLED] = CRGB::Black;
+
+            currentLED++;
+            if (currentLED >= StripControl::MATRIX_LEDS) {
+                currentLED = 0U;
+                firstPass = !firstPass;
             }
         }
-        stripShow();
-    }
-}
-
-static void drawLights(const uint8_t lightsMode) {
-    static uint8_t color = 0;
-    static uint8_t stepJ = 0;
-    static uint8_t stepQ = 0;
-    static uint32_t lastTime = 0;
-    static bool isNewCycle = true;
-
-    constexpr int delays[] = {RUNNING_LIGHTS_1_DELAY, RUNNING_LIGHTS_2_DELAY, RUNNING_LIGHTS_3_DELAY};
-
-    uint32_t currentDelay = delays[constrain(lightsMode, 1, 3) - 1];
-    if (lightsMode >= 1 && lightsMode <= 3) {
-        currentDelay = delays[lightsMode - 1];
     }
 
-    if (millis() - lastTime < currentDelay)
-        return;
-    lastTime = millis();
+    void drawColorfulSnake() {
+        static uint32_t color = 0U;
+        static uint32_t head = 0U;
+        static uint32_t tail = 0U;
+        static uint32_t pixelCounter = 0U;
+        static uint32_t previousMillis = 0U;
 
-    if (isNewCycle && lightsMode == 1) {
-        color = ESP8266TrueRandom.random(0, 128);
-        isNewCycle = false;
-    }
+        static uint16_t snake[10] = {};
 
-    const uint8_t prevQ = stepQ == 0 ? 2 : stepQ - 1;
-    for (uint16_t i = 0; i < MATRIX_LEDS; i = i + 3) {
-        if (i + prevQ < MATRIX_LEDS) {
-            leds[i + prevQ] = CRGB::Black;
+        if (Effects::checkCommandReceived()) {
+            head = 0U;
+            tail = 0U;
+            pixelCounter = 0U;
+            previousMillis = 0U;
+            (void) memset(&snake[0], 0xFF, sizeof(snake));
+        }
+
+        if (millis() - previousMillis >= static_cast<uint32_t>(RunningLightsDelays::COLORFUL_SNAKE_DELAY)) {
+            previousMillis = millis();
+
+            head = (head + 1U) % StripControl::MATRIX_LEDS;
+
+            tail = (tail + 1U) % 10U;
+            snake[tail] = static_cast<uint16_t>(head);
+
+            pixelCounter++;
+            if (pixelCounter >= StripControl::MATRIX_LEDS) {
+                pixelCounter = 0U;
+                color = static_cast<uint32_t>(ESP8266TrueRandom.random(0, 128));
+            }
+
+            fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+
+            const uint32_t rawColor = pgm_read_dword_near(&Colors::mainColors[color]);
+            const auto snakeColor = CRGB(rawColor);
+
+            for (const unsigned short i: snake) {
+                if (i < StripControl::MATRIX_LEDS) {
+                    StripControl::leds[i] = snakeColor;
+                }
+            }
+            StripControl::show();
         }
     }
 
-    for (uint16_t i = 0; i < MATRIX_LEDS; i = i + 3) {
-        CRGB pixelColor;
+    void drawLights(const uint32_t lightsMode) {
+        static uint32_t color = 0U;
+        static uint32_t stepJ = 0U;
+        static uint32_t stepQ = 0U;
+        static uint32_t lastTime = 0U;
+        static bool isNewCycle = true;
 
-        switch (lightsMode) {
-            case 1:
-                pixelColor = CRGB(pgm_read_dword_near(&mainColors[color]));
-                break;
+        constexpr uint32_t delays[] = {static_cast<uint32_t>(RunningLightsDelays::RUNNING_LIGHTS_1_DELAY),
+                                       static_cast<uint32_t>(RunningLightsDelays::RUNNING_LIGHTS_2_DELAY),
+                                       static_cast<uint32_t>(RunningLightsDelays::RUNNING_LIGHTS_3_DELAY)};
 
-            case 2:
-                pixelColor = customWheel((i + stepJ) % 255);
-                break;
+        if (const uint32_t currentDelay = delays[constrain(lightsMode, 1, 3) - 1U];
+            millis() - lastTime < currentDelay) {
+            return;
+        }
+        lastTime = millis();
 
-            case 3:
-                pixelColor = CRGB(pgm_read_dword_near(&mainColors[ESP8266TrueRandom.random(0, 128)]));
-                break;
-            default:;
+        if (isNewCycle && lightsMode == 1U) {
+            color = static_cast<uint32_t>(ESP8266TrueRandom.random(0, 128));
+            isNewCycle = false;
         }
 
-        if (i + stepQ < MATRIX_LEDS) {
-            leds[i + stepQ] = pixelColor;
+        const uint8_t prevQ = stepQ == 0U ? 2U : stepQ - 1U;
+        for (uint32_t i = 0U; i < StripControl::MATRIX_LEDS; i = i + 3U) {
+            if (i + prevQ < StripControl::MATRIX_LEDS) {
+                StripControl::leds[i + prevQ] = CRGB::Black;
+            }
+        }
+
+        for (uint32_t i = 0U; i < StripControl::MATRIX_LEDS; i = i + 3U) {
+            CRGB pixelColor;
+
+            switch (lightsMode) {
+                case 1U:
+                    pixelColor = CRGB(pgm_read_dword_near(&Colors::mainColors[color]));
+                    break;
+
+                case 2U:
+                    pixelColor = Effects::wheel((i + stepJ) % 255U);
+                    break;
+
+                case 3U:
+                    pixelColor = CRGB(pgm_read_dword_near(&Colors::mainColors[ESP8266TrueRandom.random(0, 128)]));
+                    break;
+                default:;
+            }
+
+            if (i + stepQ < StripControl::MATRIX_LEDS) {
+                StripControl::leds[i + stepQ] = pixelColor;
+            }
+        }
+
+        StripControl::show();
+
+        stepQ++;
+        if (stepQ >= 3U) {
+            stepQ = 0U;
+            stepJ++;
+
+            if (stepJ >= 2U) {
+                stepJ = 0U;
+                isNewCycle = true;
+            }
         }
     }
-
-    stripShow();
-
-    stepQ++;
-
-    if (stepQ >= 3) {
-        stepQ = 0;
-        stepJ++;
-
-        if (stepJ >= 2) {
-            stepJ = 0;
-            isNewCycle = true;
-        }
-    }
-}
+} // namespace

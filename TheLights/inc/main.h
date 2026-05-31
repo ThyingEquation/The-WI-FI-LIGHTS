@@ -13,11 +13,11 @@
 #include <FastLED.h>
 #include <NeoPixelBus.h>
 
-enum GlobalSettings {
-    MATRIX_WIDTH = 12,
-    MATRIX_HEIGHT = 12,
-    MATRIX_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT,
-};
+namespace StripControl {
+    constexpr uint32_t MATRIX_WIDTH  = 12U;
+    constexpr uint32_t MATRIX_HEIGHT = 12U;
+    constexpr uint32_t MATRIX_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT;
 
-extern CRGB leds[MATRIX_LEDS];
-extern NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip;
+    extern CRGB leds[MATRIX_LEDS];
+    extern NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip;
+}

@@ -3,123 +3,135 @@
 /*
   Эта группа эффектов для любого размера матриц
 
-  Настраиваемые параметры (FlickeringLightsSettings):
+  Настраиваемые параметры (FlickeringLightsDelays):
     1) Скорости эффектов
 */
 
-enum FlickeringLightsSettings { FLYING_LIGHTS_DELAY = 75, CONFETTI_DELAY = 20, FLASH_LIGHT_DELAY = 17 };
+namespace {
+    enum class FlickeringLightsDelays : uint16_t {
+        FLYING_LIGHTS_DELAY = 75U,
+        CONFETTI_DELAY = 20U,
+        FLASH_LIGHT_DELAY = 17U
+    };
 
-static void drawFlyingLights();
-static void drawConfetti();
-static void drawLocalFlickeringLights();
+    void drawFlyingLights();
+    void drawConfetti();
+    void drawLocalFlickeringLights();
+}
 
-void drawFlickeringLights(const uint8_t subMode) {
-    switch (subMode) {
-        case 0:
-            drawFlyingLights();
-            break;
+namespace Effects {
+    void drawFlickeringLights(const uint32_t subMode) {
+        switch (subMode) {
+            case 0U:
+                drawFlyingLights();
+                break;
 
-        case 1:
-            drawConfetti();
-            break;
+            case 1U:
+                drawConfetti();
+                break;
 
-        case 2:
-            drawLocalFlickeringLights();
-            break;
+            case 2U:
+                drawLocalFlickeringLights();
+                break;
 
-        default:
-            break;
+            default:
+                break;
+        }
     }
 }
 
-static void drawFlyingLights() {
-    static constexpr CRGB HEAD_COLOR = CRGB(175, 255, 175);
-    static constexpr CRGB TAIL_COLOR = CRGB(27, 130, 39);
+namespace {
+    void drawFlyingLights() {
+        static constexpr auto HEAD_COLOR = CRGB(175U, 255U, 175U);
+        static constexpr auto TAIL_COLOR = CRGB(27U, 130U, 39U);
 
-    EVERY_N_MILLIS(FLYING_LIGHTS_DELAY) {
-        bool emptyScreen = true;
-        for (int8_t row = MATRIX_HEIGHT - 1; row >= 0; row--) {
-            for (int8_t col = 0; col < MATRIX_WIDTH; col++) {
-                if (leds[xyToIndex(col, row)] == HEAD_COLOR) {
-                    leds[xyToIndex(col, row)] = TAIL_COLOR;
-                    if (row < MATRIX_HEIGHT - 1) {
-                        const int16_t drift = static_cast<int16_t>(random8(3) - 1);
-                        int16_t nextCol = static_cast<int16_t>(col + drift);
+        EVERY_N_MILLIS(static_cast<uint32_t>(FlickeringLightsDelays::FLYING_LIGHTS_DELAY)) {
+            bool emptyScreen = true;
+            for (int32_t row = static_cast<int16_t>(StripControl::MATRIX_HEIGHT - 1U); row >= 0; row--) {
+                for (int8_t col = 0; col < static_cast<int8_t>(StripControl::MATRIX_WIDTH); col++) {
+                    if (StripControl::leds[Effects::getIndex(static_cast<uint32_t>(col), static_cast<uint32_t>(row))] == HEAD_COLOR) {
+                        StripControl::leds[Effects::getIndex(static_cast<uint32_t>(col), static_cast<uint32_t>(row))] = TAIL_COLOR;
+                        if (row < static_cast<int16_t>(StripControl::MATRIX_HEIGHT - 1U)) {
+                            auto nextCol = static_cast<int16_t>(col + static_cast<int16_t>(random8(3U) - 1U));
+                            if (nextCol < 0) {
+                                nextCol = 0;
+                            }
+                            if (nextCol >= static_cast<int16_t>(StripControl::MATRIX_WIDTH)) {
+                                nextCol = static_cast<int16_t>(StripControl::MATRIX_WIDTH - 1U);
+                            }
 
-                        if (nextCol < 0)
-                            nextCol = 0;
-                        if (nextCol >= MATRIX_WIDTH)
-                            nextCol = MATRIX_WIDTH - 1;
-
-                        leds[xyToIndex(nextCol, row + 1)] = HEAD_COLOR;
+                            StripControl::leds[Effects::getIndex(static_cast<uint32_t>(nextCol), static_cast<uint32_t>(row) + 1U)] = HEAD_COLOR;
+                        }
                     }
                 }
             }
-        }
 
-        for (auto &led: leds) {
-            if (led.g != 255)
-                led.nscale8(180);
-            if (led)
-                emptyScreen = false;
-        }
+            for (auto &led: StripControl::leds) {
+                if (led.g != 255U) {
+                    (void)led.nscale8(180U);
+                }
+                if (led) {
+                    emptyScreen = false;
+                }
+            }
 
-        if (random8(5) == 0 || emptyScreen) {
-            const int16_t spawnX = random8(MATRIX_WIDTH);
-            leds[xyToIndex(spawnX, 0)] = CRGB(175, 255, 175);
-        }
-        stripShow();
-    }
-}
-
-static void drawConfetti() {
-    static bool loadingFlag = true;
-
-    static byte FF[MATRIX_WIDTH][MATRIX_HEIGHT];
-    static byte SF[MATRIX_WIDTH][MATRIX_HEIGHT];
-
-    static uint32_t lastTime = 0;
-
-    if (millis() - lastTime < CONFETTI_DELAY)
-        return;
-    lastTime = millis();
-
-    if (loadingFlag) {
-        memset8(SF, 0, sizeof(SF));
-        memset8(FF, 0, sizeof(FF));
-        loadingFlag = false;
-    }
-
-    for (byte i = 0; i < 8; i++) {
-        const uint8_t x = ESP8266TrueRandom.random(0, MATRIX_WIDTH);
-        const uint8_t y = ESP8266TrueRandom.random(0, MATRIX_HEIGHT);
-        if (!SF[x][y]) {
-            SF[x][y] = 255;
-            FF[x][y] = ESP8266TrueRandom.random(0, 255);
+            if (random8(5U) == 0U || emptyScreen) {
+                const uint32_t spawnX = random8(static_cast<uint8_t>(StripControl::MATRIX_WIDTH));
+                StripControl::leds[Effects::getIndex(spawnX, 0U)] = CRGB(175U, 255U, 175U);
+            }
+            StripControl::show();
         }
     }
 
-    for (byte x = 0; x < MATRIX_WIDTH; x++) {
-        for (byte y = 0; y < MATRIX_HEIGHT; y++) {
-            if (SF[x][y] <= 30) {
-                SF[x][y] = 0;
-            } else {
-                SF[x][y] = SF[x][y] - 8 <= 0 ? 0 : SF[x][y] - 8;
-                leds[xyToIndex(x, y)] = CHSV(FF[x][y], 255, SF[x][y]);
+    void drawConfetti() {
+        static bool loadingFlag = true;
+        static uint8_t FF[StripControl::MATRIX_WIDTH][StripControl::MATRIX_HEIGHT] = {};
+        static uint8_t SF[StripControl::MATRIX_WIDTH][StripControl::MATRIX_HEIGHT] = {};
+        static uint32_t lastTime = 0U;
+
+        if (millis() - lastTime < static_cast<uint32_t>(FlickeringLightsDelays::CONFETTI_DELAY)) {
+            return;
+        }
+        lastTime = millis();
+
+        if (loadingFlag) {
+            memset8(&SF[0], 0, sizeof(SF));
+            memset8(&FF[0], 0, sizeof(FF));
+            loadingFlag = false;
+        }
+
+        for (byte i = 0U; i < 8U; i++) {
+            const auto x = static_cast<uint32_t>(ESP8266TrueRandom.random(0, static_cast<long>(StripControl::MATRIX_WIDTH)));
+            const auto y = static_cast<uint32_t>(ESP8266TrueRandom.random(0, static_cast<long>(StripControl::MATRIX_HEIGHT)));
+            if (SF[x][y] == 0U) {
+                SF[x][y] = 255U;
+                FF[x][y] = static_cast<uint8_t>(ESP8266TrueRandom.random(0, 255));
             }
         }
+
+        for (byte x = 0U; x < StripControl::MATRIX_WIDTH; x++) {
+            for (byte y = 0U; y < StripControl::MATRIX_HEIGHT; y++) {
+                if (SF[x][y] <= 30U) {
+                    SF[x][y] = 0U;
+                } else {
+                    SF[x][y] = (SF[x][y] <= 8U) ? static_cast<uint8_t>(0) : static_cast<uint8_t>(SF[x][y] - 8U);
+                    StripControl::leds[Effects::getIndex(x, y)] = CHSV(FF[x][y], 255U, SF[x][y]);
+                }
+            }
+        }
+        StripControl::show();
     }
-    stripShow();
-}
 
-static void drawLocalFlickeringLights() {
-    static uint32_t lastTime = 0;
+    void drawLocalFlickeringLights() {
+        static uint32_t lastTime = 0U;
 
-    if (millis() - lastTime < FLASH_LIGHT_DELAY)
-        return;
-    lastTime = millis();
+        if (millis() - lastTime < static_cast<uint32_t>(FlickeringLightsDelays::FLASH_LIGHT_DELAY)) {
+            return;
+        }
+        lastTime = millis();
 
-    fadeToBlackBy(leds, MATRIX_LEDS, 20);
-    leds[random16(MATRIX_LEDS)] += CHSV(HUE_PURPLE, 255, 255);
-    stripShow();
+        fadeToBlackBy(&StripControl::leds[0], static_cast<uint16_t>(StripControl::MATRIX_LEDS), 20U);
+        StripControl::leds[random16(static_cast<uint16_t>(StripControl::MATRIX_LEDS))] += CHSV(static_cast<uint8_t>(HUE_PURPLE), 255U, 255U);
+        StripControl::show();
+    }
 }

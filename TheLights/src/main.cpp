@@ -1,262 +1,278 @@
 #include <deque>
 
 #include "effects.h"
-#include "lightsServer.h"
-#include "lightsSettings.h"
+#include "settings.h"
+#include "commandsHandler.h"
+#include "localWifiServer.h"
 
-AppSettings settings;
-DeviceEffectsState deviceEffectsState;
+namespace Settings {
+    AppSettings settings;
+}
 
-CRGB leds[MATRIX_LEDS];
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(MATRIX_LEDS);
+namespace StripControl {
+    CRGB leds[MATRIX_LEDS];
+    NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(StripControl::MATRIX_LEDS);
+}
 
-static void initEffectAllModes(uint8_t empty);
-static void effectAllModes();
+namespace {
+    void initEffectAllModes(uint32_t empty);
+    void checkWifiAutoOff();
+    void effectAllModes();
 
-void (*modeFunctions[])(uint8_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
-        drawColorfulEffects, drawRunningLights,  drawJumpingLights, drawFlickeringLights,
-        drawWaterEffects,    drawWeatherEffects, drawGamesEffects,  drawSpaceEffects,
-        drawCanvasEffects,   drawRunningLine,    drawAnimations,    initEffectAllModes};
-static constexpr uint8_t GROUP_COUNT = std::size(modeFunctions);
+    void (*modeFunctions[])(uint32_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
+        &Effects::drawColorfulEffects,  &Effects::drawRunningLights, &Effects::drawJumpingLights,
+        &Effects::drawFlickeringLights, &Effects::drawWaterEffects,  &Effects::drawWeatherEffects,
+        &Effects::drawGamesEffects,     &Effects::drawSpaceEffects,  &Effects::drawCanvasEffects,
+        &Effects::drawRunningLine,      &Effects::drawAnimations,    &initEffectAllModes};
+    constexpr uint8_t GROUP_COUNT = std::size(modeFunctions);
+    
+    enum class EffectsGroups : uint8_t { // Главные группы эффектов. Порядок эффектов аналогичен андроид приложению
+        COLORFUL_EFFECTS, // (0) - Цветные эффекты
+        RUNNING_LIGHTS, // (1) - Бегущие огни
+        JUMPING_LIGHTS, // (2) - Прыгающие огоньки
+        FLICKERING_LIGHTS, // (3) - Мерцающие огни
+        WATER_EFFECTS, // (4) - Водные эффекты
+        WEATHER_EFFECTS, // (5) - Погодные эффекты
+        GAMES_EFFECTS, // (6) - Эффекты в виде игр
+        SPACE_EFFECTS, // (7) - Космос
+        CANVAS_EFFECTS, // (8) - Эффекты режима рисования
+        RUNNING_LINE, // (9) - Бегущая строка (текст)
+        ANIMATIONS, // (10) - Анимации
+    };
 
-enum EffectsGroupMode // Главные группы эффектов. Порядок эффектов аналогичен андроид приложению
-{
-    COLORFUL_EFFECTS, // (0) - Цветные эффекты
-    RUNNING_LIGHTS, // (1) - Бегущие огни
-    JUMPING_LIGHTS, // (2) - Прыгающие огоньки
-    FLICKERING_LIGHTS, // (3) - Мерцающие огни
-    WATER_EFFECTS, // (4) - Водные эффекты
-    WEATHER_EFFECTS, // (5) - Погодные эффекты
-    GAMES_EFFECTS, // (6) - Эффекты в виде игр
-    SPACE_EFFECTS, // (7) - Космос
-    CANVAS_EFFECTS, // (8) - Эффекты режима рисования
-    RUNNING_LINE, // (9) - Бегущая строка (текст)
-    ANIMATIONS, // (10) - Анимации
+    struct ModeConfig {
+        uint8_t effectsGroup;
+        uint8_t subMode;
+    };
+
+    constexpr ModeConfig mainModesData[] = {
+        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 0U}, // "Цветные пятна"
+        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 1U}, // "Световой шум"
+        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 2U}, // "Диагональные волны"
+        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 3U}, // "Крутящаяся радуга"
+        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 4U}, // "Радужная рябь"
+        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 5U}, // "Радуга волной"
+        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 6U}, // "Радуга змейкой"
+
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 0U}, // "Медленный огонек"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 1U}, // "Быстрый огонек"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 2U}, // "Цветной огонек"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 3U}, // "Цветная змейка"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 4U}, // "Бегущие огоньки #1"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 5U}, // "Бегущие огоньки #2"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 6U}, // "Бегущие огоньки #3"
+
+        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 0U}, // "Хаос"
+        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 1U}, // "Дрейфующая линия"
+        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 2U}, // "Прыгающие круги"
+        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 3U}, // "Прыгающий квадрат"
+        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 4U}, // "Прыгающие точки"
+
+        {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 0U}, // "Летящие огни"
+        {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 1U}, // "Конфетти"
+        {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 2U}, // "Мерцающие огни"
+
+        {static_cast<uint8_t>(EffectsGroups::WATER_EFFECTS), 0U}, // "Лагуна"
+        {static_cast<uint8_t>(EffectsGroups::WATER_EFFECTS), 1U}, // "Бассейн"
+
+        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 0U}, // "Снегопад"
+        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 1U}, // "Метель"
+        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 2U}, // "Дождь"
+        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 3U}, // "Ливень"
+
+        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 0U}, // "Игра змейка"
+        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 1U}, // "Тетрис"
+        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 2U}, // "Арканоид"
+        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 3U}, // "Космические корабли"
+        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 4U}, // "Эффект из к/ф матрица"
+
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 0U}, // "Звездное небо"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 1U}, // "Созвездия"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 2U}, // "Пульсирующая звезда"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 3U}, // "Затменные звезды"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 4U}, // "Метеоритный дождь"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 5U}, // "Спиральная туманность"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 6U}, // "Спиральная галактика"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 7U}, // "Фазы луны"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 8U}, // "Юпитер"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 9U}, // "Черная дыра"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 10U}, // "Северное сияние"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 11U}, // "Магнитные волны"
+        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 12U}, // "Интерференция лучей"
+
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 0U}, // "Полная заливка"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 1U}, // "Зеркальная заливка"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 2U}, // "Заливка линиями"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 3U}, // "Быстрая заливка змейкой"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 4U}, // "Медленная заливка змейкой"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 5U}, // "Цветная заливка змейкой"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 6U}, // "Цветное дыхание"
+
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 254U}, // "Все картинки подряд"
+        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 255U}, // "Все картинки беспорядочно"
+
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 0U}, // "С наступающим Новым годом"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 1U}, // "С Новым годом"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 2U}, // "Happy New Year"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 3U}, // "С Рождеством"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 4U}, // "Merry Christmas"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 5U}, // "Здесь могла быть ваша реклама"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 6U}, // "Привет, я умная гирлянда"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 7U}, // "ВВЕДИТЕ ТЕКСТ"
+        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 8U}, // "Поэма 'Медный всадник'"
+
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 0U}, // "Сердце"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 1U}, // Смайлик"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 2U}, // "Прыгающий человечек"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 3U}, // "Файербол"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 4U}, // "Взрыв"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 5U}, // "'С НОВЫМ ГОДОМ' на японском"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 6U}, // "Приветствие на корейском"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 7U}, // "Цифровой сигнал"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 8U}, // "Синусоида"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 9U}, // "Цветные синусоиды"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 10U}, // "Цветные линии #1"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 11U}, // "Цветные линии #2"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 12U}, // "Цветные линии #3"
+        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 13U}, // "Цветные линии #4"
 };
+    constexpr auto ALL_MODES_EFFECT_COUNT = std::size(mainModesData);
 
-struct ModeConfig {
-    uint8_t effectsGroup;
-    uint8_t subMode;
-};
+    uint32_t startingMillis = millis();
 
-constexpr ModeConfig mainModesData[] = {
-        {COLORFUL_EFFECTS, 0}, // "Цветные пятна"
-        {COLORFUL_EFFECTS, 1}, // "Световой шум"
-        {COLORFUL_EFFECTS, 2}, // "Диагональные волны"
-        {COLORFUL_EFFECTS, 3}, // "Крутящаяся радуга"
-        {COLORFUL_EFFECTS, 4}, // "Радужная рябь"
-        {COLORFUL_EFFECTS, 5}, // "Радуга волной"
-        {COLORFUL_EFFECTS, 6}, // "Радуга змейкой"
-
-        {RUNNING_LIGHTS, 0}, // "Медленный огонек"
-        {RUNNING_LIGHTS, 1}, // "Быстрый огонек"
-        {RUNNING_LIGHTS, 2}, // "Цветной огонек"
-        {RUNNING_LIGHTS, 3}, // "Цветная змейка"
-        {RUNNING_LIGHTS, 4}, // "Бегущие огоньки #1"
-        {RUNNING_LIGHTS, 5}, // "Бегущие огоньки #2"
-        {RUNNING_LIGHTS, 6}, // "Бегущие огоньки #3"
-
-        {JUMPING_LIGHTS, 0}, // "Хаос"
-        {JUMPING_LIGHTS, 1}, // "Дрейфующая линия"
-        {JUMPING_LIGHTS, 2}, // "Прыгающие круги"
-        {JUMPING_LIGHTS, 3}, // "Прыгающий квадрат"
-        {JUMPING_LIGHTS, 4}, // "Прыгающие точки"
-
-        {FLICKERING_LIGHTS, 0}, // "Летящие огни"
-        {FLICKERING_LIGHTS, 1}, // "Конфетти"
-        {FLICKERING_LIGHTS, 2}, // "Мерцающие огни"
-
-        {WATER_EFFECTS, 0}, // "Лагуна"
-        {WATER_EFFECTS, 1}, // "Бассейн"
-
-        {WEATHER_EFFECTS, 0}, // "Снегопад"
-        {WEATHER_EFFECTS, 1}, // "Метель"
-        {WEATHER_EFFECTS, 2}, // "Дождь"
-        {WEATHER_EFFECTS, 3}, // "Ливень"
-
-        {GAMES_EFFECTS, 0}, // "Игра змейка"
-        {GAMES_EFFECTS, 1}, // "Тетрис"
-        {GAMES_EFFECTS, 2}, // "Арканоид"
-        {GAMES_EFFECTS, 3}, // "Космические корабли"
-        {GAMES_EFFECTS, 4}, // "Эффект из к/ф матрица"
-
-        {SPACE_EFFECTS, 0}, // "Звездное небо"
-        {SPACE_EFFECTS, 1}, // "Созвездия"
-        {SPACE_EFFECTS, 2}, // "Пульсирующая звезда"
-        {SPACE_EFFECTS, 3}, // "Затменные звезды"
-        {SPACE_EFFECTS, 4}, // "Метеоритный дождь"
-        {SPACE_EFFECTS, 5}, // "Спиральная туманность"
-        {SPACE_EFFECTS, 6}, // "Спиральная галактика"
-        {SPACE_EFFECTS, 7}, // "Фазы луны"
-        {SPACE_EFFECTS, 8}, // "Юпитер"
-        {SPACE_EFFECTS, 9}, // "Черная дыра"
-        {SPACE_EFFECTS, 10}, // "Северное сияние"
-        {SPACE_EFFECTS, 11}, // "Магнитные волны"
-        {SPACE_EFFECTS, 12}, // "Интерференция лучей"
-
-        {CANVAS_EFFECTS, 0}, // "Полная заливка"
-        {CANVAS_EFFECTS, 1}, // "Зеркальная заливка"
-        {CANVAS_EFFECTS, 2}, // "Заливка линиями"
-        {CANVAS_EFFECTS, 3}, // "Быстрая заливка змейкой"
-        {CANVAS_EFFECTS, 4}, // "Медленная заливка змейкой"
-        {CANVAS_EFFECTS, 5}, // "Цветная заливка змейкой"
-        {CANVAS_EFFECTS, 6}, // "Цветное дыхание"
-
-        {CANVAS_EFFECTS, 254}, // "Все картинки подряд"
-        {CANVAS_EFFECTS, 255}, // "Все картинки беспорядочно"
-
-        {RUNNING_LINE, 0}, // "С наступающим Новым годом"
-        {RUNNING_LINE, 1}, // "С Новым годом"
-        {RUNNING_LINE, 2}, // "Happy New Year"
-        {RUNNING_LINE, 3}, // "С Рождеством"
-        {RUNNING_LINE, 4}, // "Merry Christmas"
-        {RUNNING_LINE, 5}, // "Здесь могла быть ваша реклама"
-        {RUNNING_LINE, 6}, // "Привет, я умная гирлянда"
-        {RUNNING_LINE, 7}, // "ВВЕДИТЕ ТЕКСТ"
-        {RUNNING_LINE, 8}, // "Поэма 'Медный всадник'"
-
-        {ANIMATIONS, 0}, // "Сердце"
-        {ANIMATIONS, 1}, // Смайлик"
-        {ANIMATIONS, 2}, // "Прыгающий человечек"
-        {ANIMATIONS, 3}, // "Файербол"
-        {ANIMATIONS, 4}, // "Взрыв"
-        {ANIMATIONS, 5}, // "'С НОВЫМ ГОДОМ' на японском"
-        {ANIMATIONS, 6}, // "Приветствие на корейском"
-        {ANIMATIONS, 7}, // "Цифровой сигнал"
-        {ANIMATIONS, 8}, // "Синусоида"
-        {ANIMATIONS, 9}, // "Цветные синусоиды"
-        {ANIMATIONS, 10}, // "Цветные линии #1"
-        {ANIMATIONS, 11}, // "Цветные линии #2"
-        {ANIMATIONS, 12}, // "Цветные линии #3"
-        {ANIMATIONS, 13}, // "Цветные линии #4"
-};
-constexpr auto ALL_MODES_EFFECT_COUNT = std::size(mainModesData);
-
-static uint32_t startingMillis = millis();
-
-void stripShow() {
-    const uint8_t globalBr = settings.globalBrightness;
-    for (uint16_t i = 0; i < MATRIX_LEDS; i++) {
-        CRGB c = leds[i];
-        if (globalBr < 255)
-            c.nscale8_video(globalBr);
-        strip.SetPixelColor(i, RgbColor(c.r, c.g, c.b));
-    }
-    strip.Show();
-}
-
-static void initEffectAllModes(uint8_t empty) {
-    deviceEffectsState.currentIndex = 255;
-    deviceEffectsState.isAllModesEnable = true;
-    deviceEffectsState.effectsGroup = 255;
-    deviceEffectsState.effectSubmode = 255;
-}
-
-void setup() {
-    if (!loadSettings()) {
-        return;
-    }
-
-    initRunningLine();
-    initLightServer();
-
-    if (settings.startingEffectsGroup != 255) // Сохранен стартовый режим
-    {
-        deviceEffectsState.effectsGroup = settings.startingEffectsGroup;
-        deviceEffectsState.effectSubmode = settings.startingEffectSubmode;
-        deviceEffectsState.currentIndex = 255;
-    }
-
-    // Serial.begin(9600);
-    // Serial.println(deviceEffectsState.effectsGroup);
-    // Serial.println(deviceEffectsState.effectSubmode);
-
-    strip.Begin();
-    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-    strip.Show();
-
-    delay(100);
-}
-
-void loop() {
-    static uint32_t lastMillis = 0;
-    const uint32_t currentMillis = millis();
-
-    checkLightServer();
-
-    if (deviceEffectsState.isAllModesEnable) {
-        effectAllModes();
-    }
-
-    if (deviceEffectsState.isScreenClearEnable) {
-        deviceEffectsState.isScreenClearEnable = false;
-        fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-        stripShow();
-        return;
-    }
-
-    if (deviceEffectsState.effectsGroup < GROUP_COUNT) {
-        modeFunctions[deviceEffectsState.effectsGroup](deviceEffectsState.effectSubmode);
-    }
-
-    if (deviceEffectsState.isWifiActive && currentMillis - lastMillis >= 1000) {
-        lastMillis = currentMillis;
-        if (settings.isWifiAutoOffEnable) {
-            if (currentMillis - startingMillis >= 180000) {
-                WiFi.softAPdisconnect(true);
-                deviceEffectsState.isWifiActive = false;
-            }
-        }
+    void initEffectAllModes(uint32_t empty) {
+        Effects::state.currentIndex = 255U;
+        Effects::state.isAllModesEnable = true;
+        Effects::state.effectsGroup = 255U;
+        Effects::state.effectSubmode = 255U;
     }
 }
 
-static void effectAllModes() {
-    static std::deque<uint8_t> usedEffects;
-    static uint32_t prevTime = 0;
-    static uint8_t randomCounter = 0;
-    static uint32_t allModeDelayLocal = settings.allModeDelay;
-    static uint8_t allModesWorkTypeLocal = settings.allModesWorkType;
-
-    if (const uint32_t currentTime = millis();
-        deviceEffectsState.currentIndex == 255 || currentTime - prevTime >= allModeDelayLocal) {
-
-        sendVirtualCommand();
-
-        if (deviceEffectsState.currentIndex == 255) {
-            deviceEffectsState.currentIndex = 0;
+    void setup() {
+        if (!Settings::loadSettings()) {
+            return;
         }
 
-        prevTime = currentTime;
+        Effects::initRunningLine();
+        LocalWifiServer::initLightServer();
 
-        if (allModesWorkTypeLocal == 1) {
-            if (deviceEffectsState.currentIndex >= ALL_MODES_EFFECT_COUNT) {
-                deviceEffectsState.currentIndex = 0;
-            }
-
-            deviceEffectsState.effectsGroup = mainModesData[deviceEffectsState.currentIndex].effectsGroup;
-            deviceEffectsState.effectSubmode = mainModesData[deviceEffectsState.currentIndex].subMode;
-
-            deviceEffectsState.currentIndex += 1;
-        } else {
-            randomCounter = 0;
-            do {
-                deviceEffectsState.currentIndex = ESP8266TrueRandom.random(0, ALL_MODES_EFFECT_COUNT);
-                randomCounter++;
-                /// ДОБАВИТЬ ПРОПОРЦИОНАЛЬНОСТЬ!!!!!
-                if (randomCounter > 30)
-                    break;
-            } while (std::find(usedEffects.begin(), usedEffects.end(), deviceEffectsState.currentIndex) !=
-                     usedEffects.end());
-
-            usedEffects.push_back(deviceEffectsState.currentIndex);
-            if (usedEffects.size() > 40) // Размер истории используемых эффектов
-            {
-                usedEffects.pop_front();
-            }
-
-            deviceEffectsState.effectsGroup = mainModesData[deviceEffectsState.currentIndex].effectsGroup;
-            deviceEffectsState.effectSubmode = mainModesData[deviceEffectsState.currentIndex].subMode;
+        if (Settings::settings.startingEffectsGroup != 255U) // Сохранен стартовый режим
+        {
+            Effects::state.effectsGroup = Settings::settings.startingEffectsGroup;
+            Effects::state.effectSubmode = Settings::settings.startingEffectSubmode;
+            Effects::state.currentIndex = 255U;
         }
-        deviceEffectsState.isScreenClearEnable = true;
+
+        // Serial.begin(9600);
+        // Serial.println(state.effectsGroup);
+        // Serial.println(state.effectSubmode);
+
+        StripControl::strip.Begin();
+        fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+        StripControl::strip.Show();
+
+        delay(1500U);
+    }
+
+    void loop() {
+        LocalWifiServer::checkLightServer();
+
+        if (Effects::state.isAllModesEnable) {
+            effectAllModes();
+        }
+
+        if (Effects::state.isScreenClearEnable) {
+            Effects::state.isScreenClearEnable = false;
+            fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+            StripControl::show();
+            return;
+        }
+
+        if (Effects::state.effectsGroup < GROUP_COUNT) {
+            modeFunctions[Effects::state.effectsGroup](Effects::state.effectSubmode);
+        }
+
+        checkWifiAutoOff();
+    }
+
+namespace {
+    void checkWifiAutoOff() {
+        static uint32_t lastMillis = 0U;
+
+        if (const uint32_t currentMillis = millis();
+            Effects::state.isWifiActive && currentMillis - lastMillis >= 1000U) {
+            lastMillis = currentMillis;
+            if (Settings::settings.isWifiAutoOffEnable) {
+                if (currentMillis - startingMillis >= 180000U) {
+                    (void)WiFi.softAPdisconnect(true);
+                    Effects::state.isWifiActive = false;
+                }
+            }
+            }
+    }
+
+    void effectAllModes() {
+        static std::deque<uint8_t> usedEffects;
+        static uint32_t prevTime = 0U;
+        static uint8_t randomCounter = 0U;
+        static uint32_t allModeDelayLocal = 2000U;
+        static uint8_t allModesWorkTypeLocal = Settings::settings.allModesWorkType;
+
+        if (const uint32_t currentTime = millis();
+            Effects::state.currentIndex == 255U || currentTime - prevTime >= allModeDelayLocal) {
+
+            CommandsHandler::sendVirtualCommand();
+
+            if (Effects::state.currentIndex == 255U) {
+                Effects::state.currentIndex = 0U;
+            }
+
+            prevTime = currentTime;
+
+            if (allModesWorkTypeLocal == 1U) {
+                if (Effects::state.currentIndex >= ALL_MODES_EFFECT_COUNT) {
+                    Effects::state.currentIndex = 0U;
+                }
+
+                Effects::state.effectsGroup = mainModesData[Effects::state.currentIndex].effectsGroup;
+                Effects::state.effectSubmode = mainModesData[Effects::state.currentIndex].subMode;
+
+                Effects::state.currentIndex += 1;
+            } else {
+                randomCounter = 0U;
+                do {
+                    Effects::state.currentIndex = static_cast<uint8_t>(ESP8266TrueRandom.random(0, static_cast<int32_t>(ALL_MODES_EFFECT_COUNT)));
+                    randomCounter++;
+                    /// ДОБАВИТЬ ПРОПОРЦИОНАЛЬНОСТЬ!!!!!
+                    if (randomCounter > 60U)
+                        {break;}
+                } while (std::find(usedEffects.begin(), usedEffects.end(),
+                                   Effects::state.currentIndex) !=
+                         usedEffects.end());
+
+                usedEffects.push_back(Effects::state.currentIndex);
+                if (usedEffects.size() > 55U) // Размер истории используемых эффектов
+                {
+                    usedEffects.pop_front();
+                }
+
+                Effects::state.effectsGroup = mainModesData[Effects::state.currentIndex].effectsGroup;
+                Effects::state.effectSubmode = mainModesData[Effects::state.currentIndex].subMode;
+            }
+            Effects::state.isScreenClearEnable = true;
+            }
+    }
+}
+
+namespace StripControl {
+    void show() {
+        const uint8_t globalBr = Settings::settings.globalBrightness;
+        for (uint16_t i = 0U; i < StripControl::MATRIX_LEDS; i++) {
+            CRGB c = StripControl::leds[i];
+            if (globalBr < 255U)
+            {(void) c.nscale8_video(globalBr);}
+            strip.SetPixelColor(i, RgbColor(c.r, c.g, c.b));
+        }
+        strip.Show();
     }
 }

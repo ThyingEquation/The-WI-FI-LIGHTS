@@ -3,320 +3,383 @@
 /*
   Эта группа эффектов для любого размера матриц
 
-  Настраиваемые параметры (JumpingLightsSettings):
+  Настраиваемые параметры (JumpingLightsDelays):
     1) Скорости эффектов
 */
 
-enum JumpingLightsSettings { JUMPING_SQUARE_DELAY = 90, JUMPING_POINTS_DELAY = 60 };
+namespace {
+    enum class JumpingLightsDelays : uint16_t { JUMPING_SQUARE_DELAY = 90U, JUMPING_POINTS_DELAY = 60U };
 
-static void drawChaos();
-static void drawDriftingLine();
-static void drawJumpingCircle();
-static void drawJumpingSquare();
-static void drawJumpingPoints();
+    void drawChaos();
+    void drawDriftingLine();
+    void drawJumpingCircle();
+    void drawJumpingSquare();
+    void drawJumpingPoints();
 
-static void initPoints();
+    void initPoints();
 
-static int8_t pos[2][8];
-static int8_t dir[8];
-static byte hue6;
+    int8_t pos[2][8];
+    int8_t dir[8];
+    uint8_t hue6;
 
-struct Point {
-    int16_t x;
-    int16_t y;
-    CRGB color;
-    int16_t directionX;
-    int16_t directionY;
-};
+    struct Point {
+        int16_t x{0};
+        int16_t y{0};
+        CRGB color{CRGB::Black};
+        int16_t directionX{0};
+        int16_t directionY{0};
+    };
 
-static Point points[6];
+    Point points[6];
+} // namespace
 
-void drawJumpingLights(const uint8_t subMode) {
-    static uint8_t firstStartPoints = 0;
-    switch (subMode) {
-        case 0:
-            drawChaos();
-            break;
+namespace Effects {
+    void drawJumpingLights(const uint32_t subMode) {
+        static uint8_t firstStartPoints = 0U;
+        switch (subMode) {
+            case 0U:
+                drawChaos();
+                break;
 
-        case 1:
-            drawDriftingLine();
-            break;
+            case 1U:
+                drawDriftingLine();
+                break;
 
-        case 2:
-            drawJumpingCircle();
-            break;
+            case 2U:
+                drawJumpingCircle();
+                break;
 
-        case 3:
-            drawJumpingSquare();
-            break;
+            case 3U:
+                drawJumpingSquare();
+                break;
 
-        case 4:
-            if (firstStartPoints == 0) {
-                initPoints();
-                firstStartPoints = 1;
-            }
-            drawJumpingPoints();
-            break;
+            case 4U:
+                if (firstStartPoints == 0U) {
+                    initPoints();
+                    firstStartPoints = 1U;
+                }
+                drawJumpingPoints();
+                break;
 
-        default:
-            break;
+            default:
+                break;
+        }
     }
-}
 
-void drawPixel(const float x, const float y, const CRGB &color) {
-    if (x < 0 || y < 0 || x > static_cast<float>(MATRIX_WIDTH) - 1 || y > static_cast<float>(MATRIX_HEIGHT) - 1)
-        return;
+    void drawPixel(const float x, const float y, const CRGB &color) {
+        if (x < 0.0F || y < 0.0F || x >= static_cast<float>(StripControl::MATRIX_WIDTH) ||
+            y >= static_cast<float>(StripControl::MATRIX_HEIGHT)) {
+            return;
+        }
 
-    const uint8_t xx = (x - static_cast<int16_t>(x)) * 255;
-    const uint8_t yy = (y - static_cast<int16_t>(y)) * 255;
-    const uint8_t ix = 255 - xx;
-    const uint8_t iy = 255 - yy;
+        const auto x_int = static_cast<int16_t>(x);
+        const auto y_int = static_cast<int16_t>(y);
 
-#define WU_WEIGHT(a, b) ((uint8_t) (((a) * (b) + (a) + (b)) >> 8))
-    const uint8_t wu[4] = {WU_WEIGHT(ix, iy), WU_WEIGHT(xx, iy), WU_WEIGHT(ix, yy), WU_WEIGHT(xx, yy)};
+        const auto xx = static_cast<uint8_t>((x - static_cast<float>(x_int)) * 255.0F);
+        const auto yy = static_cast<uint8_t>((y - static_cast<float>(y_int)) * 255.0F);
+        const auto ix = static_cast<uint8_t>(255U - static_cast<uint16_t>(xx));
+        const auto iy = static_cast<uint8_t>(255U - static_cast<uint16_t>(yy));
 
-    for (uint8_t i = 0; i < 4; i++) {
-        const int16_t xn = x + (i & 1);
-        const int16_t yn = y + (i >> 1 & 1);
-        CRGB clr = leds[xyToIndex(xn, yn)];
-        if (xn < static_cast<int16_t>(MATRIX_WIDTH) - 1 && yn < static_cast<int16_t>(MATRIX_HEIGHT) - 1 && yn > 0 &&
-            xn > 0) {
-            clr.r = qadd8(clr.r, (color.r * wu[i]) >> 8);
-            clr.g = qadd8(clr.g, (color.g * wu[i]) >> 8);
-            clr.b = qadd8(clr.b, (color.b * wu[i]) >> 8);
+        auto wuWeight = [](const uint8_t a, const uint8_t b) -> uint8_t {
+            const auto av = static_cast<uint16_t>(a);
+            const auto bv = static_cast<uint16_t>(b);
+            return static_cast<uint8_t>((av * bv + av + bv) >> 8U);
+        };
+
+        const uint8_t wu[4] = {wuWeight(ix, iy), wuWeight(xx, iy), wuWeight(ix, yy), wuWeight(xx, yy)};
+
+        for (uint8_t i = 0U; i < 4U; i++) {
+            const auto xn = static_cast<int16_t>(static_cast<int16_t>(x_int) + static_cast<int16_t>(i & 1U));
+            const auto yn = static_cast<int16_t>(static_cast<int16_t>(y_int) + static_cast<int16_t>((i >> 1U) & 1U));
+
+            if (xn < 0 || xn >= static_cast<int16_t>(StripControl::MATRIX_WIDTH) || yn < 0 ||
+                yn >= static_cast<int16_t>(StripControl::MATRIX_HEIGHT)) {
+                continue;
+            }
+
+            const auto ledIndex = static_cast<uint16_t>(getIndex(static_cast<uint32_t>(xn), static_cast<uint32_t>(yn)));
+            CRGB clr = StripControl::leds[ledIndex];
+
+            if (xn < static_cast<int16_t>(StripControl::MATRIX_WIDTH - 1U) &&
+                yn < static_cast<int16_t>(StripControl::MATRIX_HEIGHT - 1U) && yn > 0 && xn > 0) {
+                clr.r = qadd8(clr.r, static_cast<uint8_t>(
+                                             (static_cast<uint16_t>(color.r) * static_cast<uint16_t>(wu[i])) >> 8U));
+                clr.g = qadd8(clr.g, static_cast<uint8_t>(
+                                             (static_cast<uint16_t>(color.g) * static_cast<uint16_t>(wu[i])) >> 8U));
+                clr.b = qadd8(clr.b, static_cast<uint8_t>(
+                                             (static_cast<uint16_t>(color.b) * static_cast<uint16_t>(wu[i])) >> 8U));
+            } else {
+                clr.r = qadd8(clr.r, static_cast<uint8_t>((static_cast<uint16_t>(color.r) * 85U) >> 8U));
+                clr.g = qadd8(clr.g, static_cast<uint8_t>((static_cast<uint16_t>(color.g) * 85U) >> 8U));
+                clr.b = qadd8(clr.b, static_cast<uint8_t>((static_cast<uint16_t>(color.b) * 85U) >> 8U));
+            }
+
+            StripControl::leds[ledIndex] = clr;
+        }
+    }
+} // namespace Effects
+
+namespace {
+    void move(const uint8_t id) {
+        switch (dir[id]) {
+            case 0:
+                pos[1][id]++;
+                break;
+            case 1:
+                pos[0][id]++;
+                break;
+            case 2:
+                pos[1][id]--;
+                break;
+            case 3:
+                pos[0][id]--;
+                break;
+            default:
+                break;
+        }
+    }
+
+    void check1(const uint8_t id) {
+        const auto idx = static_cast<uint16_t>(static_cast<int16_t>(pos[1][id]) *
+                                                       static_cast<int16_t>(StripControl::MATRIX_WIDTH) +
+                                               static_cast<int16_t>(pos[0][id]));
+
+        if (StripControl::leds[idx] == CRGB(0U, 0U, 0U)) {
+            StripControl::leds[Effects::getIndex(static_cast<uint16_t>(pos[0][id]),
+                                                 static_cast<uint16_t>(pos[1][id]))] = CHSV(hue6, 255U, 255U);
         } else {
-            clr.r = qadd8(clr.r, (color.r * 85) >> 8);
-            clr.g = qadd8(clr.g, (color.g * 85) >> 8);
-            clr.b = qadd8(clr.b, (color.b * 85) >> 8);
-        }
-        leds[xyToIndex(xn, yn)] = clr;
-    }
-#undef WU_WEIGHT
-}
-
-static void move(const byte id) {
-    switch (dir[id]) {
-        case 0:
-            pos[1][id]++;
-            break;
-        case 1:
-            pos[0][id]++;
-            break;
-        case 2:
-            pos[1][id]--;
-            break;
-        case 3:
-            pos[0][id]--;
-            break;
-        default:;
-    }
-}
-
-static void check1(const byte id) {
-    if (leds[pos[1][id] * MATRIX_WIDTH + pos[0][id]] == CRGB(0, 0, 0))
-        leds[xyToIndex(pos[0][id], pos[1][id])] = CHSV(hue6, 255, 255);
-    else
-        leds[xyToIndex(pos[0][id], pos[1][id])] = 0;
-}
-
-static void check2(const byte id) {
-    if (leds[pos[1][id] * MATRIX_WIDTH + pos[0][id]] == CRGB(0, 0, 0)) {
-        dir[id]++;
-    } else {
-        dir[id]--;
-    }
-
-    if (dir[id] > 3) {
-        dir[id] = 0;
-    } else if (dir[id] < 0) {
-        dir[id] = 3;
-    }
-}
-
-static void check3(const byte id) {
-    if (pos[0][id] > MATRIX_WIDTH - 1) {
-        pos[0][id] = 0;
-    }
-    if (pos[1][id] > MATRIX_HEIGHT - 1) {
-        pos[1][id] = 0;
-    }
-    if (pos[0][id] < 0) {
-        pos[0][id] = MATRIX_WIDTH - 1;
-    }
-    if (pos[1][id] < 0) {
-        pos[1][id] = MATRIX_HEIGHT - 1;
-    }
-}
-
-static void drawChaos() {
-    static bool setUp = true;
-    static uint32_t lastTime = 0;
-
-    if (millis() - lastTime < 100)
-        return;
-    lastTime = millis();
-
-    if (setUp) {
-        setUp = false;
-
-        fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-        stripShow();
-
-        for (byte i = 0; i < 8; i++) {
-            pos[0][i] = ESP8266TrueRandom.random(0, MATRIX_HEIGHT);
-            pos[1][i] = ESP8266TrueRandom.random(0, MATRIX_WIDTH);
-            dir[i] = ESP8266TrueRandom.random(0, 3);
+            StripControl::leds[Effects::getIndex(static_cast<uint16_t>(pos[0][id]),
+                                                 static_cast<uint16_t>(pos[1][id]))] = CRGB::Black;
         }
     }
 
-    for (byte i = 0; i < 8; i++) {
-        check1(i);
-        move(i);
-        check3(i);
-        check2(i);
+    void check2(const uint8_t id) {
+        const auto idx = static_cast<uint16_t>(static_cast<int16_t>(pos[1][id]) *
+                                                       static_cast<int16_t>(StripControl::MATRIX_WIDTH) +
+                                               static_cast<int16_t>(pos[0][id]));
+
+        if (StripControl::leds[idx] == CRGB(0U, 0U, 0U)) {
+            dir[id]++;
+        } else {
+            dir[id]--;
+        }
+
+        if (dir[id] > 3) {
+            dir[id] = 0;
+        } else if (dir[id] < 0) {
+            dir[id] = 3;
+        } else {
+            // dir[id] already in range, no action needed
+        }
     }
 
-    hue6++;
-
-    EVERY_N_SECONDS(8) { setUp = true; }
-    stripShow();
-}
-
-static void drawCurve(const float x, const float y, const float x2, const float y2, const float x3, const float y3,
-                      const CRGB coll) {
-    for (float u = 0.0; u <= 1.0; u += 0.02) {
-        const float invU = 1.0 - u;
-        const float b0 = invU * invU;
-        const float b1 = 2 * invU * u;
-        const float b2 = u * u;
-
-        const float xu = b0 * x + b1 * x2 + b2 * x3;
-        const float yu = b0 * y + b1 * y2 + b2 * y3;
-
-        drawPixel(xu, yu, coll);
+    void check3(const uint8_t id) {
+        if (pos[0][id] > static_cast<int8_t>(StripControl::MATRIX_WIDTH - 1U)) {
+            pos[0][id] = 0;
+        }
+        if (pos[1][id] > static_cast<int8_t>(StripControl::MATRIX_HEIGHT - 1U)) {
+            pos[1][id] = 0;
+        }
+        if (pos[0][id] < 0) {
+            pos[0][id] = static_cast<int8_t>(StripControl::MATRIX_WIDTH - 1U);
+        }
+        if (pos[1][id] < 0) {
+            pos[1][id] = static_cast<int8_t>(StripControl::MATRIX_HEIGHT - 1U);
+        }
     }
-}
 
-static void drawDriftingLine() {
-    static byte hue;
+    void drawChaos() {
+        static bool setUp = true;
+        static uint32_t lastTime = 0U;
 
-    fadeToBlackBy(leds, MATRIX_LEDS, 30);
-    const byte x1 = beatsin8(18, 0, MATRIX_WIDTH - 1);
-    const byte x2 = beatsin8(23, 0, MATRIX_WIDTH - 1);
-    const byte x3 = beatsin8(27, 0, MATRIX_WIDTH - 1);
+        if ((millis() - lastTime) < 100U) {
+            return;
+        }
+        lastTime = millis();
 
-    const byte y1 = beatsin8(20, 0, MATRIX_HEIGHT - 1);
-    const byte y2 = beatsin8(26, 0, MATRIX_HEIGHT - 1);
-    const byte y3 = beatsin8(15, 0, MATRIX_HEIGHT - 1);
+        if (setUp) {
+            setUp = false;
 
-    drawCurve(x1, y1, x2, y2, x3, y3, CHSV(hue, 255, 255));
-    hue++;
-    stripShow();
-}
+            fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+            StripControl::show();
 
-static void drawJumpingCircle() {
-    static XYMap xyMap(MATRIX_WIDTH, MATRIX_HEIGHT);
+            for (uint8_t i = 0U; i < 8U; i++) {
+                pos[0][i] = static_cast<int8_t>(
+                        ESP8266TrueRandom.random(0, static_cast<int32_t>(StripControl::MATRIX_HEIGHT)));
+                pos[1][i] = static_cast<int8_t>(
+                        ESP8266TrueRandom.random(0, static_cast<int32_t>(StripControl::MATRIX_WIDTH)));
+                dir[i] = static_cast<int8_t>(ESP8266TrueRandom.random(0, 3));
+            }
+        }
 
-    for (byte i = 8; i--;) {
-        leds[xyToIndex(beatsin8(12 + i, 0, MATRIX_WIDTH - 1), beatsin8(15 - i, 0, MATRIX_HEIGHT - 1))] =
-                CHSV(beatsin8(12, 0, 255), 255, 255);
-        blur2d(leds, MATRIX_WIDTH, MATRIX_HEIGHT, 16, xyMap);
+        for (uint8_t i = 0U; i < 8U; i++) {
+            check1(i);
+            move(i);
+            check3(i);
+            check2(i);
+        }
+
+        hue6++;
+
+        EVERY_N_SECONDS(8U) { setUp = true; }
+        StripControl::show();
     }
-    stripShow();
-}
 
-static void drawJumpingSquare() {
-    static float squareX = 0;
-    static float squareY = 0;
-    static float directionX = 1.0f;
-    static float directionY = 0.95f;
-    static CRGB squareColor = CRGB::Red;
-    static uint32_t lastTime = 0;
+    void drawCurve(const float x, const float y, const float x2, const float y2, const float x3, const float y3,
+                   const CRGB coll) {
+        constexpr uint32_t STEPS = 50U;
+        for (uint32_t step = 0U; step <= STEPS; step++) {
+            const float u = static_cast<float>(step) / static_cast<float>(STEPS);
+            const float invU = 1.0F - u;
+            const float b0 = invU * invU;
+            const float b1 = 2.0F * invU * u;
+            const float b2 = u * u;
 
-    if (millis() - lastTime < JUMPING_SQUARE_DELAY)
-        return;
-    lastTime = millis();
+            const float xu = b0 * x + b1 * x2 + b2 * x3;
+            const float yu = b0 * y + b1 * y2 + b2 * y3;
 
-    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
+            Effects::drawPixel(xu, yu, coll);
+        }
+    }
 
-    for (uint8_t i = 0; i < 3; i++) {
-        for (uint8_t j = 0; j < 3; j++) {
-            if (const uint16_t ledIndex = xyToIndex(squareX + i, squareY + j); ledIndex < MATRIX_LEDS) {
-                leds[ledIndex] = squareColor;
+    void drawDriftingLine() {
+        static uint8_t hue = 0U;
+
+        fadeToBlackBy(&StripControl::leds[0], static_cast<uint16_t>(StripControl::MATRIX_LEDS), 30U);
+        const uint8_t x1 = beatsin8(18U, 0U, static_cast<uint8_t>(StripControl::MATRIX_WIDTH - 1U));
+        const uint8_t x2 = beatsin8(23U, 0U, static_cast<uint8_t>(StripControl::MATRIX_WIDTH - 1U));
+        const uint8_t x3 = beatsin8(27U, 0U, static_cast<uint8_t>(StripControl::MATRIX_WIDTH - 1U));
+
+        const uint8_t y1 = beatsin8(20U, 0U, static_cast<uint8_t>(StripControl::MATRIX_HEIGHT - 1U));
+        const uint8_t y2 = beatsin8(26U, 0U, static_cast<uint8_t>(StripControl::MATRIX_HEIGHT - 1U));
+        const uint8_t y3 = beatsin8(15U, 0U, static_cast<uint8_t>(StripControl::MATRIX_HEIGHT - 1U));
+
+        drawCurve(static_cast<float>(x1), static_cast<float>(y1), static_cast<float>(x2), static_cast<float>(y2),
+                  static_cast<float>(x3), static_cast<float>(y3), CHSV(hue, 255U, 255U));
+        hue++;
+        StripControl::show();
+    }
+
+    void drawJumpingCircle() {
+        static XYMap xyMap(static_cast<uint16_t>(StripControl::MATRIX_WIDTH),
+                           static_cast<uint16_t>(StripControl::MATRIX_HEIGHT));
+
+        for (uint32_t i = 8U; i-- > 0U;) {
+            StripControl::leds[Effects::getIndex(
+                    beatsin8(static_cast<uint8_t>(12U + i), 0U, static_cast<uint8_t>(StripControl::MATRIX_WIDTH - 1U)),
+                    beatsin8(static_cast<uint8_t>(15U - i), 0U,
+                             static_cast<uint8_t>(StripControl::MATRIX_HEIGHT - 1U)))] =
+                    CHSV(beatsin8(12U, 0U, 255U), 255U, 255U);
+            blur2d(&StripControl::leds[0], static_cast<uint8_t>(StripControl::MATRIX_WIDTH),
+                   static_cast<uint8_t>(StripControl::MATRIX_HEIGHT), 16U, xyMap);
+        }
+        StripControl::show();
+    }
+
+    void drawJumpingSquare() {
+        static float squareX = 0.0F;
+        static float squareY = 0.0F;
+        static float directionX = 1.0F;
+        static float directionY = 0.95F;
+        static CRGB squareColor = CRGB::Red;
+        static uint32_t lastTime = 0U;
+
+        if ((millis() - lastTime) < static_cast<uint32_t>(JumpingLightsDelays::JUMPING_SQUARE_DELAY)) {
+            return;
+        }
+        lastTime = millis();
+
+        fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+
+        for (uint8_t i = 0U; i < 3U; i++) {
+            for (uint8_t j = 0U; j < 3U; j++) {
+                const float fx = squareX + static_cast<float>(i);
+                const float fy = squareY + static_cast<float>(j);
+                if (fx >= 0.0F && fy >= 0.0F) {
+                    if (const uint32_t ledIndex =
+                                Effects::getIndex(static_cast<uint32_t>(fx), static_cast<uint32_t>(fy));
+                        ledIndex < StripControl::MATRIX_LEDS) {
+                        StripControl::leds[ledIndex] = squareColor;
+                    }
+                }
+            }
+        }
+        StripControl::show();
+
+        squareX += directionX;
+        squareY += directionY;
+
+        if ((squareX + 3.0F) >= static_cast<float>(StripControl::MATRIX_WIDTH) || squareX < 0.0F) {
+            directionX = -directionX;
+            squareX = (squareX < 0.0F) ? 0.0F : static_cast<float>(StripControl::MATRIX_WIDTH - 3U);
+        }
+        if ((squareY + 3.0F) >= static_cast<float>(StripControl::MATRIX_HEIGHT) || squareY < 0.0F) {
+            directionY = -directionY;
+            squareY = (squareY < 0.0F) ? 0.0F : static_cast<float>(StripControl::MATRIX_HEIGHT - 3U);
+        }
+
+        static uint8_t frameCount = 0U;
+        frameCount++;
+        if (frameCount >= 50U) {
+            squareColor = CHSV(random8(), 255U, 255U);
+            frameCount = 0U;
+        }
+    }
+
+    void initPoints() {
+        for (auto &pt: points) {
+            pt.x = static_cast<int16_t>(ESP8266TrueRandom.random(0, static_cast<int32_t>(StripControl::MATRIX_WIDTH)));
+            pt.y = static_cast<int16_t>(ESP8266TrueRandom.random(0, static_cast<int32_t>(StripControl::MATRIX_HEIGHT)));
+            pt.color = CHSV(random8(), 255U, 255U);
+            pt.directionX = (ESP8266TrueRandom.random(0, 2) == 0) ? static_cast<int16_t>(1) : static_cast<int16_t>(-1);
+            pt.directionY = (ESP8266TrueRandom.random(0, 2) == 0) ? static_cast<int16_t>(1) : static_cast<int16_t>(-1);
+        }
+    }
+
+    void drawJumpingPoints() {
+        static uint32_t lastTime = 0U;
+
+        if ((millis() - lastTime) < static_cast<uint32_t>(JumpingLightsDelays::JUMPING_POINTS_DELAY)) {
+            return;
+        }
+        lastTime = millis();
+
+        fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+
+        for (const auto &pt: points) {
+            if (const auto ledIndex = static_cast<uint16_t>(
+                        Effects::getIndex(static_cast<uint32_t>(pt.x), static_cast<uint32_t>(pt.y)));
+                ledIndex < StripControl::MATRIX_LEDS) {
+                StripControl::leds[ledIndex] = pt.color;
+            }
+        }
+        StripControl::show();
+
+        for (auto &pt: points) {
+            pt.x = static_cast<int16_t>(pt.x + pt.directionX);
+            pt.y = static_cast<int16_t>(pt.y + pt.directionY);
+
+            if (pt.x >= static_cast<int16_t>(StripControl::MATRIX_WIDTH) || pt.x < 0) {
+                pt.directionX = static_cast<int16_t>(-pt.directionX);
+                if (random8(10U) > 7U) {
+                    pt.directionY = (random8(2U) == 0U) ? static_cast<int16_t>(1) : static_cast<int16_t>(-1);
+                }
+                pt.x = (pt.x < 0) ? static_cast<int16_t>(0) : static_cast<int16_t>(StripControl::MATRIX_WIDTH - 1U);
+            }
+
+            if (pt.y >= static_cast<int16_t>(StripControl::MATRIX_HEIGHT) || pt.y < 0) {
+                pt.directionY = static_cast<int16_t>(-pt.directionY);
+                if (random8(10U) > 7U) {
+                    pt.directionX = (random8(2U) == 0U) ? static_cast<int16_t>(1) : static_cast<int16_t>(-1);
+                }
+                pt.y = (pt.y < 0) ? static_cast<int16_t>(0) : static_cast<int16_t>(StripControl::MATRIX_HEIGHT - 1U);
+            }
+        }
+
+        for (auto &pt: points) {
+            if (random8(20U) == 0U) {
+                pt.color = CHSV(random8(), 255U, 255U);
             }
         }
     }
-    stripShow();
-
-    squareX += directionX;
-    squareY += directionY;
-
-    if (squareX + 3 >= MATRIX_WIDTH || squareX < 0) {
-        directionX = -directionX;
-        squareX = max(static_cast<float>(0), min(squareX, static_cast<float>(MATRIX_WIDTH - 3)));
-    }
-    if (squareY + 3 >= MATRIX_HEIGHT || squareY < 0) {
-        directionY = -directionY;
-        squareY = max(static_cast<float>(0), min(squareY, static_cast<float>(MATRIX_HEIGHT - 3)));
-    }
-
-    static uint8_t frameCount = 0;
-    if (++frameCount >= 50) {
-        squareColor = CHSV(random8(), 255, 255);
-        frameCount = 0;
-    }
-}
-
-static void initPoints() {
-    for (uint8_t i = 0; i < 6; i++) {
-        points[i].x = ESP8266TrueRandom.random(0, MATRIX_WIDTH);
-        points[i].y = ESP8266TrueRandom.random(0, MATRIX_HEIGHT);
-        points[i].color = CHSV(random8(), 255, 255);
-        points[i].directionX = ESP8266TrueRandom.random(0, 2) == 0 ? 1 : -1;
-        points[i].directionY = ESP8266TrueRandom.random(0, 2) == 0 ? 1 : -1;
-    }
-}
-
-static void drawJumpingPoints() {
-    static uint32_t lastTime = 0;
-
-    if (millis() - lastTime < JUMPING_POINTS_DELAY)
-        return;
-    lastTime = millis();
-
-    fill_solid(leds, MATRIX_LEDS, CRGB::Black);
-
-    for (uint8_t i = 0; i < 6; i++) {
-        if (const uint16_t ledIndex = xyToIndex(points[i].x, points[i].y); ledIndex < MATRIX_LEDS) {
-            leds[ledIndex] = points[i].color;
-        }
-    }
-    stripShow();
-
-    for (uint8_t i = 0; i < 6; i++) {
-        points[i].x += points[i].directionX;
-        points[i].y += points[i].directionY;
-
-        if (points[i].x >= MATRIX_WIDTH || points[i].x < 0) {
-            points[i].directionX = -points[i].directionX;
-            if (random8(10) > 7)
-                points[i].directionY = random8(2) == 0 ? 1 : -1;
-
-            points[i].x = max(static_cast<int16_t>(0), min(points[i].x, static_cast<int16_t>(MATRIX_WIDTH - 1)));
-        }
-
-        if (points[i].y >= MATRIX_HEIGHT || points[i].y < 0) {
-            points[i].directionY = -points[i].directionY;
-            if (random8(10) > 7)
-                points[i].directionX = random8(2) == 0 ? 1 : -1;
-
-            points[i].y = max(static_cast<int16_t>(0), min(points[i].y, static_cast<int16_t>(MATRIX_HEIGHT - 1)));
-        }
-    }
-
-    for (uint8_t i = 0; i < 6; i++) {
-        if (random8(20) == 0) {
-            points[i].color = CHSV(random8(), 255, 255);
-        }
-    }
-}
+} // namespace
