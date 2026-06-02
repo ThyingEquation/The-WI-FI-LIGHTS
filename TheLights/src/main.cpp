@@ -1,9 +1,9 @@
 #include <deque>
 
-#include "effects.h"
-#include "settings.h"
 #include "commandsHandler.h"
+#include "effects.h"
 #include "localWifiServer.h"
+#include "settings.h"
 
 namespace Settings {
     AppSettings settings;
@@ -11,8 +11,8 @@ namespace Settings {
 
 namespace StripControl {
     CRGB leds[MATRIX_LEDS];
-    NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(StripControl::MATRIX_LEDS);
-}
+    NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(StripControl::MATRIX_LEDS); // GPIO2
+} // namespace StripControl
 
 namespace {
     void initEffectAllModes(uint32_t empty);
@@ -20,12 +20,12 @@ namespace {
     void effectAllModes();
 
     void (*modeFunctions[])(uint32_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
-        &Effects::drawColorfulEffects,  &Effects::drawRunningLights, &Effects::drawJumpingLights,
-        &Effects::drawFlickeringLights, &Effects::drawWaterEffects,  &Effects::drawWeatherEffects,
-        &Effects::drawGamesEffects,     &Effects::drawSpaceEffects,  &Effects::drawCanvasEffects,
-        &Effects::drawRunningLine,      &Effects::drawAnimations,    &initEffectAllModes};
+            &Effects::drawColorfulEffects,  &Effects::drawRunningLights, &Effects::drawJumpingLights,
+            &Effects::drawFlickeringLights, &Effects::drawWaterEffects,  &Effects::drawWeatherEffects,
+            &Effects::drawGamesEffects,     &Effects::drawSpaceEffects,  &Effects::drawCanvasEffects,
+            &Effects::drawRunningLine,      &Effects::drawAnimations,    &initEffectAllModes};
     constexpr uint8_t GROUP_COUNT = std::size(modeFunctions);
-    
+
     enum class EffectsGroups : uint8_t { // Главные группы эффектов. Порядок эффектов аналогичен андроид приложению
         COLORFUL_EFFECTS, // (0) - Цветные эффекты
         RUNNING_LIGHTS, // (1) - Бегущие огни
@@ -46,97 +46,97 @@ namespace {
     };
 
     constexpr ModeConfig mainModesData[] = {
-        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 0U}, // "Цветные пятна"
-        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 1U}, // "Световой шум"
-        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 2U}, // "Диагональные волны"
-        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 3U}, // "Крутящаяся радуга"
-        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 4U}, // "Радужная рябь"
-        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 5U}, // "Радуга волной"
-        {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 6U}, // "Радуга змейкой"
+            {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 0U}, // "Цветные пятна"
+            {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 1U}, // "Световой шум"
+            {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 2U}, // "Диагональные волны"
+            {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 3U}, // "Крутящаяся радуга"
+            {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 4U}, // "Радужная рябь"
+            {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 5U}, // "Радуга волной"
+            {static_cast<uint8_t>(EffectsGroups::COLORFUL_EFFECTS), 6U}, // "Радуга змейкой"
 
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 0U}, // "Медленный огонек"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 1U}, // "Быстрый огонек"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 2U}, // "Цветной огонек"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 3U}, // "Цветная змейка"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 4U}, // "Бегущие огоньки #1"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 5U}, // "Бегущие огоньки #2"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 6U}, // "Бегущие огоньки #3"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 0U}, // "Медленный огонек"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 1U}, // "Быстрый огонек"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 2U}, // "Цветной огонек"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 3U}, // "Цветная змейка"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 4U}, // "Бегущие огоньки #1"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 5U}, // "Бегущие огоньки #2"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LIGHTS), 6U}, // "Бегущие огоньки #3"
 
-        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 0U}, // "Хаос"
-        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 1U}, // "Дрейфующая линия"
-        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 2U}, // "Прыгающие круги"
-        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 3U}, // "Прыгающий квадрат"
-        {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 4U}, // "Прыгающие точки"
+            {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 0U}, // "Хаос"
+            {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 1U}, // "Дрейфующая линия"
+            {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 2U}, // "Прыгающие круги"
+            {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 3U}, // "Прыгающий квадрат"
+            {static_cast<uint8_t>(EffectsGroups::JUMPING_LIGHTS), 4U}, // "Прыгающие точки"
 
-        {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 0U}, // "Летящие огни"
-        {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 1U}, // "Конфетти"
-        {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 2U}, // "Мерцающие огни"
+            {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 0U}, // "Летящие огни"
+            {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 1U}, // "Конфетти"
+            {static_cast<uint8_t>(EffectsGroups::FLICKERING_LIGHTS), 2U}, // "Мерцающие огни"
 
-        {static_cast<uint8_t>(EffectsGroups::WATER_EFFECTS), 0U}, // "Лагуна"
-        {static_cast<uint8_t>(EffectsGroups::WATER_EFFECTS), 1U}, // "Бассейн"
+            {static_cast<uint8_t>(EffectsGroups::WATER_EFFECTS), 0U}, // "Лагуна"
+            {static_cast<uint8_t>(EffectsGroups::WATER_EFFECTS), 1U}, // "Бассейн"
 
-        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 0U}, // "Снегопад"
-        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 1U}, // "Метель"
-        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 2U}, // "Дождь"
-        {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 3U}, // "Ливень"
+            {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 0U}, // "Снегопад"
+            {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 1U}, // "Метель"
+            {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 2U}, // "Дождь"
+            {static_cast<uint8_t>(EffectsGroups::WEATHER_EFFECTS), 3U}, // "Ливень"
 
-        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 0U}, // "Игра змейка"
-        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 1U}, // "Тетрис"
-        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 2U}, // "Арканоид"
-        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 3U}, // "Космические корабли"
-        {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 4U}, // "Эффект из к/ф матрица"
+            {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 0U}, // "Игра змейка"
+            {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 1U}, // "Тетрис"
+            {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 2U}, // "Арканоид"
+            {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 3U}, // "Космические корабли"
+            {static_cast<uint8_t>(EffectsGroups::GAMES_EFFECTS), 4U}, // "Эффект из к/ф матрица"
 
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 0U}, // "Звездное небо"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 1U}, // "Созвездия"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 2U}, // "Пульсирующая звезда"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 3U}, // "Затменные звезды"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 4U}, // "Метеоритный дождь"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 5U}, // "Спиральная туманность"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 6U}, // "Спиральная галактика"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 7U}, // "Фазы луны"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 8U}, // "Юпитер"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 9U}, // "Черная дыра"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 10U}, // "Северное сияние"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 11U}, // "Магнитные волны"
-        {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 12U}, // "Интерференция лучей"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 0U}, // "Звездное небо"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 1U}, // "Созвездия"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 2U}, // "Пульсирующая звезда"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 3U}, // "Затменные звезды"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 4U}, // "Метеоритный дождь"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 5U}, // "Спиральная туманность"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 6U}, // "Спиральная галактика"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 7U}, // "Фазы луны"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 8U}, // "Юпитер"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 9U}, // "Черная дыра"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 10U}, // "Северное сияние"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 11U}, // "Магнитные волны"
+            {static_cast<uint8_t>(EffectsGroups::SPACE_EFFECTS), 12U}, // "Интерференция лучей"
 
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 0U}, // "Полная заливка"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 1U}, // "Зеркальная заливка"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 2U}, // "Заливка линиями"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 3U}, // "Попиксельная линиями"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 4U}, // "Быстрая заливка змейкой"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 5U}, // "Медленная заливка змейкой"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 6U}, // "Цветная заливка змейкой"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 7U}, // "Цветное дыхание"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 0U}, // "Полная заливка"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 1U}, // "Зеркальная заливка"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 2U}, // "Заливка линиями"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 3U}, // "Попиксельная линиями"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 4U}, // "Быстрая заливка змейкой"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 5U}, // "Медленная заливка змейкой"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 6U}, // "Цветная заливка змейкой"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 7U}, // "Цветное дыхание"
 
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 254U}, // "Все картинки подряд"
-        {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 255U}, // "Все картинки беспорядочно"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 254U}, // "Все картинки подряд"
+            {static_cast<uint8_t>(EffectsGroups::CANVAS_EFFECTS), 255U}, // "Все картинки беспорядочно"
 
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 0U}, // "С наступающим Новым годом"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 1U}, // "С Новым годом"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 2U}, // "Happy New Year"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 3U}, // "С Рождеством"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 4U}, // "Merry Christmas"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 5U}, // "Здесь могла быть ваша реклама"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 6U}, // "Привет, я умная гирлянда"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 7U}, // "ВВЕДИТЕ ТЕКСТ"
-        {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 8U}, // "Поэма 'Медный всадник'"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 0U}, // "С наступающим Новым годом"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 1U}, // "С Новым годом"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 2U}, // "Happy New Year"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 3U}, // "С Рождеством"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 4U}, // "Merry Christmas"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 5U}, // "Здесь могла быть ваша реклама"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 6U}, // "Привет, я умная гирлянда"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 7U}, // "ВВЕДИТЕ ТЕКСТ"
+            {static_cast<uint8_t>(EffectsGroups::RUNNING_LINE), 8U}, // "Поэма 'Медный всадник'"
 
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 0U}, // "Сердце"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 1U}, // Смайлик"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 2U}, // "Прыгающий человечек"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 3U}, // "Файербол"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 4U}, // "Взрыв"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 5U}, // "'С НОВЫМ ГОДОМ' на японском"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 6U}, // "Приветствие на корейском"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 7U}, // "Цифровой сигнал"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 8U}, // "Синусоида"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 9U}, // "Цветные синусоиды"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 10U}, // "Цветные линии #1"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 11U}, // "Цветные линии #2"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 12U}, // "Цветные линии #3"
-        {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 13U}, // "Цветные линии #4"
-};
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 0U}, // "Сердце"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 1U}, // Смайлик"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 2U}, // "Прыгающий человечек"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 3U}, // "Файербол"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 4U}, // "Взрыв"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 5U}, // "'С НОВЫМ ГОДОМ' на японском"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 6U}, // "Приветствие на корейском"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 7U}, // "Цифровой сигнал"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 8U}, // "Синусоида"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 9U}, // "Цветные синусоиды"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 10U}, // "Цветные линии #1"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 11U}, // "Цветные линии #2"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 12U}, // "Цветные линии #3"
+            {static_cast<uint8_t>(EffectsGroups::ANIMATIONS), 13U}, // "Цветные линии #4"
+    };
     constexpr auto ALL_MODES_EFFECT_COUNT = std::size(mainModesData);
 
     uint32_t startingMillis = millis();
@@ -147,54 +147,62 @@ namespace {
         Effects::state.effectsGroup = 255U;
         Effects::state.effectSubmode = 255U;
     }
+} // namespace
+
+void setup() {
+    constexpr uint32_t configPin = 4U; // GPIO4
+    pinMode(static_cast<uint8_t>(configPin), static_cast<uint8_t>(INPUT_PULLUP));
+
+    if (!Settings::loadSettings()) {
+        return;
+    }
+
+    StripControl::strip.Begin();
+    fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+    StripControl::strip.Show();
+
+    if (const auto buttonState = static_cast<uint32_t>(digitalRead(static_cast<uint8_t>(configPin)));
+        buttonState == 1U) {
+        Effects::initRunningLine();
+        LocalWifiServer::initAccessPointServer();
+    } else {
+        SettingsWifiServer::settingsServer();
+    }
+
+    if (Settings::settings.startingEffectsGroup != 255U) // Сохранен стартовый режим
+    {
+        Effects::state.effectsGroup = Settings::settings.startingEffectsGroup;
+        Effects::state.effectSubmode = Settings::settings.startingEffectSubmode;
+        Effects::state.currentIndex = 255U;
+    }
+
+    // Serial.begin(9600U);
+    // (void)Serial.println(state.effectsGroup);
+    // (void)Serial.println(state.effectSubmode);
+
+    delay(1500U);
 }
 
-    void setup() {
-        if (!Settings::loadSettings()) {
-            return;
-        }
+void loop() {
+    LocalWifiServer::checkAccessPointServer();
 
-        Effects::initRunningLine();
-        LocalWifiServer::initLightServer();
+    if (Effects::state.isAllModesEnable) {
+        effectAllModes();
+    }
 
-        if (Settings::settings.startingEffectsGroup != 255U) // Сохранен стартовый режим
-        {
-            Effects::state.effectsGroup = Settings::settings.startingEffectsGroup;
-            Effects::state.effectSubmode = Settings::settings.startingEffectSubmode;
-            Effects::state.currentIndex = 255U;
-        }
-
-        // Serial.begin(9600);
-        // Serial.println(state.effectsGroup);
-        // Serial.println(state.effectSubmode);
-
-        StripControl::strip.Begin();
+    if (Effects::state.isScreenClearEnable) {
+        Effects::state.isScreenClearEnable = false;
         fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
-        StripControl::strip.Show();
-
-        delay(1500U);
+        StripControl::show();
+        return;
     }
 
-    void loop() {
-        LocalWifiServer::checkLightServer();
-
-        if (Effects::state.isAllModesEnable) {
-            effectAllModes();
-        }
-
-        if (Effects::state.isScreenClearEnable) {
-            Effects::state.isScreenClearEnable = false;
-            fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
-            StripControl::show();
-            return;
-        }
-
-        if (Effects::state.effectsGroup < GROUP_COUNT) {
-            modeFunctions[Effects::state.effectsGroup](Effects::state.effectSubmode);
-        }
-
-        checkWifiAutoOff();
+    if (Effects::state.effectsGroup < GROUP_COUNT) {
+        modeFunctions[Effects::state.effectsGroup](Effects::state.effectSubmode);
     }
+
+    checkWifiAutoOff();
+}
 
 namespace {
     void checkWifiAutoOff() {
@@ -205,11 +213,11 @@ namespace {
             lastMillis = currentMillis;
             if (Settings::settings.isWifiAutoOffEnable) {
                 if (currentMillis - startingMillis >= 180000U) {
-                    (void)WiFi.softAPdisconnect(true);
+                    (void) WiFi.softAPdisconnect(true);
                     Effects::state.isWifiActive = false;
                 }
             }
-            }
+        }
     }
 
     void effectAllModes() {
@@ -242,13 +250,14 @@ namespace {
             } else {
                 randomCounter = 0U;
                 do {
-                    Effects::state.currentIndex = static_cast<uint8_t>(ESP8266TrueRandom.random(0, static_cast<int32_t>(ALL_MODES_EFFECT_COUNT)));
+                    Effects::state.currentIndex = static_cast<uint8_t>(
+                            ESP8266TrueRandom.random(0, static_cast<int32_t>(ALL_MODES_EFFECT_COUNT)));
                     randomCounter++;
                     /// ДОБАВИТЬ ПРОПОРЦИОНАЛЬНОСТЬ!!!!!
-                    if (randomCounter > 60U)
-                        {break;}
-                } while (std::find(usedEffects.begin(), usedEffects.end(),
-                                   Effects::state.currentIndex) !=
+                    if (randomCounter > 60U) {
+                        break;
+                    }
+                } while (std::find(usedEffects.begin(), usedEffects.end(), Effects::state.currentIndex) !=
                          usedEffects.end());
 
                 usedEffects.push_back(Effects::state.currentIndex);
@@ -261,19 +270,20 @@ namespace {
                 Effects::state.effectSubmode = mainModesData[Effects::state.currentIndex].subMode;
             }
             Effects::state.isScreenClearEnable = true;
-            }
+        }
     }
-}
+} // namespace
 
 namespace StripControl {
     void show() {
         const uint8_t globalBr = Settings::settings.globalBrightness;
         for (uint16_t i = 0U; i < StripControl::MATRIX_LEDS; i++) {
             CRGB c = StripControl::leds[i];
-            if (globalBr < 255U)
-            {(void) c.nscale8_video(globalBr);}
+            if (globalBr < 255U) {
+                (void) c.nscale8_video(globalBr);
+            }
             strip.SetPixelColor(i, RgbColor(c.r, c.g, c.b));
         }
         strip.Show();
     }
-}
+} // namespace StripControl

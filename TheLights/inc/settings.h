@@ -5,11 +5,16 @@
 namespace Settings {
     struct AppSettings // Настройки по умолчанию
     {
-        char ssid[33] = "wifiLights";
-        char password[64] = "11111111";
+        char localNetworkSsid[33] = "wifiLights";
+        char localNetworkPassword[64] = "11111111";
+        char stationNetworkSsid[33] = "your Wi-Fi network name";
+        char stationNetworkPassword[64] = "11111111";
         uint8_t localIpVal[4] = {192U, 168U, 1U, 1U};
         uint8_t gatewayVal[4] = {192U, 168U, 1U, 1U};
         uint8_t subnetVal[4] = {255U, 255U, 255U, 0U};
+
+        bool isLocalAccessPoint = false; // Работа через стороннюю сеть, иначе создается локальная точка доступа
+        bool isAndroidAppWorkMode = true; // Режим работы через андроид приложение, иначе WEB страница
 
         bool isWifiAutoOffEnable = false; // Авто отключение WIFI через 3 минуты после запуска
 

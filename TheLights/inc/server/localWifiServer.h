@@ -4,8 +4,12 @@
 #include <WiFiUdp.h>
 
 namespace LocalWifiServer {
-    void initLightServer();
-    void checkLightServer();
+    void initAccessPointServer();
+    void checkAccessPointServer();
 
     inline WiFiUDP Udp;
+}
+
+namespace SettingsWifiServer {
+    void settingsServer();
 }

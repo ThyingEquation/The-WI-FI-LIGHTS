@@ -31,8 +31,8 @@ namespace CommandsHandler{
         if (command.rfind(commands[0U]) == 0U) {
             command.remove_prefix(commands[0U].length());
             const size_t len = std::min(command.size(), static_cast<size_t>(32));
-            (void)command.copy(&Settings::settings.ssid[0], len);
-            Settings::settings.ssid[len] = '\0';
+            (void)command.copy(&Settings::settings.localNetworkSsid[0], len);
+            Settings::settings.localNetworkSsid[len] = '\0';
         } else if (command.rfind(commands[1U]) == 0U) {
             command.remove_prefix(commands[1U].length());
             if (const size_t separatorPos = command.find('-'); separatorPos != std::string_view::npos) {
