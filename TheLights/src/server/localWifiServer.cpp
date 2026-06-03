@@ -66,6 +66,9 @@ namespace SettingsWifiServer {
         html += "Имя гирлянды (текущее: <b>" + static_cast<String>(Settings::settings.localNetworkSsid) + "</b>):<br>";
         html += "<input type='text' name='g_name' placeholder='Введите новое имя'><br><br>";
 
+        html += "Пароль гирлянды (текущее: <b>" + static_cast<String>(Settings::settings.localNetworkPassword) + "</b>):<br>";
+        html += "<input type='text' name='g_pass' placeholder='Введите новый пароль'><br><br>";
+
         html += "Имя вашей Wi-Fi сети (текущее: <b>" + static_cast<String>(Settings::settings.stationNetworkSsid) +
                 "</b>):<br>";
         html += "<input type='text' name='wifi_ssid' placeholder='Введите новое имя'><br><br>";
@@ -102,6 +105,11 @@ namespace SettingsWifiServer {
             const String gName = server.arg("g_name");
             (void)strncpy(&Settings::settings.localNetworkSsid[0], gName.c_str(), 32U);
             Settings::settings.localNetworkSsid[32] = '\0';
+        }
+        if (server.hasArg("g_pass") && server.arg("g_pass") != "") {
+            const String gName = server.arg("g_pass");
+            (void)strncpy(&Settings::settings.localNetworkPassword[0], gName.c_str(), 63U);
+            Settings::settings.localNetworkPassword[63] = '\0';
         }
         if (server.hasArg("wifi_ssid") && server.arg("wifi_ssid") != "") {
             const String gName = server.arg("wifi_ssid");
