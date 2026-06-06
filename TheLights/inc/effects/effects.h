@@ -33,13 +33,15 @@ namespace Effects {
 
     extern const uint8_t mainMatrixScheme[144];
 
+    constexpr uint32_t EFFECT_DISABLED = 255U;
+
     struct EffectsState {
         bool isScreenClearEnable = true;
         bool isAllModesEnable = false;
         bool isWifiActive = false;
-        uint8_t effectsGroup = 255U;
-        uint8_t effectSubmode = 255U;
-        uint8_t currentIndex = 255U;
+        uint32_t effectsGroup = 255U;
+        uint32_t effectSubmode = 255U;
+        uint32_t currentIndex = 255U;
     };
 
     extern EffectsState state;

@@ -3,7 +3,13 @@
 #include <LittleFS.h>
 
 namespace Settings {
-    struct AppSettings // Настройки по умолчанию
+    enum class AnimationsDelays : uint32_t {
+        ANDROID_AP = 1U,
+        ANDROID_STA = 2U,
+        WEB_PAGE_AP = 3U
+    };
+
+    struct SettingsParameters // Настройки по умолчанию
     {
         char localNetworkSsid[33] = "wifiLights";
         char localNetworkPassword[64] = "11111111";
@@ -13,27 +19,26 @@ namespace Settings {
         uint8_t gatewayVal[4] = {192U, 168U, 1U, 1U};
         uint8_t subnetVal[4] = {255U, 255U, 255U, 0U};
 
-        bool isLocalAccessPoint = false; // Работа через стороннюю сеть, иначе создается локальная точка доступа
-        bool isAndroidAppWorkMode = true; // Режим работы через андроид приложение, иначе WEB страница
+        uint32_t workMode = static_cast<uint32_t>(AnimationsDelays::ANDROID_AP);
 
         bool isWifiAutoOffEnable = false; // Авто отключение WIFI через 3 минуты после запуска
 
         // Стартовый режим
-        uint8_t startingEffectsGroup = 255U; // ==255 - отключен, иначе включен
-        uint8_t startingEffectSubmode = 255U;
+        uint32_t startingEffectsGroup = 255U; // ==255 - отключен, иначе включен
+        uint32_t startingEffectSubmode = 255U;
 
         // 50%, самая оптимальная яркость для всех эффектов
-        uint8_t globalBrightness = 128U;
+        uint32_t globalBrightness = 128U;
 
         // 1 - случайный порядок; 0 - строго по порядку массива mainModes. Эффект "Все эффекты"
-        uint8_t allModesWorkType = 0U;
+        uint32_t allModesWorkType = 0U;
         // Задержка между эффектами 10 минут. Эффект "Все эффекты"
         uint32_t allModeDelay = 600000U;
     };
 
-    extern AppSettings settings;
+    extern SettingsParameters parameters;
 
-    void saveSettings();
-    bool loadSettings();
-    void resetSettings();
+    void save();
+    bool load();
+    void reset();
 } // namespace Settings

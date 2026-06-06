@@ -13,3 +13,8 @@ namespace LocalWifiServer {
 namespace SettingsWifiServer {
     void settingsServer();
 }
+
+namespace WebControlServer {
+    void webControlServerInit();
+    void handleWebClient();
+}

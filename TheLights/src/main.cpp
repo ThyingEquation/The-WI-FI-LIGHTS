@@ -6,7 +6,7 @@
 #include "settings.h"
 
 namespace Settings {
-    AppSettings settings;
+    SettingsParameters parameters;
 }
 
 namespace StripControl {
@@ -142,10 +142,10 @@ namespace {
     uint32_t startingMillis = millis();
 
     void initEffectAllModes(uint32_t empty) {
-        Effects::state.currentIndex = 255U;
+        Effects::state.currentIndex = Effects::EFFECT_DISABLED;
         Effects::state.isAllModesEnable = true;
-        Effects::state.effectsGroup = 255U;
-        Effects::state.effectSubmode = 255U;
+        Effects::state.effectsGroup = Effects::EFFECT_DISABLED;
+        Effects::state.effectSubmode = Effects::EFFECT_DISABLED;
     }
 } // namespace
 
@@ -153,7 +153,7 @@ void setup() {
     constexpr uint32_t configPin = 4U; // GPIO4
     pinMode(static_cast<uint8_t>(configPin), static_cast<uint8_t>(INPUT_PULLUP));
 
-    if (!Settings::loadSettings()) {
+    if (!Settings::load()) {
         return;
     }
 
@@ -164,16 +164,24 @@ void setup() {
     if (const auto buttonState = static_cast<uint32_t>(digitalRead(static_cast<uint8_t>(configPin)));
         buttonState == 1U) {
         Effects::initRunningLine();
-        LocalWifiServer::initAccessPointServer();
+        if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_AP)) {
+            LocalWifiServer::initAccessPointServer();
+        }
+        else if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_STA)) {
+            // в работе
+        }
+        else {
+            WebControlServer::webControlServerInit();
+        }
     } else {
-        SettingsWifiServer::settingsServer();
+            SettingsWifiServer::settingsServer();
     }
 
-    if (Settings::settings.startingEffectsGroup != 255U) // Сохранен стартовый режим
+    if (Settings::parameters.startingEffectsGroup != Effects::EFFECT_DISABLED) // Сохранен стартовый режим
     {
-        Effects::state.effectsGroup = Settings::settings.startingEffectsGroup;
-        Effects::state.effectSubmode = Settings::settings.startingEffectSubmode;
-        Effects::state.currentIndex = 255U;
+        Effects::state.effectsGroup = Settings::parameters.startingEffectsGroup;
+        Effects::state.effectSubmode = Settings::parameters.startingEffectSubmode;
+        Effects::state.currentIndex = Effects::EFFECT_DISABLED;
     }
 
     // Serial.begin(9600U);
@@ -184,7 +192,12 @@ void setup() {
 }
 
 void loop() {
-    LocalWifiServer::checkAccessPointServer();
+
+    if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_AP)) {
+        LocalWifiServer::checkAccessPointServer();
+    } else {
+        WebControlServer::handleWebClient();
+    }
 
     if (Effects::state.isAllModesEnable) {
         effectAllModes();
@@ -197,7 +210,7 @@ void loop() {
         return;
     }
 
-    if (Effects::state.effectsGroup < GROUP_COUNT) {
+    if (static_cast<uint32_t>(Effects::state.effectsGroup) < GROUP_COUNT) {
         modeFunctions[Effects::state.effectsGroup](Effects::state.effectSubmode);
     }
 
@@ -211,7 +224,7 @@ namespace {
         if (const uint32_t currentMillis = millis();
             Effects::state.isWifiActive && currentMillis - lastMillis >= 1000U) {
             lastMillis = currentMillis;
-            if (Settings::settings.isWifiAutoOffEnable) {
+            if (Settings::parameters.isWifiAutoOffEnable) {
                 if (currentMillis - startingMillis >= 180000U) {
                     (void) WiFi.softAPdisconnect(true);
                     Effects::state.isWifiActive = false;
@@ -221,18 +234,18 @@ namespace {
     }
 
     void effectAllModes() {
-        static std::deque<uint8_t> usedEffects;
+        static std::deque<uint32_t> usedEffects;
         static uint32_t prevTime = 0U;
-        static uint8_t randomCounter = 0U;
-        static uint32_t allModeDelayLocal = Settings::settings.allModeDelay;
-        static uint8_t allModesWorkTypeLocal = Settings::settings.allModesWorkType;
+        static uint32_t randomCounter = 0U;
+        static uint32_t allModeDelayLocal = Settings::parameters.allModeDelay;
+        static uint32_t allModesWorkTypeLocal = Settings::parameters.allModesWorkType;
 
         if (const uint32_t currentTime = millis();
-            Effects::state.currentIndex == 255U || currentTime - prevTime >= allModeDelayLocal) {
+            Effects::state.currentIndex == Effects::EFFECT_DISABLED || currentTime - prevTime >= allModeDelayLocal) {
 
             CommandsHandler::sendVirtualCommand();
 
-            if (Effects::state.currentIndex == 255U) {
+            if (Effects::state.currentIndex == Effects::EFFECT_DISABLED) {
                 Effects::state.currentIndex = 0U;
             }
 
@@ -246,7 +259,7 @@ namespace {
                 Effects::state.effectsGroup = mainModesData[Effects::state.currentIndex].effectsGroup;
                 Effects::state.effectSubmode = mainModesData[Effects::state.currentIndex].subMode;
 
-                Effects::state.currentIndex += 1;
+                Effects::state.currentIndex += 1U;
             } else {
                 randomCounter = 0U;
                 do {
@@ -276,10 +289,10 @@ namespace {
 
 namespace StripControl {
     void show() {
-        const uint8_t globalBr = Settings::settings.globalBrightness;
+        const uint8_t globalBr = Settings::parameters.globalBrightness;
         for (uint16_t i = 0U; i < StripControl::MATRIX_LEDS; i++) {
             CRGB c = StripControl::leds[i];
-            if (globalBr < 255U) {
+            if (static_cast<uint32_t>(globalBr) < Effects::EFFECT_DISABLED) {
                 (void) c.nscale8_video(globalBr);
             }
             strip.SetPixelColor(i, RgbColor(c.r, c.g, c.b));

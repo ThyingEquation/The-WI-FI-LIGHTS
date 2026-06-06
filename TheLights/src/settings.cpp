@@ -8,52 +8,52 @@ namespace {
 namespace Settings {
     const char *SETTINGS_FILE = "/appSettings.bin";
 
-    bool loadSettings() {
+    bool load() {
         if (!LittleFS.begin()) {
             return false;
         }
 
         File settingsFile = LittleFS.open(SETTINGS_FILE, "r");
         if (!settingsFile) {
-            Settings::saveSettings();
+            Settings::save();
             return true;
         }
 
-        if (const size_t sz = settingsFile.size(); sz != sizeof(Settings::AppSettings)) {
+        if (const size_t sz = settingsFile.size(); sz != sizeof(Settings::SettingsParameters)) {
             settingsFile.close();
-            Settings::settings = Settings::AppSettings{};
-            Settings::saveSettings();
+            Settings::parameters = Settings::SettingsParameters{};
+            Settings::save();
             return true;
         }
 
         const size_t read =
-                settingsFile.read(reinterpret_cast<uint8_t *>(&Settings::settings), sizeof(Settings::AppSettings));
+                settingsFile.read(reinterpret_cast<uint8_t *>(&Settings::parameters), sizeof(Settings::SettingsParameters));
         settingsFile.close();
 
-        if (read != sizeof(Settings::AppSettings)) {
-            Settings::saveSettings();
+        if (read != sizeof(Settings::SettingsParameters)) {
+            Settings::save();
             return false;
         }
 
         return true;
     }
 
-    void saveSettings() {
+    void save() {
         File settingsFile = LittleFS.open(SETTINGS_FILE, "w");
         if (!settingsFile) {
             return;
         }
 
-        const size_t written = settingsFile.write(reinterpret_cast<const uint8_t *>(&Settings::settings),
-                                                  sizeof(Settings::AppSettings));
+        const size_t written = settingsFile.write(reinterpret_cast<const uint8_t *>(&Settings::parameters),
+                                                  sizeof(Settings::SettingsParameters));
         settingsFile.close();
 
-        if (written == sizeof(Settings::AppSettings)) {
+        if (written == sizeof(Settings::SettingsParameters)) {
             successSave();
         }
     }
 
-    void resetSettings() { (void) LittleFS.remove(SETTINGS_FILE); }
+    void reset() { (void) LittleFS.remove(SETTINGS_FILE); }
 } // namespace Settings
 
 namespace {
