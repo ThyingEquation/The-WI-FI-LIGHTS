@@ -166,15 +166,13 @@ void setup() {
         Effects::initRunningLine();
         if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_AP)) {
             LocalWifiServer::initAccessPointServer();
-        }
-        else if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_STA)) {
-            // в работе
-        }
-        else {
-            WebControlServer::webControlServerInit();
+        } else if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_STA)) {
+            LocalWifiServer::initStationServer();
+        } else {
+            WebControlServer::init();
         }
     } else {
-            SettingsWifiServer::settingsServer();
+        SettingsServer::checkServer();
     }
 
     if (Settings::parameters.startingEffectsGroup != Effects::EFFECT_DISABLED) // Сохранен стартовый режим
@@ -193,10 +191,11 @@ void setup() {
 
 void loop() {
 
-    if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_AP)) {
-        LocalWifiServer::checkAccessPointServer();
+    if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_AP) ||
+        Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_STA)) {
+        LocalWifiServer::checkServer();
     } else {
-        WebControlServer::handleWebClient();
+        WebControlServer::checkServer();
     }
 
     if (Effects::state.isAllModesEnable) {

@@ -5,16 +5,17 @@
 
 namespace LocalWifiServer {
     void initAccessPointServer();
-    void checkAccessPointServer();
+    void initStationServer();
+    void checkServer();
 
     inline WiFiUDP Udp;
 }
 
-namespace SettingsWifiServer {
-    void settingsServer();
+namespace SettingsServer {
+    void checkServer();
 }
 
 namespace WebControlServer {
-    void webControlServerInit();
-    void handleWebClient();
+    void init();
+    void checkServer();
 }

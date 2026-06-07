@@ -24,14 +24,59 @@ namespace LocalWifiServer {
         (void) Udp.begin(1653U);
     }
 
-    void checkAccessPointServer() {
+    void initStationServer() {
+        (void) WiFi.mode(WIFI_STA);
+        (void) WiFi.begin(&Settings::parameters.stationNetworkSsid[0], &Settings::parameters.stationNetworkPassword[0]);
+
+        uint8_t attempts = 0U;
+        while (WiFi.status() != WL_CONNECTED && attempts < 20U) {
+            delay(500U);
+            for (uint32_t i = 0U; i < attempts; ++i) {
+                StripControl::leds[i] = CHSV(96U, 255U, 80U);
+            }
+            StripControl::show();
+            attempts++;
+        }
+
+        delay(10U);
+        fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+        StripControl::show();
+        delay(10U);
+
+        if (WiFi.status() != WL_CONNECTED) {
+            fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CHSV(0U, 255U, 80U));
+            StripControl::show();
+            delay(2000U);
+            EspClass::restart();
+        }
+
+        fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CHSV(96U, 255U, 80U));
+        StripControl::show();
+        delay(2000U);
+        fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
+        StripControl::show();
+
+        (void) Udp.begin(1653U);
+    }
+
+    void checkServer() {
         if (Udp.parsePacket()) {
             char incomingPacket[256U] = {};
-            if (const auto len = static_cast<uint32_t>(Udp.read(&incomingPacket[0], 254U)); len > 0U) {
+            if (const auto len = static_cast<int32_t>(Udp.read(&incomingPacket[0], 254U)); len > 0) {
                 incomingPacket[len] = '\0';
             }
 
             const auto command = std::string_view(incomingPacket);
+
+            if (command == "DISCOVER") {
+                const String reply =
+                        String("IAM_HERE|") + Settings::parameters.localNetworkSsid + "|" +
+                        (WiFi.getMode() == WIFI_STA ? WiFi.localIP().toString() : WiFi.softAPIP().toString());
+                (void) Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+                (void) Udp.write(reply.c_str());
+                (void) Udp.endPacket();
+                return;
+            }
 
             if (constexpr std::array<std::string_view, 4U> commands = {"connectionState?", "settings?", "canvas?",
                                                                        "command?"};
@@ -52,19 +97,21 @@ namespace LocalWifiServer {
     }
 } // namespace LocalWifiServer
 
-namespace SettingsWifiServer {
+namespace SettingsServer {
     ESP8266WebServer server(80);
 
     void handleRoot() {
         String html = "<html><head><meta charset='UTF-8'><title>Настройки Гирлянды</title>";
         html += "<style>body { font-family: sans-serif; margin: 20px; } input { margin-bottom: 10px; width: 100%; "
-                "padding: 8px; } input[type='radio'] { width: auto; vertical-align: middle; margin-bottom: 0; padding: 0; }</style>";
+                "padding: 8px; } input[type='radio'] { width: auto; vertical-align: middle; margin-bottom: 0; padding: "
+                "0; }</style>";
         html += "</head><body>";
         html += "<h2>Настройки Гирлянды</h2>";
 
         html += "<form action='/save' method='POST'>";
 
-        html += "Имя гирлянды (текущее: <b>" + static_cast<String>(Settings::parameters.localNetworkSsid) + "</b>):<br>";
+        html += "Имя гирлянды (текущее: <b>" + static_cast<String>(Settings::parameters.localNetworkSsid) +
+                "</b>):<br>";
         html += "<input type='text' name='g_name' placeholder='Введите новое имя'><br><br>";
 
         html += "Пароль гирлянды (текущее: <b>" + static_cast<String>(Settings::parameters.localNetworkPassword) +
@@ -136,7 +183,7 @@ namespace SettingsWifiServer {
         EspClass::restart();
     }
 
-    void settingsServer() {
+    void checkServer() {
         (void) WiFi.mode(WIFI_AP);
         delay(1U);
         const IPAddress localIp(Settings::parameters.localIpVal[0], Settings::parameters.localIpVal[1],
@@ -159,7 +206,7 @@ namespace SettingsWifiServer {
             delay(1U);
         }
     }
-} // namespace SettingsWifiServer
+} // namespace SettingsServer
 
 
 namespace WebControlServer {
@@ -363,8 +410,10 @@ namespace WebControlServer {
         if (server.hasArg("effect")) {
             const String effVal = server.arg("effect");
             if (const int32_t separatorIdx = effVal.indexOf('_'); separatorIdx != -1) {
-                const auto group = static_cast<uint32_t>(effVal.substring(0U, static_cast<uint32_t>(separatorIdx)).toInt());
-                const auto submode = static_cast<uint32_t>(effVal.substring(static_cast<uint32_t>(separatorIdx + 1)).toInt());
+                const auto group =
+                        static_cast<uint32_t>(effVal.substring(0U, static_cast<uint32_t>(separatorIdx)).toInt());
+                const auto submode =
+                        static_cast<uint32_t>(effVal.substring(static_cast<uint32_t>(separatorIdx + 1)).toInt());
                 Effects::state.effectsGroup = group;
                 Effects::state.effectSubmode = submode;
             }
@@ -375,12 +424,8 @@ namespace WebControlServer {
 
     void handleDisableEffect() {
         prepareEffectChange();
-
         Effects::state.effectsGroup = Effects::EFFECT_DISABLED;
         Effects::state.effectSubmode = Effects::EFFECT_DISABLED;
-        server.sendHeader("Location", "/", true);
-        server.send(302, "text/plain", "");
-
         server.sendHeader("Location", "/", true);
         server.send(302, "text/plain", "");
     }
@@ -392,7 +437,7 @@ namespace WebControlServer {
         server.send(302, "text/plain", "");
     }
 
-    void  handleRemoveStartingEffect() {
+    void handleRemoveStartingEffect() {
         Settings::parameters.startingEffectsGroup = Effects::EFFECT_DISABLED;
         Settings::parameters.startingEffectSubmode = Effects::EFFECT_DISABLED;
         server.sendHeader("Location", "/", true);
@@ -417,11 +462,11 @@ namespace WebControlServer {
 
         server.sendHeader("Location", "/", true);
         server.send(302, "text/plain", "");
-
+        delay(100U);
         EspClass::restart();
     }
 
-    void webControlServerInit() {
+    void init() {
         (void) WiFi.mode(WIFI_AP);
         delay(1U);
         const IPAddress localIp(Settings::parameters.localIpVal[0], Settings::parameters.localIpVal[1],
@@ -432,7 +477,7 @@ namespace WebControlServer {
                                Settings::parameters.subnetVal[2], Settings::parameters.subnetVal[3]);
         delay(1U);
         (void) WiFi.softAPConfig(localIp, gateway, subnet);
-        (void) WiFi.softAP(&Settings::parameters.localNetworkSsid[0], "11111111");
+        (void) WiFi.softAP(&Settings::parameters.localNetworkSsid[0], &Settings::parameters.localNetworkPassword[0]);
 
         server.on("/", HTTP_GET, &handleRoot);
         server.on("/set_effect", HTTP_POST, &handleEnableEffect);
@@ -444,5 +489,5 @@ namespace WebControlServer {
         server.begin();
     }
 
-    void handleWebClient() { server.handleClient(); }
+    void checkServer() { server.handleClient(); }
 } // namespace WebControlServer
