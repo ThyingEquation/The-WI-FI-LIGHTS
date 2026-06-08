@@ -38,7 +38,7 @@ namespace Effects {
     struct EffectsState {
         bool isScreenClearEnable = true;
         bool isAllModesEnable = false;
-        bool isWifiActive = false;
+        bool isWifiActive = true;
         uint32_t effectsGroup = 255U;
         uint32_t effectSubmode = 255U;
         uint32_t currentIndex = 255U;

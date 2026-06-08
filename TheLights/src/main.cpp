@@ -225,7 +225,12 @@ namespace {
             lastMillis = currentMillis;
             if (Settings::parameters.isWifiAutoOffEnable) {
                 if (currentMillis - startingMillis >= 180000U) {
-                    (void) WiFi.softAPdisconnect(true);
+                    if (Settings::parameters.workMode ==
+                        static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_STA)) {
+                        (void) WiFi.disconnect(true);
+                    } else {
+                        (void) WiFi.softAPdisconnect(true);
+                    }
                     Effects::state.isWifiActive = false;
                 }
             }

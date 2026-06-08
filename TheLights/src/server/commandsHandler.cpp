@@ -12,7 +12,7 @@ namespace {
     bool isCommandReceived = false;
 }
 
-namespace CommandsHandler{
+namespace CommandsHandler {
     void handleConnectionState(const std::string_view command) {
         if (command == "check") {
             (void) LocalWifiServer::Udp.beginPacket(LocalWifiServer::Udp.remoteIP(), LocalWifiServer::Udp.remotePort());
@@ -22,16 +22,16 @@ namespace CommandsHandler{
     }
 
     void handleSettings(std::string_view command) {
-        constexpr std::array<std::string_view, 8> commands = {
-            "ssid=",         "startingEffect=", "brightness=", "restart",
-            "allModesTime=", "allModes=",       "wifiOff",     "wifiAutoOff="};
+        constexpr std::array<std::string_view, 8U> commands = {
+                "ssid=",         "startingEffect=", "brightness=", "restart",
+                "allModesTime=", "allModes=",       "wifiOff",     "wifiAutoOff="};
 
         bool isFailed = false;
 
         if (command.rfind(commands[0U]) == 0U) {
             command.remove_prefix(commands[0U].length());
             const size_t len = std::min(command.size(), static_cast<size_t>(32));
-            (void)command.copy(&Settings::parameters.localNetworkSsid[0], len);
+            (void) command.copy(&Settings::parameters.localNetworkSsid[0], len);
             Settings::parameters.localNetworkSsid[len] = '\0';
         } else if (command.rfind(commands[1U]) == 0U) {
             command.remove_prefix(commands[1U].length());
@@ -41,12 +41,12 @@ namespace CommandsHandler{
                 if (sscanf(std::string(command.substr(0U, separatorPos)).c_str(), "%u", &groupTemp) != 1 ||
                     sscanf(std::string(command.substr(separatorPos + 1U)).c_str(), "%u", &submodeTemp) != 1) {
                     isFailed = true;
-                    } else if (groupTemp > Effects::EFFECT_DISABLED || submodeTemp > Effects::EFFECT_DISABLED) {
-                        isFailed = true;
-                    } else {
-                        Settings::parameters.startingEffectsGroup = static_cast<uint8_t>(groupTemp);
-                        Settings::parameters.startingEffectSubmode = static_cast<uint8_t>(submodeTemp);
-                    }
+                } else if (groupTemp > Effects::EFFECT_DISABLED || submodeTemp > Effects::EFFECT_DISABLED) {
+                    isFailed = true;
+                } else {
+                    Settings::parameters.startingEffectsGroup = static_cast<uint8_t>(groupTemp);
+                    Settings::parameters.startingEffectSubmode = static_cast<uint8_t>(submodeTemp);
+                }
             }
         } else if (command.rfind(commands[2U]) == 0U) {
             command.remove_prefix(commands[2U].length());
@@ -83,16 +83,22 @@ namespace CommandsHandler{
             }
         } else if (command.rfind(commands[6U]) == 0U) {
             Effects::state.isWifiActive = false;
-            (void)WiFi.softAPdisconnect(true);
+            if (Settings::parameters.workMode == static_cast<uint32_t>(Settings::AnimationsDelays::ANDROID_STA)) {
+                (void) WiFi.disconnect(true);
+            } else {
+                (void) WiFi.softAPdisconnect(true);
+            }
         } else if (command.rfind(commands[7U]) == 0U) {
             command.remove_prefix(commands[7U].length());
             bool isWifiAutoOffEnableTemp = false;
             if (sscanf(std::string(command).c_str(), "%u", &isWifiAutoOffEnableTemp) != 1) {
                 isFailed = true;
             } else if (isWifiAutoOffEnableTemp) {
-                isFailed = true;
+                Settings::parameters.isWifiAutoOffEnable = true;
+            } else if (!isWifiAutoOffEnableTemp) {
+                Settings::parameters.isWifiAutoOffEnable = false;
             } else {
-                Settings::parameters.isWifiAutoOffEnable = isWifiAutoOffEnableTemp;
+                isFailed = true;
             }
         } else {
             isFailed = true;
@@ -186,15 +192,15 @@ namespace CommandsHandler{
                 if (sscanf(std::string(command.substr(0U, separatorPos)).c_str(), "%u", &groupTemp) != 1 ||
                     sscanf(std::string(command.substr(separatorPos + 1U)).c_str(), "%u", &submodeTemp) != 1) {
                     isFailed = true;
-                    } else if (groupTemp > Effects::EFFECT_DISABLED || submodeTemp > Effects::EFFECT_DISABLED) {
-                        isFailed = true;
-                    } else {
-                        Effects::state.effectsGroup = static_cast<uint8_t>(groupTemp);
-                        Effects::state.effectSubmode = static_cast<uint8_t>(submodeTemp);
-                        if (Effects::state.effectsGroup == 10U) {
-                            Effects::drawAnimations(Effects::EFFECT_DISABLED);
-                        }
+                } else if (groupTemp > Effects::EFFECT_DISABLED || submodeTemp > Effects::EFFECT_DISABLED) {
+                    isFailed = true;
+                } else {
+                    Effects::state.effectsGroup = static_cast<uint8_t>(groupTemp);
+                    Effects::state.effectSubmode = static_cast<uint8_t>(submodeTemp);
+                    if (Effects::state.effectsGroup == 10U) {
+                        Effects::drawAnimations(Effects::EFFECT_DISABLED);
                     }
+                }
             }
         } else {
             isFailed = true;
@@ -212,7 +218,7 @@ namespace CommandsHandler{
     }
 
     void sendVirtualCommand() { isCommandReceived = true; }
-}
+} // namespace CommandsHandler
 
 namespace Effects {
     bool checkCommandReceived() {
@@ -220,10 +226,9 @@ namespace Effects {
         if (isCommandReceived) {
             isCommandReceived = false;
             returnValue = true;
-        }
-        else {
+        } else {
             returnValue = false;
         }
         return returnValue;
     }
-}
+} // namespace Effects
