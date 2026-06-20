@@ -9,11 +9,13 @@ namespace Settings {
         WEB_PAGE_AP = 3U
     };
 
+    constexpr uint8_t EFFECTS_BITMASK_SIZE = 10U;
+
     struct SettingsParameters // Настройки по умолчанию
     {
-        char localNetworkSsid[33] = "wifiLights";
+        char localNetworkSsid[32] = "wifiLights";
         char localNetworkPassword[64] = "11111111";
-        char stationNetworkSsid[33] = "your Wi-Fi network name";
+        char stationNetworkSsid[32] = "your Wi-Fi network name";
         char stationNetworkPassword[64] = "11111111";
         uint8_t localIpVal[4] = {192U, 168U, 1U, 1U};
         uint8_t gatewayVal[4] = {192U, 168U, 1U, 1U};
@@ -34,6 +36,8 @@ namespace Settings {
         uint32_t allModesWorkType = 0U;
         // Задержка между эффектами 10 минут. Эффект "Все эффекты"
         uint32_t allModeDelay = 600000U;
+
+        uint8_t enabledEffectsMask[EFFECTS_BITMASK_SIZE]{};
     };
 
     extern SettingsParameters parameters;

@@ -18,6 +18,8 @@ namespace {
     void initEffectAllModes(uint32_t empty);
     void checkWifiAutoOff();
     void effectAllModes();
+    inline uint32_t countEnabled();
+    inline void enableAll();
 
     void (*modeFunctions[])(uint32_t) = { // порядок группы эффекта в этом массиве = коду группы эффекта
             &Effects::drawColorfulEffects,  &Effects::drawRunningLights, &Effects::drawJumpingLights,
@@ -157,6 +159,10 @@ void setup() {
         return;
     }
 
+    if (countEnabled() == 0U) {
+        enableAll();
+    }
+
     StripControl::strip.Begin();
     fill_solid(&StripControl::leds[0], static_cast<int>(StripControl::MATRIX_LEDS), CRGB::Black);
     StripControl::strip.Show();
@@ -237,12 +243,52 @@ namespace {
         }
     }
 
+    inline void enableAll() {
+        for (uint32_t i = 0U; i < ALL_MODES_EFFECT_COUNT; i++) {
+            Settings::parameters.enabledEffectsMask[i / 8U] |= (1U << (i % 8U));
+        }
+    }
+
+    inline bool isEnabled(const uint32_t i) {
+        if (i >= ALL_MODES_EFFECT_COUNT) {
+            return false;
+        }
+        return (Settings::parameters.enabledEffectsMask[i / 8U] & (1U << (i % 8U))) != 0U;
+    }
+
+    inline uint32_t countEnabled() {
+        uint32_t count = 0U;
+        for (uint32_t i = 0U; i < ALL_MODES_EFFECT_COUNT; i++) {
+            if (isEnabled(i)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     void effectAllModes() {
         static std::deque<uint32_t> usedEffects;
         static uint32_t prevTime = 0U;
-        static uint32_t randomCounter = 0U;
         static uint32_t allModeDelayLocal = Settings::parameters.allModeDelay;
         static uint32_t allModesWorkTypeLocal = Settings::parameters.allModesWorkType;
+
+        static std::vector<uint32_t> allowedEffects;
+        static bool allowedCacheValid = false;
+        if (!allowedCacheValid) {
+            allowedEffects.clear();
+            for (uint32_t i = 0U; i < ALL_MODES_EFFECT_COUNT; i++) {
+                if (isEnabled(i)) {
+                    allowedEffects.push_back(i);
+                }
+            }
+            allowedCacheValid = true;
+        }
+
+        if (allowedEffects.empty()) {
+            return;
+        }
+
+        const uint32_t historySize = std::max(1U, static_cast<uint32_t>(allowedEffects.size() * 7U / 10U));
 
         if (const uint32_t currentTime = millis();
             Effects::state.currentIndex == Effects::EFFECT_DISABLED || currentTime - prevTime >= allModeDelayLocal) {
@@ -256,36 +302,38 @@ namespace {
             prevTime = currentTime;
 
             if (allModesWorkTypeLocal == 1U) {
-                if (Effects::state.currentIndex >= ALL_MODES_EFFECT_COUNT) {
+                if (Effects::state.currentIndex >= allowedEffects.size()) {
                     Effects::state.currentIndex = 0U;
                 }
-
-                Effects::state.effectsGroup = mainModesData[Effects::state.currentIndex].effectsGroup;
-                Effects::state.effectSubmode = mainModesData[Effects::state.currentIndex].subMode;
-
+                const uint32_t idx = allowedEffects[Effects::state.currentIndex];
+                Effects::state.effectsGroup = mainModesData[idx].effectsGroup;
+                Effects::state.effectSubmode = mainModesData[idx].subMode;
                 Effects::state.currentIndex += 1U;
+
             } else {
-                randomCounter = 0U;
+                uint32_t randomCounter = 0U;
+                uint32_t chosenAllowedIdx = 0U;
                 do {
-                    Effects::state.currentIndex = static_cast<uint8_t>(
-                            ESP8266TrueRandom.random(0, static_cast<int32_t>(ALL_MODES_EFFECT_COUNT)));
+                    chosenAllowedIdx = static_cast<uint32_t>(
+                            ESP8266TrueRandom.random(0, static_cast<int32_t>(allowedEffects.size())));
                     randomCounter++;
-                    /// ДОБАВИТЬ ПРОПОРЦИОНАЛЬНОСТЬ!!!!!
-                    if (randomCounter > 60U) {
+                    if (randomCounter > allowedEffects.size() * 2U) {
                         break;
                     }
-                } while (std::find(usedEffects.begin(), usedEffects.end(), Effects::state.currentIndex) !=
+                } while (std::find(usedEffects.begin(), usedEffects.end(), allowedEffects[chosenAllowedIdx]) !=
                          usedEffects.end());
 
-                usedEffects.push_back(Effects::state.currentIndex);
-                if (usedEffects.size() > 55U) // Размер истории используемых эффектов
-                {
+                const uint32_t chosenIdx = allowedEffects[chosenAllowedIdx];
+                usedEffects.push_back(chosenIdx);
+                if (usedEffects.size() > historySize) {
                     usedEffects.pop_front();
                 }
 
-                Effects::state.effectsGroup = mainModesData[Effects::state.currentIndex].effectsGroup;
-                Effects::state.effectSubmode = mainModesData[Effects::state.currentIndex].subMode;
+                Effects::state.effectsGroup = mainModesData[chosenIdx].effectsGroup;
+                Effects::state.effectSubmode = mainModesData[chosenIdx].subMode;
+                Effects::state.currentIndex = chosenAllowedIdx;
             }
+
             Effects::state.isScreenClearEnable = true;
         }
     }
@@ -293,11 +341,11 @@ namespace {
 
 namespace StripControl {
     void show() {
-        const uint8_t globalBr = Settings::parameters.globalBrightness;
+        const uint32_t globalBr = Settings::parameters.globalBrightness;
         for (uint16_t i = 0U; i < StripControl::MATRIX_LEDS; i++) {
             CRGB c = StripControl::leds[i];
-            if (static_cast<uint32_t>(globalBr) < Effects::EFFECT_DISABLED) {
-                (void) c.nscale8_video(globalBr);
+            if (globalBr < Effects::EFFECT_DISABLED) {
+                (void) c.nscale8_video(static_cast<uint8_t>(globalBr));
             }
             strip.SetPixelColor(i, RgbColor(c.r, c.g, c.b));
         }

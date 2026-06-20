@@ -153,8 +153,8 @@ namespace SettingsServer {
         if (server.hasArg("g_pass") && server.arg("g_pass") != "") {
             const String &gPass = server.arg("g_pass");
             if (gPass.length() >= 8U) {
-                (void) strncpy(&Settings::parameters.localNetworkPassword[0], gPass.c_str(), 62U);
-                Settings::parameters.localNetworkPassword[62] = '\0';
+                (void) strncpy(&Settings::parameters.localNetworkPassword[0], gPass.c_str(), 63U);
+                Settings::parameters.localNetworkPassword[63] = '\0';
             }
         }
         if (server.hasArg("wifi_ssid") && server.arg("wifi_ssid") != "") {
@@ -165,8 +165,8 @@ namespace SettingsServer {
         if (server.hasArg("wifi_pass") && server.arg("wifi_pass") != "") {
             const String &wPass = server.arg("wifi_pass");
             if (wPass.length() >= 8U) {
-                (void) strncpy(&Settings::parameters.stationNetworkPassword[0], wPass.c_str(), 62U);
-                Settings::parameters.stationNetworkPassword[62] = '\0';
+                (void) strncpy(&Settings::parameters.stationNetworkPassword[0], wPass.c_str(), 63U);
+                Settings::parameters.stationNetworkPassword[63] = '\0';
             }
         }
 
