@@ -1,9 +1,0 @@
-.pio/
-.vscode/
-build/
-*.launch
-*.o
-*.bin
-*.elf
-*.map
-*.d
