@@ -129,10 +129,10 @@ namespace SettingsServer {
         html += "Режим работы:<br>";
         html += "<label><input type='radio' name='workMode' value='1'" +
                 String(Settings::parameters.workMode == 1U ? " checked" : "") +
-                "> Работа через андроид приложение + точка доступа</label><br>";
+                "> Работа через андроид приложение + точка доступа (AP)</label><br>";
         html += "<label><input type='radio' name='workMode' value='2'" +
                 String(Settings::parameters.workMode == 2U ? " checked" : "") +
-                "> Работа через андроид приложение + сторонняя сеть</label><br>";
+                "> Работа через андроид приложение + сторонняя сеть (STA)</label><br>";
         html += "<label><input type='radio' name='workMode' value='3'" +
                 String(Settings::parameters.workMode == 3U ? " checked" : "") +
                 "> Работа через упрощенную веб-страницу + точка доступа</label><br><br>";
