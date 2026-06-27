@@ -46,7 +46,7 @@
 - Упрощенная встроенная WEB-страница. Она доступна на любом устройстве, но отсутствует режим "Рисовалка"
 
 <p align="center">
-  <img src="Images/mario.gif" alt="animated" />
+  <img src="Images/pacman.gif" alt="animated" />
 </p>
 
 ---
